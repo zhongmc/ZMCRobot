@@ -11,66 +11,68 @@
 
         }
 
-        Vel RearDriveRobot::ensure_w(double v, double w)
+
+        Vel RearDriveRobot::ensure_w(double v, double w )
         {
+            Vel vel;
 
-            Vel vel = uni_to_diff(v, w);
-            double vel_l, vel_r;
-
-            double vel_min, vel_max;
-            vel_min = vel.vel_l;
-            vel_max = vel.vel_r;
-
-            if ( vel_min > vel.vel_r )
+            if( abs(v) > 0 )
             {
-                vel_min = vel.vel_r;
-                vel_max = vel.vel_l;
-            }
+              double v_lim, w_lim;
+              v_lim = abs(v);
+              if( v_lim > this->max_v )
+                v_lim = max_v;
+              w_lim = abs(w);
+              if( w_lim > max_w )
+                w_lim = max_w;
+              
+              if( w < 0 )
+                w_lim = -1*w_lim;
+              
+              Vel vel_d = uni_to_diff(v_lim, w_lim);
+              double vel_rl_max, vel_rl_min;
+              if( vel_d.vel_l > vel_d.vel_r )
+              {
+                vel_rl_min = vel_d.vel_r;
+                vel_rl_max = vel_d.vel_l;
+              }
+              else{
+                vel_rl_min = vel_d.vel_l;
+                vel_rl_max = vel_d.vel_r;
+              }
 
-            // stop one motor to support large angle turning
-            double minVel = 0;
-            if ( abs( w ) < 0.2 )
-                minVel = min_vel;
-
-
-            if ( vel_max > max_vel )
-            {
-                vel_r = vel.vel_r - (vel_max - max_vel);
-                vel_l = vel.vel_l - (vel_max - max_vel);
-
-            }
-            else if ( vel_min < minVel )
-            {
-                vel_r = vel.vel_r + (minVel - vel_min);
-                vel_l = vel.vel_l + (minVel - vel_min);
+              if( vel_rl_max > max_vel )
+              {
+                vel.vel_r = vel_d.vel_r - (vel_rl_max - max_vel);
+                vel.vel_l = vel_d.vel_l - (vel_rl_max - max_vel);
+              }
+              else if( vel_rl_min < min_vel )
+              {
+                vel.vel_r = vel_d.vel_r + (min_vel - vel_rl_min);
+                vel.vel_l = vel_d.vel_l + (min_vel - vel_rl_min);
+              }
+              else
+              {
+                vel.vel_r = vel_d.vel_r;
+                vel.vel_l = vel_d.vel_l;
+              }
 
             }
             else
             {
-                vel_r = vel.vel_r;
-                vel_l = vel.vel_l;
+                if( w < 0 )
+                {
+                    w = -1*min_w;
+                }
+                else 
+                  w = min_w;
+                vel = uni_to_diff(v, w);
             }
-
-                if( vel_l < minVel )
-                    vel_l = minVel;
-                else if( vel_l > max_vel )
-                    vel_l = max_vel;
-
-                if( vel_r < minVel )
-                    vel_r = minVel;
-                else if( vel_r > max_vel )
-                    vel_r = max_vel;
-            
-
-            vel.vel_l = vel_l;
-            vel.vel_r = vel_r;
-            return vel;
-
+          return vel;
         }
 
 
-
-
+ 
 double RearDriveRobot::vel_l_to_pwm( double vel)
 {
   //ax^2+bx+c

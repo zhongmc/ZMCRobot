@@ -1,5 +1,6 @@
 #include "ZMCRobot.h"
 #include <CurieBLE.h>
+#include <Arduino.h>
 
 #include "CurieTimerOne.h"
 #include "IRSensor.h"
@@ -168,21 +169,31 @@ void setup() {
   mSettings.ki = 0.01;
   mSettings.kd = 0.05;
 
+  mSettings.max_rpm = 200;
+  mSettings.min_rpm = 40;  //45
+
   mSettings.atObstacle = 0.20; //0.15
   mSettings.unsafe = 0.08;
   mSettings.dfw = 0.25; //0.25
   mSettings.velocity = 0.5;  //0.3
-  mSettings.max_rpm = 200;
-  mSettings.min_rpm = 40;  //45
   
   supervisor.updateSettings(mSettings);
   driveSupervisor.updateSettings(mSettings);
+
+  supervisor.init();
+  driveSupervisor.init();
+
 #else
   SETTINGS mSettings;
   mSettings.sType = 0;
   mSettings.kp = 30;
   mSettings.ki = 0.0;
   mSettings.kd = 0.02;
+
+  mSettings.max_rpm = 140;
+  mSettings.min_rpm = 0;  //45
+  mSettings.max_pwm = 150;
+
 
   mSettings.pwm_zero = 0;
   mSettings.pwm_diff = 0;
@@ -192,9 +203,7 @@ void setup() {
   mSettings.unsafe = 0.8; //0.8
   mSettings.dfw = 0.30; //0.25
   mSettings.velocity = 0.4;  //0.3
-  mSettings.max_rpm = 140;
-  mSettings.min_rpm = 0;  //45
-  mSettings.max_pwm = 150;
+
   mSettings.wheelSyncKp = 0;
   balanceSupervisor.updateSettings(mSettings);
 
@@ -556,7 +565,12 @@ void processUltrasonic()
       lastTrigTimer = curTime;
       waitForEcho = true;
       digitalWrite( ULTRASONIC_TRIG, HIGH); //trig the ultrosonic
-      delayMicroseconds(2); //2us
+      //delayMicroseconds(2); //2us
+      for(int i=0; i<100; i++)
+        {
+          int k;
+          k=i;
+        } 
       digitalWrite( ULTRASONIC_TRIG, LOW); //trig the ultrosonic
       
     }

@@ -1,10 +1,36 @@
 #include "ZMCRobot.h"
+#include <CurieBle.h>
+
+
+#if CAR_TYPE == DRIVE_CAR
+  #include "Supervisor.h"
+  #include "DriveSupervisor.h"
+#else
+  #include "BalanceSupervisor.h"
+  //#include "Kalman.h"
+#endif
+
+#if CAR_TYPE == DRIVE_CAR
+  extern Supervisor supervisor;
+  extern DriveSupervisor driveSupervisor;
+#else
+  extern BalanceSupervisor balanceSupervisor;
+#endif
+
+extern long trigTime, echoTime;
+extern double ultrasonicDistance;
+
 
 static char comData[30];
 static int comDataCount;
 
 //extern Supervisor supervisor;
 extern double gp2y0a41[3][4];
+extern long count1,count2;
+
+extern bool openDebug;
+
+extern double batteryVoltage;
 
 void checkSerialData()
 {

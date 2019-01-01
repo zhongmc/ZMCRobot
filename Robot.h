@@ -54,12 +54,12 @@ class Robot {
         
         double velocity;
 
-        virtual Vel ensure_w(double v, double w);
-        virtual double vel_l_to_pwm( double vel);
-        virtual double vel_r_to_pwm( double vel);
+        virtual Vel ensure_w(double v, double w) = 0;
+        virtual double vel_l_to_pwm( double vel) = 0;
+        virtual double vel_r_to_pwm( double vel) = 0;
 
-        virtual double pwm_to_ticks_r(double pwm, double dt);
-        virtual double pwm_to_ticks_l(double pwm, double dt);
+        virtual double pwm_to_ticks_r(double pwm, double dt) = 0;
+        virtual double pwm_to_ticks_l(double pwm, double dt) = 0;
 
         SETTINGS getPIDParams()
         {
@@ -95,7 +95,7 @@ class Robot {
 
         double max_vel, min_vel;
         double max_v, min_v;
-        double max_w; 
+        double max_w, min_w; 
         
         double angle;
         double gyro;

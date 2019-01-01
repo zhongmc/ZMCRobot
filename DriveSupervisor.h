@@ -5,6 +5,7 @@
 #include <Arduino.h>
 #include "Controller.h"
 #include "Robot.h"
+#include "RearDriveRobot.h"
 
 #include "VelocityController.h"
 
@@ -35,6 +36,8 @@ class DriveSupervisor{
 
         void updateSettings(SETTINGS settings);
         
+        void init();
+
         bool mSimulateMode;
         
     private:
@@ -51,7 +54,8 @@ class DriveSupervisor{
     private:
 
         VelocityController m_Controller;
-        Robot robot;
+     //   Robot robot;
+        RearDriveRobot robot;
 
         double d_unsafe;
        Input m_input;

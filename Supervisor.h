@@ -5,6 +5,7 @@
 #include <Arduino.h>
 #include "Controller.h"
 #include "Robot.h"
+#include "RearDriveRobot.h"
 
 #include "GoToGoal.h"
 #include "AvoidObstacle.h"
@@ -62,6 +63,8 @@ class Supervisor{
         void getIRDistances(double dis[5]);
         Position getRobotPosition();
 
+        void init();
+
         void updateSettings(SETTINGS settings);
         SETTINGS getSettings( byte settingsType );
         
@@ -89,7 +92,9 @@ class Supervisor{
         FollowWall m_FollowWall;
         SlidingMode m_SlidingMode;
 
-        Robot robot;
+       // Robot robot;
+
+        RearDriveRobot robot;
 
         Controller *m_currentController;
        double d_fw;  //distance to follow wall

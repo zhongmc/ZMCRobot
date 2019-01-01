@@ -1,6 +1,30 @@
 #include "ZMCRobot.h"
 #include <CurieBle.h>
 
+#include "robot.h"
+
+
+#if CAR_TYPE == DRIVE_CAR
+  #include "Supervisor.h"
+  #include "DriveSupervisor.h"
+#else
+  #include "BalanceSupervisor.h"
+  //#include "Kalman.h"
+#endif
+
+#if CAR_TYPE == DRIVE_CAR
+  extern Supervisor supervisor;
+  extern DriveSupervisor driveSupervisor;
+#else
+  extern BalanceSupervisor balanceSupervisor;
+#endif
+
+
+extern bool doCheckBattleVoltage; // = true;
+extern bool openDebug; // = false;
+extern  byte settingsReqQueue[8];
+extern short queueLen; // = 0;
+
 BLEPeripheral blePeripheral;
 // BLE Peripheral Device (the board you're programming)
 BLEService zmcRobotService("3A37"); // BLE Heart Rate Service

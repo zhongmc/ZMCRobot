@@ -4,7 +4,7 @@
 #include "ZMCRobot.h"
 
 //Robot::Robot(double R, double L, double ticksr, double minRpm, double maxRpm)
-BalanceSupervisor::BalanceSupervisor(): robot(0.0325, 0.155, 390, -120, 140)
+BalanceSupervisor::BalanceSupervisor()  //: robot(0.0325, 0.155, 390, -120, 140)
 {
 
 
@@ -46,7 +46,7 @@ BalanceSupervisor::BalanceSupervisor(): robot(0.0325, 0.155, 390, -120, 140)
   filter.begin(GYRO_RATE);
   // filter2.begin(GYRO_RATE);
 
-  robot.setVel2PwmParam(0.1811, 1.4199, 1.8548); // vel to pwm parameters
+ // robot.setVel2PwmParam(0.1811, 1.4199, 1.8548); // vel to pwm parameters
 
   d_stop = 0.05;
   d_at_obs = 0.15;

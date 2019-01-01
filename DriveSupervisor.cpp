@@ -12,8 +12,8 @@ DriveSupervisor::DriveSupervisor()
   m_input.theta = 0;
 
 //  robot.setVel2PwmParam(0, 6.4141, 14.924); // vel to pwm parameters
+//   robot.setVel2PwmParam(0,9.59,18.73);
 
-    robot.setVel2PwmParam(0,9.59,18.73);
     robot.setIRSensorType( GP2Y0A21 );
 
   mSimulateMode = false;
@@ -35,6 +35,13 @@ void DriveSupervisor::updateSettings(SETTINGS settings)
 
 
 }
+
+void DriveSupervisor::init()
+{
+  SETTINGS settings = robot.getPIDParams();
+  m_Controller.updateSettings(settings);
+}
+
 
 void DriveSupervisor::setGoal(double v, double theta )
 {

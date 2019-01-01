@@ -5,6 +5,7 @@
 #include <Arduino.h>
 #include "Controller.h"
 #include "Robot.h"
+#include "BalanceRobot.h"
 
 #include "BalanceController.h"
 #include "BalanceSpeedController.h"
@@ -155,8 +156,10 @@ class BalanceSupervisor {
   private:
 
     // Robot(double R, double L, double ticksr, double maxRpm double minRpm)
-    Robot robot;
+   // Robot robot;
 
+    BalanceRobot robot;
+    
     double normalize(double in, double limit);
 
     long execTime;

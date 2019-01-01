@@ -64,6 +64,15 @@ SETTINGS Supervisor::getSettings(byte settingsType)
     
 }
 
+void Supervisor::init()
+{
+  SETTINGS settings = robot.getPIDParams();
+    m_GoToGoal.updateSettings(settings);
+    m_AvoidObstacle.updateSettings(settings);
+    m_FollowWall.updateSettings(settings);
+
+}
+
 
 void Supervisor::setGoal(double x, double y, int theta)
 {

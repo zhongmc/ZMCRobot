@@ -42,6 +42,7 @@ void Robot::init(double R, double L, double ticksr, double minRpm, double maxRpm
   max_v = max_vel * wheel_radius;
   min_v = min_vel * wheel_radius;
   max_w =  (wheel_radius / wheel_base_length) * (max_vel - min_vel);
+  min_w = (wheel_radius / wheel_base_length) * (2*min_vel);
 
   pwm_diff = 0;
   angleOff = 0;
@@ -72,7 +73,7 @@ void Robot::updateSettings(SETTINGS settings)
   max_v = max_vel * wheel_radius;
   min_v = min_vel * wheel_radius;
   max_w =  (wheel_radius / wheel_base_length) * (max_vel - min_vel);
-
+  min_w = (wheel_radius / wheel_base_length) * (2*min_vel);
   pwm_diff = settings.pwm_diff;
   angleOff = settings.angleOff;
 

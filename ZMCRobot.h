@@ -1,10 +1,12 @@
+#include "Robot.h"
+
 #ifndef _ZMC_ROBOT_H_
 #define _ZMC_ROBOT_H_
 
 #define BALANCE_CAR  1
 #define DRIVE_CAR 2
 
-#define CAR_TYPE  BALANCE_CAR  //DRIVE_CAR BALANCE_CAR
+#define CAR_TYPE  DRIVE_CAR  //DRIVE_CAR BALANCE_CAR
 
 #define MAX_ULTRASONIC_DIS 1
 #define MAX_IRSENSOR_DIS 0.3
@@ -29,6 +31,14 @@ void startDrive();
 void stopAndReset();
 void startBalance();
   
+void initMotor();
+void initBluetooth();
+void checkSerialData();
+  //ble cmd process
+void processSetingsRequire();
+void sendRobotStateValue(Position pos, double irDistance[5], double voltage );
+void MoveMotor( int pwm );
+
 #endif
 
 
