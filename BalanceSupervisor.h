@@ -9,7 +9,7 @@
 
 #include "BalanceController.h"
 #include "BalanceSpeedController.h"
-#include "VelocityController.h"  //w controller
+#include "VelocityController.h" //w controller
 
 #include <CurieIMU.h>
 #include <MadgwickAHRS.h>
@@ -19,169 +19,159 @@
 
 #include <Kalman.h>
 
-#define GYRO_RATE   100
+#define GYRO_RATE 100
 
-class BalanceSupervisor {
-  public:
-    BalanceSupervisor();
-    void execute(long left_ticks, long right_ticks, double dt);
-    void reset(Vector goal, double v, double d_fw);
-    void reset(long leftTicks, long rightTicks);
-    void resetRobot();
+class BalanceSupervisor
+{
+public:
+  BalanceSupervisor();
+  void execute(long left_ticks, long right_ticks, double dt);
+  void reset(Vector goal, double v, double d_fw);
+  void reset(long leftTicks, long rightTicks);
+  void resetRobot();
 
-    void resetKalman();
+  void resetKalman();
 
-    void setGoal(double v, double w);
-    void stopDrive();
+  void setGoal(double v, double w);
+  void stopDrive();
 
-    void updateSettings(SETTINGS settings);
-    SETTINGS getSettings( byte settingsType );
+  void updateSettings(SETTINGS settings);
+  SETTINGS getSettings(byte settingsType);
 
-    void setBalanceCtrlParam(double val, int idx)
-    {
-      m_BalanceController.setCtrlParam( val, idx);
-    }
+  void setBalanceCtrlParam(double val, int idx)
+  {
+    m_BalanceController.setCtrlParam(val, idx);
+  }
 
-    void setSpeedCtrlParam(double val, int idx)
-    {
-      m_SpeedController.setCtrlParam(val, idx);
-    }
+  void setSpeedCtrlParam(double val, int idx)
+  {
+    m_SpeedController.setCtrlParam(val, idx);
+  }
 
+  void getRobotInfo()
+  {
+    Serial.println("Balance robot info, current state:");
+    Serial.print("exec time:");
+    Serial.print(execTime);
+    Serial.print(", max_pwm:");
+    Serial.print(max_pwm);
 
-    void getRobotInfo()
-    {
-      Serial.println("Balance robot info, current state:");
-      Serial.print("exec time:");
-      Serial.print(execTime);
-      Serial.print(", max_pwm:");
-      Serial.print(max_pwm);
+    Serial.print(", pwm_diff:");
+    Serial.print(pwm_diff);
+    Serial.print(", pwm_zero:");
+    Serial.println(pwm_zero);
 
-      Serial.print(", pwm_diff:");
-      Serial.print(pwm_diff);
-      Serial.print(", pwm_zero:");
-      Serial.println( pwm_zero);
+    Serial.print("pwmInfo(b,s,wl，wr):");
+    Serial.print(mBalancePWM);
+    Serial.print(",");
 
-      Serial.print("pwmInfo(b,s,wl，wr):");
-      Serial.print(mBalancePWM);
-      Serial.print(",");
+    Serial.print(mSpeedPWM);
+    Serial.print(",");
+    Serial.print(mwPWM_L);
+    Serial.print(",");
+    Serial.println(mwPWM_R);
 
-      Serial.print(mSpeedPWM);
-      Serial.print(",");
-      Serial.print(mwPWM_L);
-      Serial.print(",");
-      Serial.println(mwPWM_R);
+    Serial.print("Input(v, theta):");
+    Serial.print(m_input.v);
+    Serial.print(", ");
+    Serial.println(m_input.theta);
 
-      Serial.print("Input(v, theta):");
-      Serial.print(m_input.v);
-      Serial.print(", ");
-      Serial.println(m_input.theta);
+    robot.getRobotInfo();
+    Serial.print("balance ");
+    m_BalanceController.PrintInfo();
+    Serial.print("velocity ");
+    m_SpeedController.PrintInfo();
+    Serial.print("Diff:");
+    m_thetaController.PrintInfo();
+  }
 
+  //        void setGoal(double x, double y, int theta);
+  //the target to go!
+  Vector m_Goal;
 
-      robot.getRobotInfo();
-      Serial.print("balance ");
-      m_BalanceController.PrintInfo();
-      Serial.print("velocity ");
-      m_SpeedController.PrintInfo();
-      Serial.print("Diff:");
-      m_thetaController.PrintInfo();
+  Position getRobotPosition();
+  //will return the pitch/angle of the robot
+  void getIRDistances(double dis[5]);
 
-    }
+  //filter paramaters
+  double KG_ANG;
 
+  PWM_OUT pwm;
+  double mBalancePWM, mSpeedPWM, mwPWM_L, mwPWM_R;
+  Vel mVel;
 
-    //        void setGoal(double x, double y, int theta);
-    //the target to go!
-    Vector m_Goal;
+  int pwm_diff, pwm_zero, max_pwm;
+  double wheelSyncKP;
 
-    Position getRobotPosition();
-    //will return the pitch/angle of the robot
-    void getIRDistances(double dis[5]);
+  int angleType; //the angle used to control balance 0 sensor 1 kalman 2 es
+  void setAngleType(int val)
+  {
+    angleType = val;
+    Serial.print("Change angle type to:");
+    Serial.println(val);
+  }
 
-    //filter paramaters
-    double KG_ANG;
+  bool mSimulateMode;
+  bool mIgnoreObstacle;
 
-    PWM_OUT pwm;
-    double mBalancePWM, mSpeedPWM, mwPWM_L, mwPWM_R;
-    Vel mVel;
+private:
+  void check_states();
 
-    int pwm_diff, pwm_zero, max_pwm;
-    double wheelSyncKP;
+  int m_state;
+  double m_sensor_angle, m_estima_angle, g_fGravityAngle;
+  double m_gyro;
 
-    int angleType;  //the angle used to control balance 0 sensor 1 kalman 2 es
-    void setAngleType(int val)
-    {
-      angleType = val;
-      Serial.print("Change angle type to:");
-      Serial.println(val);
-    }
+  //     MPU6050 accelgyro;
 
-    bool mSimulateMode;
+  //        MyMPU6050 mpu6050;
 
-  private:
-    void check_states();
+  double readIMU();
+  double convertRawAcceleration(int aRaw);
+  double convertRawGyro(int gRaw);
 
-    int m_state;
-    double  m_sensor_angle, m_estima_angle, g_fGravityAngle;
-    double m_gyro;
+  double estima_cal(double estima, double metron, double KG);
 
-    //     MPU6050 accelgyro;
+  bool layingDown;
 
-    //        MyMPU6050 mpu6050;
+  Madgwick filter; //, filter2;
 
-    double readIMU();
-    double convertRawAcceleration(int aRaw);
-    double convertRawGyro(int gRaw);
+  Kalman kalman;
 
-    double estima_cal (double estima, double metron, double KG);
+  bool progress_made;
+  bool at_goal;
+  bool at_obstacle;
+  bool unsafe;
 
-    bool layingDown;
+  //used to count the robot velocity
+  double m_per_tick;
+  long prev_left_ticks, prev_right_ticks;
 
-    Madgwick filter; //, filter2;
+  double m_right_ticks, m_left_ticks;
 
-    Kalman kalman;
+  int speedCounter;
 
+private:
+  // Robot(double R, double L, double ticksr, double maxRpm double minRpm)
+  // Robot robot;
 
+  BalanceRobot robot;
 
-    bool progress_made;
-    bool at_goal;
-    bool at_obstacle;
-    bool unsafe;
+  double normalize(double in, double limit);
 
-    //used to count the robot velocity
-    double m_per_tick;
-    long prev_left_ticks, prev_right_ticks;
+  long execTime;
 
-    double m_right_ticks, m_left_ticks;
+  BalanceController m_BalanceController;
+  BalanceSpeedController m_SpeedController;
+  VelocityController m_thetaController;
 
-    int speedCounter;
-  private:
+  double d_fw; //distance to follow wall
+  double d_stop;
+  double d_at_obs;
+  double d_unsafe;
+  double d_prog;
 
-    // Robot(double R, double L, double ticksr, double maxRpm double minRpm)
-   // Robot robot;
-
-    BalanceRobot robot;
-    
-    double normalize(double in, double limit);
-
-    long execTime;
-
-    BalanceController m_BalanceController;
-    BalanceSpeedController m_SpeedController;
-    VelocityController m_thetaController;
-
-    double d_fw;  //distance to follow wall
-    double d_stop;
-    double d_at_obs;
-    double d_unsafe;
-    double d_prog;
-
-    Input m_input;
-    Output m_output;
+  Input m_input;
+  Output m_output;
 };
 
-
 #endif /* _BALANCE_SUPERVISOR_H_ */
-
-
-
-
-

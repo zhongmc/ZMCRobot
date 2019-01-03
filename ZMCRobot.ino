@@ -7,21 +7,20 @@
 #include "Robot.h"
 
 #if CAR_TYPE == DRIVE_CAR
-  #include "Supervisor.h"
-  #include "DriveSupervisor.h"
+#include "Supervisor.h"
+#include "DriveSupervisor.h"
 #else
-  #include "MyMPU6050.h"
-  #include <CurieIMU.h>
-  #include <MadgwickAHRS.h>
-  #include "BalanceSupervisor.h"
-  //#include "Kalman.h"
+#include "MyMPU6050.h"
+#include <CurieIMU.h>
+#include <MadgwickAHRS.h>
+#include "BalanceSupervisor.h"
+//#include "Kalman.h"
 #endif
 
 #include "BlinkLed.h"
 
 //#include "MyKey.h"
 //#include "MyMenu.h"
-
 
 #define VOLT_IN_PIN A0
 #define ULTRASONIC_ECHO 11
@@ -40,8 +39,8 @@
 #define RIGHT_KEY 2
 #define RET_KEY 3
 
-#define START_KEY_PIN  11
-#define LEFT_KEY_PIN  10
+#define START_KEY_PIN 11
+#define LEFT_KEY_PIN 10
 #define RIGHT_KEY_PIN 9
 #define RET_KEY_PIN 8
 
@@ -50,10 +49,10 @@ byte currentState = STATE_IDLE;
 //MyKey myKey;
 
 #if CAR_TYPE == DRIVE_CAR
-  Supervisor supervisor;
-  DriveSupervisor driveSupervisor;
+Supervisor supervisor;
+DriveSupervisor driveSupervisor;
 #else
-  BalanceSupervisor balanceSupervisor;
+BalanceSupervisor balanceSupervisor;
 #endif
 
 Position pos;
@@ -89,14 +88,14 @@ IRSensor irSensor(GP2Y0A41);
 // unsigned long microsPerReading, microsPrevious;
 // double accelScale, gyroScale;
 
-static double batteryVoltage; // Measured battery level
+static double batteryVoltage;  // Measured battery level
 static uint8_t batteryCounter; // Counter used to check if it should check the battery level
 
-
-void setup() {
+void setup()
+{
 
 #if CAR_TYPE == BALANCE_CAR
-     
+
 #endif
 
   Serial.begin(115200);
@@ -107,7 +106,7 @@ void setup() {
   //  lcd.print(" "); // Print a message to the LCD.
   // showMainTips();
 
-/*
+  /*
   Serial.println("Initialze key...");
   myKey.addKey(RET_KEY, RET_KEY_PIN);
   myKey.addKey(RIGHT_KEY, RIGHT_KEY_PIN);
@@ -134,7 +133,7 @@ void setup() {
   //  microsPrevious = micros();
 
   initBluetooth();
-//  Serial.println(F("Initialze MENU..."));
+  //  Serial.println(F("Initialze MENU..."));
   //
   //void MyMenu::setKeyId(byte stKey, byte rtKey, byte lKey, byte rKey)
   //  menu.setKeyId(START_KEY, RET_KEY,  LEFT_KEY, RIGHT_KEY);
@@ -144,8 +143,7 @@ void setup() {
   // time = oneSecInUsec / 100; // time is used to toggle the LED is divided by i
   //  CurieTimerOne.start(oneSecInUsec / GYRO_RATE, &timedBlinkIsr);  // set timer and callback
 
-//  Serial.println(sizeof(long));
-
+  //  Serial.println(sizeof(long));
 
   pinMode(A0, INPUT);
   pinMode(A1, INPUT);
@@ -156,27 +154,27 @@ void setup() {
 
   pinMode(ULTRASONIC_ECHO, INPUT_PULLUP);
   pinMode(ULTRASONIC_TRIG, OUTPUT);
-  digitalWrite( ULTRASONIC_TRIG, LOW); 
+  digitalWrite(ULTRASONIC_TRIG, LOW);
 
   // ultr sound echo intterupt
   attachInterrupt(digitalPinToInterrupt(ULTRASONIC_ECHO), UltrasonicEcho, CHANGE);
 #if CAR_TYPE == DRIVE_CAR
   SETTINGS mSettings;
   mSettings.sType = 0;
- 
+
   mSettings.sType = 0;
   mSettings.kp = 5;
   mSettings.ki = 0.01;
   mSettings.kd = 0.05;
 
   mSettings.max_rpm = 200;
-  mSettings.min_rpm = 40;  //45
+  mSettings.min_rpm = 40; //45
 
   mSettings.atObstacle = 0.20; //0.15
   mSettings.unsafe = 0.08;
-  mSettings.dfw = 0.25; //0.25
-  mSettings.velocity = 0.5;  //0.3
-  
+  mSettings.dfw = 0.25;     //0.25
+  mSettings.velocity = 0.5; //0.3
+
   supervisor.updateSettings(mSettings);
   driveSupervisor.updateSettings(mSettings);
 
@@ -191,29 +189,28 @@ void setup() {
   mSettings.kd = 0.02;
 
   mSettings.max_rpm = 140;
-  mSettings.min_rpm = 0;  //45
+  mSettings.min_rpm = 0; //45
   mSettings.max_pwm = 150;
-
 
   mSettings.pwm_zero = 0;
   mSettings.pwm_diff = 0;
   mSettings.angleOff = 0.8;
-  
+
   mSettings.atObstacle = 0.25; //0.15
-  mSettings.unsafe = 0.8; //0.8
-  mSettings.dfw = 0.30; //0.25
-  mSettings.velocity = 0.4;  //0.3
+  mSettings.unsafe = 0.8;      //0.8
+  mSettings.dfw = 0.30;        //0.25
+  mSettings.velocity = 0.4;    //0.3
 
   mSettings.wheelSyncKp = 0;
   balanceSupervisor.updateSettings(mSettings);
 
-//  
-//  mSettings.sType = 2;
-//  mSettings.kp = 30;
-//  mSettings.ki = 0.0;
-//  mSettings.kd = 0.02;
-//  balanceSupervisor.updateSettings(mSettings);
-//
+  //
+  //  mSettings.sType = 2;
+  //  mSettings.kp = 30;
+  //  mSettings.ki = 0.0;
+  //  mSettings.kd = 0.02;
+  //  balanceSupervisor.updateSettings(mSettings);
+  //
   mSettings.sType = 3;
   mSettings.kp = 200;
   mSettings.ki = 10;
@@ -221,13 +218,12 @@ void setup() {
   balanceSupervisor.updateSettings(mSettings);
 #endif
 
-
   millisPrevKey = millis();
   millisPrev = millisPrevKey; //millis();
-
 }
 
-void loop() {
+void loop()
+{
   checkSerialData();
   blinkLed.beSureToBlink();
   //ble cmd process
@@ -235,35 +231,34 @@ void loop() {
 
   //ultrasonic process
   processUltrasonic();
-  
 
-  unsigned long  millisNow = millis();
-  if (millisNow - millisPrev >= 40) {
+  unsigned long millisNow = millis();
+  if (millisNow - millisPrev >= 40)
+  {
 
     millisPrev = millisNow;
     double irDistance[5];
 
 #if CAR_TYPE == DRIVE_CAR
-    if ( currentState == STATE_GOTOGOAL )
+    if (currentState == STATE_GOTOGOAL)
     {
       //report states
       supervisor.getIRDistances(irDistance);
       pos = supervisor.getRobotPosition();
-      sendRobotStateValue( pos, irDistance, batteryVoltage );
+      sendRobotStateValue(pos, irDistance, batteryVoltage);
     }
-    else if ( currentState == STATE_DRIVE )
+    else if (currentState == STATE_DRIVE)
     {
       driveSupervisor.getIRDistances(irDistance);
       pos = driveSupervisor.getRobotPosition();
-      sendRobotStateValue( pos, irDistance, batteryVoltage );
-
+      sendRobotStateValue(pos, irDistance, batteryVoltage);
     }
 #else
-    if ( currentState == STATE_BALANCE )
+    if (currentState == STATE_BALANCE)
     {
       balanceSupervisor.getIRDistances(irDistance);
       pos = balanceSupervisor.getRobotPosition();
-      sendBalanceRobotStateValue( pos, irDistance, batteryVoltage );
+      sendBalanceRobotStateValue(pos, irDistance, batteryVoltage);
       /*
               Serial.print(balanceSupervisor.pwm.pwm_l);
               Serial.print(",");
@@ -284,25 +279,23 @@ void loop() {
               Serial.print(",");
               Serial.println(irDistance[2]);
       */
-
     }
 #endif
- 
+
     else
     {
-      for ( int i = 0; i < 5; i++)
+      for (int i = 0; i < 5; i++)
       {
-        irDistance[i] = irSensor.readDistance( 1 + i );
+        irDistance[i] = irSensor.readDistance(1 + i);
         //delay(5);
       }
-      if( ultrasonicDistance < MAX_ULTRASONIC_DIS ) //irDistance[2] )
+      if (ultrasonicDistance < MAX_ULTRASONIC_DIS) //irDistance[2] )
         irDistance[2] = ultrasonicDistance;
-        
-      sendRobotStateValue( pos, irDistance, batteryVoltage );
+
+      sendRobotStateValue(pos, irDistance, batteryVoltage);
     }
 
- 
-/*
+    /*
     if ( LED_ON )
     {
       LED_ON = false;
@@ -316,9 +309,10 @@ void loop() {
 */
 
     batteryCounter++;
-    if (batteryCounter >= 10) { // Measure battery every 1s
+    if (batteryCounter >= 10)
+    { // Measure battery every 1s
 
-      if (currentState != STATE_MENU )
+      if (currentState != STATE_MENU)
       {
         //          lcd.clear();
         //          lcd.setCursor(0, 0);
@@ -332,82 +326,71 @@ void loop() {
         //          lcd.print(batteryVoltage);
       }
 
-
       batteryCounter = 0;
-      batteryVoltage = (double)analogRead(VOLT_IN_PIN)*0.0352771;/// 65.7424242f; 
+      batteryVoltage = (double)analogRead(VOLT_IN_PIN) * 0.0352771; /// 65.7424242f;
       // v = D * 3.3*(R1+R2)/(R2*1023);  R1 = 46.5 R2 = 4.68 V = d* 0.0352771;
       // VBAT is connected to analog input 5 which is not broken out. This is then connected to a 56k-15k voltage divider - 1023.0/(3.3/(15.0/(15.0+56.0))) = 63.050847458
 
-           
-      if ((batteryVoltage < 9 && batteryVoltage < 7.2) || (batteryVoltage > 9 && batteryVoltage < 11.5 ) ) // && batteryVoltage > 5) // Equal to 3.4V per cell - don't turn on if it's below 5V, this means that no battery is connected
+      if ((batteryVoltage < 9 && batteryVoltage < 7.2) || (batteryVoltage > 9 && batteryVoltage < 11.5)) // && batteryVoltage > 5) // Equal to 3.4V per cell - don't turn on if it's below 5V, this means that no battery is connected
       {
-          if(doCheckBattleVoltage )
-          {
-            stopAndReset();
-            currentState = STATE_IDLE;
-            stopRobot();
-            blinkLed.slowBlink();
-          }
+        if (doCheckBattleVoltage)
+        {
+          stopAndReset();
+          currentState = STATE_IDLE;
+          stopRobot();
+          blinkLed.slowBlink();
+        }
       }
       else
-          blinkLed.normalBlink();
+        blinkLed.normalBlink();
     }
   }
-
 }
-
 
 #if CAR_TYPE == DRIVE_CAR
 
-  void setGoal(double x, double y, int theta)
-  {
-    supervisor.setGoal(x, y, theta);
-  }
-  
-  
-  void startGoToGoal()
-  {
-    if (currentState >= 2 )
-      return;
-  
-    // supervisor.updateSettings(mSettings);
-    Serial.print("Start Go to Goal:");
-    Serial.print( supervisor.m_Goal.x);
-    Serial.print( ",");
-    Serial.println( supervisor.m_Goal.y);
-  
-    // to test set goal y to 0
-    supervisor.reset(readLeftEncoder(), readRightEncoder());
-    currentState = STATE_GOTOGOAL;
-  
-    const int oneSecInUsec = 1000000;   // A second in mirco second unit.
-    CurieTimerOne.start(oneSecInUsec / 50, &goToGoalIsr); // set timer and callback //the controller loop need 30ms to exec
-  
-  }
-  
-  
-  
-  void goToGoalIsr()
-  {
-    supervisor.execute(readLeftEncoder(), readRightEncoder(), 0.02);
-  
-  }
+void setGoal(double x, double y, int theta)
+{
+  supervisor.setGoal(x, y, theta);
+}
 
-  void ResetRobot()
-  {
-    supervisor.resetRobot();
-    driveSupervisor.resetRobot();
-    pos.x = 0;
-    pos.y = 0;
-    pos.theta = 0;
-  
-  }
+void startGoToGoal()
+{
+  if (currentState >= 2)
+    return;
 
+  // supervisor.updateSettings(mSettings);
+  Serial.print("Start Go to Goal:");
+  Serial.print(supervisor.m_Goal.x);
+  Serial.print(",");
+  Serial.println(supervisor.m_Goal.y);
+
+  // to test set goal y to 0
+  supervisor.reset(readLeftEncoder(), readRightEncoder());
+  currentState = STATE_GOTOGOAL;
+
+  const int oneSecInUsec = 1000000;                     // A second in mirco second unit.
+  CurieTimerOne.start(oneSecInUsec / 50, &goToGoalIsr); // set timer and callback //the controller loop need 30ms to exec
+}
+
+void goToGoalIsr()
+{
+  supervisor.execute(readLeftEncoder(), readRightEncoder(), 0.02);
+}
+
+void ResetRobot()
+{
+  supervisor.resetRobot();
+  driveSupervisor.resetRobot();
+  pos.x = 0;
+  pos.y = 0;
+  pos.theta = 0;
+}
 
 void startDrive()
 {
-  if ( currentState >= 2 )
-    return;
+  // if ( currentState >= 2 )
+  //   return;
 
   Serial.println("Start drive!");
   currentState = STATE_DRIVE;
@@ -416,88 +399,89 @@ void startDrive()
   driveSupervisor.reset(readLeftEncoder(), readRightEncoder());
   //   currentState = STATE_DRIVE;
 
-  const int oneSecInUsec = 1000000;   // A second in mirco second unit.
+  const int oneSecInUsec = 1000000; // A second in mirco second unit.
   // time = oneSecInUsec / 100; // time is used to toggle the LED is divided by i
   CurieTimerOne.start(oneSecInUsec / 20, &driveIsr); // set timer and callback
-
 }
 
+void driveIsr()
+{
+  driveSupervisor.execute(readLeftEncoder(), readRightEncoder(), 0.05);
+}
 
+void SetSimulateMode(bool val)
+{
+  supervisor.mSimulateMode = val;
+  driveSupervisor.mSimulateMode = val;
+  if (val)
+  {
+    doCheckBattleVoltage = false;
+    Serial.println("Set to simulate mode!");
+  }
+  else
+  {
+    doCheckBattleVoltage = true;
+    Serial.println("Close simulate mode!");
+  }
+}
 
-  void driveIsr()
-  {
-    driveSupervisor.execute(readLeftEncoder(), readRightEncoder(), 0.05);
-  }
-  
-  
-  void SetSimulateMode(bool val)
-  {
-    supervisor.mSimulateMode = val;
-    driveSupervisor.mSimulateMode = val;
-    if ( val )
-    {
-      doCheckBattleVoltage = false;
-      Serial.println("Set to simulate mode!");
-    }
-    else
-    {
-      doCheckBattleVoltage = true;
-      Serial.println("Close simulate mode!");
-    }
-  }
+void SetIgnoreObstacle(bool igm)
+{
+  supervisor.mIgnoreObstacle = igm;
+  driveSupervisor.mIgnoreObstacle = igm;
+}
 
 #else
 
-
-
 void startBalance()
 {
-  if (currentState >= 2 )
+  if (currentState >= 2)
     return;
 
   blinkLed.fastBlink();
-  
+
   currentState = STATE_BALANCE;
 
   Serial.print("Start balance!");
   balanceSupervisor.reset(readLeftEncoder(), readRightEncoder());
-  const int oneSecInUsec = 1000000;   // A second in mirco second unit.
-  CurieTimerOne.start(oneSecInUsec / GYRO_RATE, &balanceIsr);  // set timer and callback
+  const int oneSecInUsec = 1000000;                           // A second in mirco second unit.
+  CurieTimerOne.start(oneSecInUsec / GYRO_RATE, &balanceIsr); // set timer and callback
 }
-
 
 void balanceIsr()
 {
-  balanceSupervisor.execute(readLeftEncoder(), readRightEncoder(), 1 / (double)GYRO_RATE );
+  balanceSupervisor.execute(readLeftEncoder(), readRightEncoder(), 1 / (double)GYRO_RATE);
 }
 
- void SetSimulateMode(bool val)
-  {
-    balanceSupervisor.mSimulateMode = val;
-    if ( val )
-    {
-      doCheckBattleVoltage = false;
-      Serial.println("Set to simulate mode!");
-    }
-    else
-    {
-      doCheckBattleVoltage = true;
-      Serial.println("Close simulate mode!");
-    }
-  }
+void SetIgnoreObstacle(bool igm)
+{
+  balanceSupervisor.mIgnoreObstacle = igm;
+}
 
- void ResetRobot()
+void SetSimulateMode(bool val)
+{
+  balanceSupervisor.mSimulateMode = val;
+  if (val)
   {
-    balanceSupervisor.resetRobot();
-    pos.x = 0;
-    pos.y = 0;
-    pos.theta = 0;
-  
+    doCheckBattleVoltage = false;
+    Serial.println("Set to simulate mode!");
   }
+  else
+  {
+    doCheckBattleVoltage = true;
+    Serial.println("Close simulate mode!");
+  }
+}
+
+void ResetRobot()
+{
+  balanceSupervisor.resetRobot();
+  pos.x = 0;
+  pos.y = 0;
+  pos.theta = 0;
+}
 
 #endif
-
-  
 
 void stopRobot()
 {
@@ -507,83 +491,75 @@ void stopRobot()
   stopAndReset();
 }
 
-
-
-
 void setDriveGoal(double v, double w)
 {
- #if CAR_TYPE == DRIVE_CAR
-  if( currentState == STATE_DRIVE )
+#if CAR_TYPE == DRIVE_CAR
+  if (currentState == STATE_DRIVE)
   {
-    if( abs(v) < 0.001 && abs(w) < 0.01) //stop
+    if (abs(v) < 0.001 && abs(w) < 0.01) //stop
       stopRobot();
-    else 
+    else
       driveSupervisor.setGoal(v, w);
   }
- else
- {
+  else
+  {
     startDrive();
     driveSupervisor.setGoal(v, w);
- }
+  }
 
 #else
- if( currentState == STATE_BALANCE)
- {
+  if (currentState == STATE_BALANCE)
+  {
     balanceSupervisor.setGoal(v, w);
- }
+  }
 #endif
- 
 }
-
 
 bool waitForEcho = false;
 long lastTrigTimer = 0;
 
 void processUltrasonic()
 {
-    if( waitForEcho )
+  if (waitForEcho)
+  {
+    if (echoTime > 0)
     {
-      if( echoTime > 0 )
-      {
-        ultrasonicDistance = 0.00017 * echoTime;
-        if( ultrasonicDistance > MAX_ULTRASONIC_DIS )
-          ultrasonicDistance = MAX_ULTRASONIC_DIS - 0.01;
-        waitForEcho = false;
-      }
-      else if( millis() - lastTrigTimer > 50 )
-      {
-          waitForEcho = false;
-    //      Serial.println("ultrasonic No echo ...");
-          ultrasonicDistance = MAX_ULTRASONIC_DIS;
-      }
+      ultrasonicDistance = 0.00017 * echoTime;
+      if (ultrasonicDistance > MAX_ULTRASONIC_DIS)
+        ultrasonicDistance = MAX_ULTRASONIC_DIS - 0.01;
+      waitForEcho = false;
     }
-    else
+    else if (millis() - lastTrigTimer > 50)
     {
-      long curTime = millis();
-      if( curTime - lastTrigTimer < 20 )
-        return;
-      lastTrigTimer = curTime;
-      waitForEcho = true;
-      digitalWrite( ULTRASONIC_TRIG, HIGH); //trig the ultrosonic
-      //delayMicroseconds(2); //2us
-      for(int i=0; i<100; i++)
-        {
-          int k;
-          k=i;
-        } 
-      digitalWrite( ULTRASONIC_TRIG, LOW); //trig the ultrosonic
-      
+      waitForEcho = false;
+      //      Serial.println("ultrasonic No echo ...");
+      ultrasonicDistance = MAX_ULTRASONIC_DIS;
     }
-  
+  }
+  else
+  {
+    long curTime = millis();
+    if (curTime - lastTrigTimer < 20)
+      return;
+    lastTrigTimer = curTime;
+    waitForEcho = true;
+    digitalWrite(ULTRASONIC_TRIG, HIGH); //trig the ultrosonic
+    //delayMicroseconds(2); //2us
+    for (int i = 0; i < 100; i++)
+    {
+      int k;
+      k = i;
+    }
+    digitalWrite(ULTRASONIC_TRIG, LOW); //trig the ultrosonic
+  }
 }
-
 
 //the ultrasonic isr service
 void UltrasonicEcho()
 {
 
-  int echoSig = digitalRead( ULTRASONIC_ECHO );
-  if (echoSig == HIGH )
+  int echoSig = digitalRead(ULTRASONIC_ECHO);
+  if (echoSig == HIGH)
   {
     trigTime = micros();
     echoTime = 0;
@@ -591,5 +567,3 @@ void UltrasonicEcho()
   else
     echoTime = micros() - trigTime;
 }
-
-

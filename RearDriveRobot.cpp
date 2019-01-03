@@ -3,9 +3,9 @@
 RearDriveRobot::RearDriveRobot()
 {
   //R, L, ticksr, minRpm, maxRpm, GP2Y0A41);
-  init(0.065 / 2, 0.15, 330, 35, 220, GP2Y0A41);
+  init(0.065 / 2, 0.15, 330, 40, 220, GP2Y0A41);
 
-  mPIDSettings.kp = 30;
+  mPIDSettings.kp = 10; //25;
   mPIDSettings.ki = 0.2;
   mPIDSettings.kd = 0.1;
 }
@@ -58,12 +58,15 @@ Vel RearDriveRobot::ensure_w(double v, double w)
   }
   else
   {
-    if (w < 0)
+    if (abs(w) < min_w)
     {
-      w = -1 * min_w;
+      if (w < 0)
+      {
+        w = -1 * min_w;
+      }
+      else
+        w = min_w;
     }
-    else
-      w = min_w;
     vel = uni_to_diff(v, w);
   }
   return vel;

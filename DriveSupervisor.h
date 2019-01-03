@@ -14,59 +14,51 @@
 #define S_AVO 2
 #define S_FW 3
 
+class DriveSupervisor
+{
+  public:
+    DriveSupervisor();
+    void execute(long left_ticks, long right_ticks, double dt);
+    void reset(long leftTicks, long rightTicks);
+    void resetRobot();
+    void setGoal(double v, double w);
 
-class DriveSupervisor{
-    public:
-        DriveSupervisor();
-        void execute(long left_ticks, long right_ticks, double dt);
-        void reset(long leftTicks, long rightTicks);
-        void resetRobot();
-        void setGoal(double v, double w);
+    void getRobotInfo()
+    {
+        Serial.println("Drive robot info:");
+        robot.getRobotInfo();
+        m_Controller.PrintInfo();
+    }
 
-         void getRobotInfo()
-        {
-          Serial.println("Drive robot info:");
-          robot.getRobotInfo();
-          m_Controller.PrintInfo();
-        }
-        
+    void getIRDistances(double dis[5]);
+    Position getRobotPosition();
 
-        void getIRDistances(double dis[5]);
-        Position getRobotPosition();
+    void updateSettings(SETTINGS settings);
 
-        void updateSettings(SETTINGS settings);
-        
-        void init();
+    void init();
 
-        bool mSimulateMode;
-        
-    private:
-        void check_states();
+    bool mSimulateMode;
+    bool mIgnoreObstacle;
 
-        double v, w;
+  private:
+    void check_states();
 
-        bool unsafe;
-        bool danger; 
-        
-        int m_state;
-        double m_right_ticks, m_left_ticks;
-        
-    private:
+    double v, w;
 
-        VelocityController m_Controller;
-     //   Robot robot;
-        RearDriveRobot robot;
+    bool unsafe;
+    bool danger;
 
-        double d_unsafe;
-       Input m_input;
-       Output m_output;
+    int m_state;
+    double m_right_ticks, m_left_ticks;
+
+  private:
+    VelocityController m_Controller;
+    //   Robot robot;
+    RearDriveRobot robot;
+
+    double d_unsafe;
+    Input m_input;
+    Output m_output;
 };
 
-
 #endif /* _DRIVE_SUPERVISOR_H_ */
-
-
-
-
-
-

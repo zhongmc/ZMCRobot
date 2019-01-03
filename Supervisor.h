@@ -17,104 +17,96 @@
 #define S_AVO 2
 #define S_FW 3
 
+class Supervisor
+{
+public:
+  Supervisor();
+  void execute(long left_ticks, long right_ticks, double dt);
 
-class Supervisor{
-    public:
-        Supervisor();
-        void execute(long left_ticks, long right_ticks, double dt);
+  void executeFollowWall(double dt);
+  void executeAvoidAndGotoGoal(double dt);
 
-        void executeFollowWall( double dt);
-        void executeAvoidAndGotoGoal(double dt);
-        
-        void reset(long leftTicks, long rightTicks);
-        void resetRobot();
-        void setGoal(double x, double y, int theta);
+  void reset(long leftTicks, long rightTicks);
+  void resetRobot();
+  void setGoal(double x, double y, int theta);
 
-        void getRobotInfo()
-        {
-          Serial.print("GotoGoal robot info, current state:");
-          if(m_state == S_STOP)
-            Serial.println("Stoped!");
-          else if( m_state == S_GTG )
-            Serial.println("GotoGoal!");
-          else if( m_state == S_AVO )
-            Serial.println("AvoidObstacle!");
-         else if( m_state == S_FW )
-         {
-            if( m_FollowWall.dir == 0 )
-              Serial.println("FollowWall LEFT");
-            else
-              Serial.println("FollowWall RIGHT");
-          }  
-          Serial.print("exec time:");
-          Serial.println(execTime);
-          robot.getRobotInfo();
-          Serial.print("goto goal ");
-          m_GoToGoal.PrintInfo();
-          Serial.print("follow wall ");
-          m_FollowWall.PrintInfo();
-          
-          
-        }
-        
-        //the target to go!
-        Vector m_Goal;
+  void getRobotInfo()
+  {
+    Serial.print("GotoGoal robot info, current state:");
+    if (m_state == S_STOP)
+      Serial.println("Stoped!");
+    else if (m_state == S_GTG)
+      Serial.println("GotoGoal!");
+    else if (m_state == S_AVO)
+      Serial.println("AvoidObstacle!");
+    else if (m_state == S_FW)
+    {
+      if (m_FollowWall.dir == 0)
+        Serial.println("FollowWall LEFT");
+      else
+        Serial.println("FollowWall RIGHT");
+    }
+    Serial.print("exec time:");
+    Serial.println(execTime);
+    robot.getRobotInfo();
+    Serial.print("goto goal ");
+    m_GoToGoal.PrintInfo();
+    Serial.print("follow wall ");
+    m_FollowWall.PrintInfo();
+  }
 
-        void getIRDistances(double dis[5]);
-        Position getRobotPosition();
+  //the target to go!
+  Vector m_Goal;
 
-        void init();
+  void getIRDistances(double dis[5]);
+  Position getRobotPosition();
 
-        void updateSettings(SETTINGS settings);
-        SETTINGS getSettings( byte settingsType );
-        
-        bool mSimulateMode;
-        
-    private:
-        void set_progress_point();
-        void check_states();
+  void init();
 
-        bool progress_made;
-        bool at_goal;
-        bool at_obstacle;
-        bool noObstacle;
-        bool unsafe;
-        bool danger; 
-        
-        int m_state;
-        double m_right_ticks, m_left_ticks;
-        double m_distanceToGoal;
-        
-     private:
+  void updateSettings(SETTINGS settings);
+  SETTINGS getSettings(byte settingsType);
 
-        GoToGoal m_GoToGoal;
-        AvoidObstacle m_AvoidObstacle;
-        FollowWall m_FollowWall;
-        SlidingMode m_SlidingMode;
+  bool mSimulateMode;
+  bool mIgnoreObstacle;
 
-       // Robot robot;
+private:
+  void
+  set_progress_point();
+  void check_states();
 
-        RearDriveRobot robot;
+  bool progress_made;
+  bool at_goal;
+  bool at_obstacle;
+  bool noObstacle;
+  bool unsafe;
+  bool danger;
 
-        Controller *m_currentController;
-       double d_fw;  //distance to follow wall
+  int m_state;
+  double m_right_ticks, m_left_ticks;
+  double m_distanceToGoal;
 
-       double d_stop;
-       double d_at_obs;
-       double d_unsafe;
-       double d_prog;
+private:
+  GoToGoal m_GoToGoal;
+  AvoidObstacle m_AvoidObstacle;
+  FollowWall m_FollowWall;
+  SlidingMode m_SlidingMode;
 
-       long execTime;
+  // Robot robot;
 
-       Input m_input;
-       Output m_output;
+  RearDriveRobot robot;
+
+  Controller *m_currentController;
+  double d_fw; //distance to follow wall
+
+  double d_stop;
+  double d_at_obs;
+  double d_unsafe;
+  double d_prog;
+
+  long execTime;
+
+  Input m_input;
+  Output m_output;
 };
 
-
 #endif /* _SUPERVISOR_H_ */
-
-
-
-
-
-

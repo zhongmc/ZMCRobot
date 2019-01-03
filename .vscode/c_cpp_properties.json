@@ -1,20 +1,17 @@
 {
-    "configurations": [
-        {
-            "name": "Win32",
-            "includePath": [
-                "C:\\Users\\明昌\\AppData\\Local\\Arduino15\\packages\\Intel\\tools\\**",
-                "C:\\Users\\明昌\\AppData\\Local\\Arduino15\\packages\\Intel\\hardware\\arc32\\2.0.2\\**",
-                "C:\\xuexi\\ZMCRobot\\libraries\\**"
-            ],
-            "forcedInclude": [
-                "C:\\Users\\明昌\\AppData\\Local\\Arduino15\\packages\\Intel\\hardware\\arc32\\2.0.2\\cores\\arduino\\Arduino.h"
-            ],
-            "intelliSenseMode": "msvc-x64",
-            "compilerPath": "C:/Program Files (x86)/Microsoft Visual Studio/2017/Community/VC/Tools/MSVC/14.16.27023/bin/Hostx64/x64/cl.exe",
-            "cStandard": "c11",
-            "cppStandard": "c++17"
-        }
-    ],
-    "version": 4
+  "configurations": [
+    {
+      "name": "Win32",
+      "includePath": [
+        "C:\\Users\\zhong_zmwo6t7\\AppData\\Local\\Arduino15\\packages\\Intel\\tools\\**",
+        "C:\\Users\\zhong_zmwo6t7\\AppData\\Local\\Arduino15\\packages\\Intel\\hardware\\arc32\\2.0.2\\**",
+        "c:\\xuexu\\robotZMCRobotlibraries\\**"
+      ],
+      "forcedInclude": [
+        "C:\\Users\\zhong_zmwo6t7\\AppData\\Local\\Arduino15\\packages\\Intel\\hardware\\arc32\\2.0.2\\cores\\arduino\\Arduino.h"
+      ],
+      "intelliSenseMode": "msvc-x64"
+    }
+  ],
+  "version": 4
 }
