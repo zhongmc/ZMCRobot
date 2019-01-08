@@ -4,39 +4,45 @@
 #include <Arduino.h>
 #include "IRSensor.h"
 
-
-typedef struct {
+typedef struct
+{
   double v, theta; //velocity and target direction
-  double x_g, y_g;  //target x,y
+  double x_g, y_g; //target x,y
   double targetAngle;
   double turning;
 } Input;
 
-typedef struct {
+typedef struct
+{
   double v;
   double w;
-}Output;
+} Output;
 
-typedef struct {
+typedef struct
+{
   double vel_r;
   double vel_l;
-}Vel;
+} Vel;
 
-typedef struct {
-  double x,y,theta;
-}Position;
+typedef struct
+{
+  double x, y, theta;
+} Position;
 
-typedef struct {
+typedef struct
+{
   double x, y;
-}Vector;
+} Vector;
 
-typedef struct {
+typedef struct
+{
   int pwm_l, pwm_r;
-}PWM_OUT;
+} PWM_OUT;
 
-typedef struct {
-  int sType;  // 1: pid for 3 wheel; 2: pid for balance;  3: pid for speed; 4: settings for robot; 5: settings for balance robot;
-  double kp,ki,kd;
+typedef struct
+{
+  int sType; // 1: pid for 3 wheel; 2: pid for balance;  3: pid for speed; 4: settings for robot; 5: settings for balance robot;
+  double kp, ki, kd;
   double atObstacle, unsafe;
   double dfw;
   double velocity;
@@ -44,86 +50,81 @@ typedef struct {
   int pwm_diff;
   int max_pwm, pwm_zero;
   double angleOff, wheelSyncKp;
-}SETTINGS;
+} SETTINGS;
 
-class Robot {
-    public:
-        Robot();
-        Robot(double R, double L, double ticksr, double maxRpm, double minRpm);
-        double x, y, theta;
-        
-        double velocity;
+class Robot
+{
+public:
+  Robot();
+  Robot(double R, double L, double ticksr_l, double ticksr_r, double maxRpm, double minRpm);
+  double x, y, theta;
 
-        virtual Vel ensure_w(double v, double w) = 0;
-        virtual double vel_l_to_pwm( double vel) = 0;
-        virtual double vel_r_to_pwm( double vel) = 0;
+  double velocity;
 
-        virtual double pwm_to_ticks_r(double pwm, double dt) = 0;
-        virtual double pwm_to_ticks_l(double pwm, double dt) = 0;
+  virtual Vel ensure_w(double v, double w) = 0;
+  virtual double vel_l_to_pwm(double vel) = 0;
+  virtual double vel_r_to_pwm(double vel) = 0;
 
-        SETTINGS getPIDParams()
-        {
-          return mPIDSettings;
-        }
+  virtual double pwm_to_ticks_r(double pwm, double dt) = 0;
+  virtual double pwm_to_ticks_l(double pwm, double dt) = 0;
 
-   //     double vel_l, vel_r;
-        
-        double getObstacleDistance();
-        void updateState(long left_ticks, long right_ticks, double dt);
-        void reset(long left_ticks, long right_ticks);
-        Vel uni_to_diff(double v, double w);
-        Output diff_to_uni(double vel_l, double vel_r);
-        IRSensor **getIRSensors();
+  void setHaveIrSensor(int idx, bool value)
+  {
+    if (idx >= 0 && idx < 5)
+      haveIrSensor[idx] = value;
+  }
 
-        void setIRSensorType(SENSOR_TYPE sensorType);
+  bool haveIrSensor[5];
 
-       void updateSettings(SETTINGS settings);
+  SETTINGS getPIDParams()
+  {
+    return mPIDSettings;
+  }
 
-       
+  //     double vel_l, vel_r;
 
-        void getRobotInfo();
+  double getObstacleDistance();
+  void updateState(long left_ticks, long right_ticks, double dt);
+  void reset(long left_ticks, long right_ticks);
+  Vel uni_to_diff(double v, double w);
+  Output diff_to_uni(double vel_l, double vel_r);
+  IRSensor **getIRSensors();
 
-        double wheel_radius;
-        double wheel_base_length;
+  void setIRSensorType(SENSOR_TYPE sensorType);
 
-        double max_rpm;
-        double min_rpm;
+  void updateSettings(SETTINGS settings);
 
-         int pwm_diff;
-        
-        double angleOff;
+  void getRobotInfo();
 
-        double max_vel, min_vel;
-        double max_v, min_v;
-        double max_w, min_w; 
-        
-        double angle;
-        double gyro;
+  double wheel_radius;
+  double wheel_base_length;
 
-  protected:
-       void init(double R, double L, double ticksr, double minRpm, double maxRpm, SENSOR_TYPE sensorType);
+  double max_rpm;
+  double min_rpm;
 
-        SETTINGS mPIDSettings;
+  int pwm_diff;
 
+  double angleOff;
 
-    private:
-        int ticks_per_rev;
-        double m_per_tick;
-        long prev_left_ticks, prev_right_ticks;
-        IRSensor *irSensors[5];
+  double max_vel, min_vel;
+  double max_v, min_v;
+  double max_w, min_w;
 
+  double angle;
+  double gyro;
 
-        void readIRSensors();
-       
+protected:
+  void init(double R, double L, double ticksr_l, double ticksr_r, double minRpm, double maxRpm, SENSOR_TYPE sensorType);
 
-        
-      
+  SETTINGS mPIDSettings;
+
+private:
+  int ticks_per_rev_l, ticks_per_rev_r;
+  double m_per_tick_l, m_per_tick_r;
+  long prev_left_ticks, prev_right_ticks;
+  IRSensor *irSensors[5];
+
+  void readIRSensors();
 };
 
-
 #endif /* _ROBOT_H_ */
-
-
-
-
-

@@ -16,49 +16,67 @@
 
 class DriveSupervisor
 {
-  public:
-    DriveSupervisor();
-    void execute(long left_ticks, long right_ticks, double dt);
-    void reset(long leftTicks, long rightTicks);
-    void resetRobot();
-    void setGoal(double v, double w);
+public:
+  DriveSupervisor();
+  void execute(long left_ticks, long right_ticks, double dt);
+  void reset(long leftTicks, long rightTicks);
+  void resetRobot();
+  void setGoal(double v, double w);
 
-    void getRobotInfo()
-    {
-        Serial.println("Drive robot info:");
-        robot.getRobotInfo();
-        m_Controller.PrintInfo();
-    }
+  void getRobotInfo()
+  {
+    Serial.println("Drive robot info:");
 
-    void getIRDistances(double dis[5]);
-    Position getRobotPosition();
+    Serial.print("v:");
+    Serial.print(m_output.v);
+    Serial.print(",w:");
+    Serial.print(m_output.w);
 
-    void updateSettings(SETTINGS settings);
+    Serial.print(",vel-l:");
+    Serial.print(mVel.vel_l);
+    Serial.print(",vel-r:");
+    Serial.println(mVel.vel_r);
+    // long c1, c2;
+    // c1 = (long)m_left_ticks;
+    // c2 = (long)m_right_ticks;
+    Serial.print("c1:");
+    Serial.print(m_left_ticks);
+    Serial.print(",c2:");
+    Serial.println(m_right_ticks);
 
-    void init();
+    robot.getRobotInfo();
+    m_Controller.PrintInfo();
+  }
 
-    bool mSimulateMode;
-    bool mIgnoreObstacle;
+  void getIRDistances(double dis[5]);
+  Position getRobotPosition();
 
-  private:
-    void check_states();
+  void updateSettings(SETTINGS settings);
 
-    double v, w;
+  void init();
 
-    bool unsafe;
-    bool danger;
+  bool mSimulateMode;
+  bool mIgnoreObstacle;
 
-    int m_state;
-    double m_right_ticks, m_left_ticks;
+private:
+  void check_states();
 
-  private:
-    VelocityController m_Controller;
-    //   Robot robot;
-    RearDriveRobot robot;
+  double v, w;
+  Vel mVel;
+  bool unsafe;
+  bool danger;
 
-    double d_unsafe;
-    Input m_input;
-    Output m_output;
+  int m_state;
+  double m_right_ticks, m_left_ticks;
+
+private:
+  VelocityController m_Controller;
+  //   Robot robot;
+  RearDriveRobot robot;
+
+  double d_unsafe;
+  Input m_input;
+  Output m_output;
 };
 
 #endif /* _DRIVE_SUPERVISOR_H_ */

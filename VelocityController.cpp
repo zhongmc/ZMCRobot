@@ -46,11 +46,12 @@ void VelocityController::execute(Robot *robot, Input *input, Output *output, dou
   if (mW != 0) //转弯，开环控制
   {
     output->v = input->v;
-    output->w = mW;
+    output->w = 5 * mW;
     lastErrorIntegration = 0;
-    // lastError = 0;
-    e = mW;
-    p = 10;
+    lastError = 0;
+    return;
+    // e = mW;
+    // p = 10;
   }
   else
   {

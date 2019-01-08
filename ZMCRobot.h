@@ -8,6 +8,8 @@
 
 #define CAR_TYPE DRIVE_CAR //DRIVE_CAR BALANCE_CAR
 
+#define MOTOR DUAL_MOTOR //TT_MOTOR
+
 #define MAX_ULTRASONIC_DIS 1
 #define MAX_IRSENSOR_DIS 0.3
 #define SPEED_DOWN_DIS 0.2 //distance to goal to speed down

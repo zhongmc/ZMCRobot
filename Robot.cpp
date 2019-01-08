@@ -7,16 +7,16 @@ extern double ultrasonicDistance;
 
 Robot::Robot()
 {
-  //R, L, ticksr, minRpm, maxRpm, GP2Y0A41);
-  init(0.065 / 2, 0.125, 20, 200, 40, GP2Y0A41);
+  //R, L, ticksr_l, ticksr_r, minRpm, maxRpm, GP2Y0A41);
+  init(0.065 / 2, 0.125, 20, 20, 40, 200, GP2Y0A41);
 }
 
-Robot::Robot(double R, double L, double ticksr, double minRpm, double maxRpm)
+Robot::Robot(double R, double L, double ticksr_l, double ticksr_r, double minRpm, double maxRpm)
 {
-  init(R, L, ticksr, minRpm, maxRpm, GP2Y0A41);
+  init(R, L, ticksr_l, ticksr_r, minRpm, maxRpm, GP2Y0A41);
 }
 
-void Robot::init(double R, double L, double ticksr, double minRpm, double maxRpm, SENSOR_TYPE sensorType)
+void Robot::init(double R, double L, double ticksr_l, double ticksr_r, double minRpm, double maxRpm, SENSOR_TYPE sensorType)
 {
   x = 0;
   y = 0;
@@ -26,10 +26,12 @@ void Robot::init(double R, double L, double ticksr, double minRpm, double maxRpm
   prev_left_ticks = 0;
   prev_right_ticks = 0;
 
-  wheel_radius = R;       //0.065 / 2;
-  wheel_base_length = L;  // 0.127;
-  ticks_per_rev = ticksr; //20;
-  m_per_tick = 2 * PI * wheel_radius / ticks_per_rev;
+  wheel_radius = R;           //0.065 / 2;
+  wheel_base_length = L;      // 0.127;
+  ticks_per_rev_l = ticksr_l; //20;
+  ticks_per_rev_r = ticksr_r; //20;
+  m_per_tick_l = 2 * PI * wheel_radius / ticks_per_rev_l;
+  m_per_tick_r = 2 * PI * wheel_radius / ticks_per_rev_r;
 
   max_rpm = maxRpm; //160; //267
   max_vel = max_rpm * 2 * PI / 60;
@@ -39,8 +41,8 @@ void Robot::init(double R, double L, double ticksr, double minRpm, double maxRpm
 
   max_v = max_vel * wheel_radius;
   min_v = min_vel * wheel_radius;
-  max_w = (wheel_radius / wheel_base_length) * (max_vel - min_vel);
-  min_w = (wheel_radius / wheel_base_length) * (2 * min_vel);
+  max_w = (wheel_radius / wheel_base_length) * (max_vel); // - min_vel);
+  min_w = (wheel_radius / wheel_base_length) * (min_vel);
 
   pwm_diff = 0;
   angleOff = 0;
@@ -50,12 +52,18 @@ void Robot::init(double R, double L, double ticksr, double minRpm, double maxRpm
   irSensors[2] = new IRSensor(0.085, 0., 0, A3, sensorType);
   irSensors[3] = new IRSensor(0.075, -0.06, -PI / 4, A4, sensorType);
   irSensors[4] = new IRSensor(-0.1, -0.055, -PI / 2, A5, sensorType);
+
+  haveIrSensor[0] = true;
+  haveIrSensor[1] = true;
+  haveIrSensor[2] = true;
+  haveIrSensor[3] = true;
+  haveIrSensor[4] = true;
 }
 
 void Robot::setIRSensorType(SENSOR_TYPE sensorType)
 {
   for (int i = 0; i < 5; i++)
-    irSensors[0]->SetSensorType(sensorType);
+    irSensors[i]->SetSensorType(sensorType);
 }
 
 void Robot::updateSettings(SETTINGS settings)
@@ -95,8 +103,8 @@ void Robot::updateState(long left_ticks, long right_ticks, double dt)
 
   double d_right, d_left, d_center;
 
-  d_right = (right_ticks - prev_right_ticks) * m_per_tick;
-  d_left = (left_ticks - prev_left_ticks) * m_per_tick;
+  d_left = (left_ticks - prev_left_ticks) * m_per_tick_l;
+  d_right = (right_ticks - prev_right_ticks) * m_per_tick_r;
 
   prev_right_ticks = right_ticks;
   prev_left_ticks = left_ticks;
@@ -119,39 +127,17 @@ void Robot::readIRSensors()
   double sinTheta = sin(theta);
   double cosTheta = cos(theta);
 
-  irSensors[0]->readPosition(); //setDistance(MAX_IRSENSOR_DIS);
-
-  irSensors[1]->readPosition();
-  irSensors[2]->readPosition();
-
+  for (int i = 0; i < 5; i++)
+  {
+    if (haveIrSensor[i])
+      irSensors[i]->readPosition();
+  }
   if (ultrasonicDistance < MAX_ULTRASONIC_DIS)
   {
-    if (irSensors[2]->distance < MAX_IRSENSOR_DIS)
-      irSensors[2]->setDistance(min(ultrasonicDistance, irSensors[2]->distance));
-    else
-      irSensors[2]->setDistance(ultrasonicDistance);
+    irSensors[2]->setDistance(ultrasonicDistance);
   }
-  irSensors[3]->readPosition(); //setDistance(MAX_IRSENSOR_DIS);
-  irSensors[4]->readPosition(); //setDistance(MAX_IRSENSOR_DIS);
-
   for (int i = 0; i < 5; i++)
     irSensors[i]->applyGeometry(x, y, sinTheta, cosTheta);
-
-  /*
-    for ( int i = 0; i < 5; i++)
-    {
-      irSensors[i]->readPosition();
-      if( i == 2 )
-      {
-        if( ultrasonicDistance < MAX_ULTRASONIC_DIS )
-          irSensors[i]->setDistance( ultrasonicDistance );
-        
-//        if( irSensors[i]->distance > ultrasonicDistance )
-//          irSensors[i]->setDistance( ultrasonicDistance ); //use the ultrasonic sensor value...  
-      }
-      irSensors[i]->applyGeometry(x, y, sinTheta, cosTheta);
-    }
-  */
 }
 
 void Robot::getRobotInfo()
@@ -202,7 +188,9 @@ void Robot::getRobotInfo()
   Serial.print(",");
   Serial.print(100 * wheel_base_length);
   Serial.print(",");
-  Serial.println(ticks_per_rev);
+  Serial.print(ticks_per_rev_l);
+  Serial.print(",");
+  Serial.println(ticks_per_rev_r);
 
   Serial.print("Balance ang=");
   Serial.print(angle);
@@ -215,7 +203,8 @@ void Robot::getRobotInfo()
 
   for (int i = 0; i < 5; i++)
   {
-    irSensors[i]->readPosition();
+    if (haveIrSensor[i])
+      irSensors[i]->readPosition();
     Serial.print(irSensors[i]->distance);
     Serial.print(",");
   }

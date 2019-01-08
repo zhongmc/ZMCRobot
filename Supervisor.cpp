@@ -23,6 +23,11 @@ Supervisor::Supervisor()
   // robot.setVel2PwmParam(0,9.59,18.73);
   robot.setIRSensorType(GP2Y0A21);
 
+  // robot.setHaveIrSensor(0, false);
+  // robot.setHaveIrSensor(2, false);
+  // robot.setHaveIrSensor(3, false);
+  // robot.setHaveIrSensor(4, false);
+
   mSimulateMode = false;
   mIgnoreObstacle = false;
 
@@ -170,22 +175,30 @@ void Supervisor::execute(long left_ticks, long right_ticks, double dt)
   v1 = m_output.v;
   v2 = m_output.v;
 
-  if (abs(m_output.w) < 5)
-    v2 = m_output.v / (1 + W_SPEED_DOWN_SCALE * abs(m_output.w) / 5); //W_SPEED_DOWN_SCALE 1
-  else
-    v2 = m_output.v / (1 + W_SPEED_DOWN_SCALE * abs(m_output.w)); //W_SPEED_DOWN_SCALE 1
+  // if (abs(m_output.w) < 5)
+  //   v2 = m_output.v / (1 + W_SPEED_DOWN_SCALE * abs(m_output.w) / 5); //W_SPEED_DOWN_SCALE 1
+  // else
+  //   v2 = m_output.v / (1 + W_SPEED_DOWN_SCALE * abs(m_output.w)); //W_SPEED_DOWN_SCALE 1
 
-  if (obsDis < MAX_IRSENSOR_DIS) //too close to obstacle, slow down....
+  // if (obsDis < MAX_IRSENSOR_DIS) //too close to obstacle, slow down....
+  // {
+  //   v1 = m_output.v * log10(DIS_SPEED_DOWN_SCALE * obsDis + 1); //DIS_SPEED_DOWN_SCALE 10
+  // }
+  // else if (m_distanceToGoal < SPEED_DOWN_DIS) // close to goal, slow down
+  // {
+  //   v1 = m_output.v * log10(DIS_SPEED_DOWN_SCALE * m_distanceToGoal + 1); //DIS_SPEED_DOWN_SCALE 10
+  // }
+
+  if (m_distanceToGoal < 1)
   {
-    v1 = m_output.v * log10(DIS_SPEED_DOWN_SCALE * obsDis + 1); //DIS_SPEED_DOWN_SCALE 10
-  }
-  else if (m_distanceToGoal < SPEED_DOWN_DIS) // close to goal, slow down
-  {
-    v1 = m_output.v * log10(DIS_SPEED_DOWN_SCALE * m_distanceToGoal + 1); //DIS_SPEED_DOWN_SCALE 10
+    v2 = m_distanceToGoal * v1;
   }
 
   float w = max(min(m_output.w, robot.max_w), -robot.max_w);
   float v = min(v1, v2);
+
+  if (v < robot.min_v)
+    v = robot.min_v;
 
   Vel vel;
   vel = robot.ensure_w(v, w);

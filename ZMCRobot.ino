@@ -173,7 +173,7 @@ void setup()
   mSettings.atObstacle = 0.20; //0.15
   mSettings.unsafe = 0.08;
   mSettings.dfw = 0.25;     //0.25
-  mSettings.velocity = 0.5; //0.3
+  mSettings.velocity = 0.3; //0.3
 
   supervisor.updateSettings(mSettings);
   driveSupervisor.updateSettings(mSettings);
@@ -427,6 +427,7 @@ void SetSimulateMode(bool val)
 
 void SetIgnoreObstacle(bool igm)
 {
+  Serial.println("set ignore obstacle mode: " + igm);
   supervisor.mIgnoreObstacle = igm;
   driveSupervisor.mIgnoreObstacle = igm;
 }
@@ -455,6 +456,8 @@ void balanceIsr()
 
 void SetIgnoreObstacle(bool igm)
 {
+  Serial.println("set ignore obstacle mode: " + igm);
+
   balanceSupervisor.mIgnoreObstacle = igm;
 }
 

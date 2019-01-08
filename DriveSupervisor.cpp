@@ -8,7 +8,7 @@ DriveSupervisor::DriveSupervisor()
 
   m_input.x_g = 0;
   m_input.y_g = 0;
-  m_input.v = 0.6;
+  m_input.v = 0.3;
   m_input.theta = 0;
 
   //  robot.setVel2PwmParam(0, 6.4141, 14.924); // vel to pwm parameters
@@ -128,12 +128,12 @@ void DriveSupervisor::execute(long left_ticks, long right_ticks, double dt)
 
   // float w = m_output.w; // max(min(m_output.w, robot.max_w), -robot.max_w);
 
-  Vel vel;
-  vel = robot.ensure_w(m_output.v, m_output.w);
+  // Vel vel;
+  mVel = robot.ensure_w(m_output.v, m_output.w);
 
   PWM_OUT pwm;
-  pwm.pwm_l = (int)robot.vel_l_to_pwm(vel.vel_l);
-  pwm.pwm_r = (int)robot.vel_r_to_pwm(vel.vel_r);
+  pwm.pwm_l = (int)robot.vel_l_to_pwm(mVel.vel_l);
+  pwm.pwm_r = (int)robot.vel_r_to_pwm(mVel.vel_r);
 
 #ifdef _DEBUG_
   Serial.print(v);
