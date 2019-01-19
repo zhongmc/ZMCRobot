@@ -46,11 +46,19 @@ void DriveSupervisor::setGoal(double v, double theta)
   m_input.v = v;
   m_input.theta = theta;
 
+  if (theta == 0 && curTheta != 0) //remain the current theta; 加速过程中会有晃动；保留初始角度？
+  {
+    curTheta = 0;
+    mTheta = robot.theta; //转弯结束，保留当前角度
+  }
+  else
+    curTheta = theta;
+
   Serial.print("Set drive goal to: ");
   Serial.print(v);
   Serial.print(",");
   Serial.println(theta);
-  m_Controller.setGoal(v, theta, robot.theta);
+  m_Controller.setGoal(v, theta, mTheta);
 }
 
 void DriveSupervisor::resetRobot()
@@ -59,10 +67,16 @@ void DriveSupervisor::resetRobot()
   robot.y = 0;
   robot.theta = 0;
   m_Controller.setGoal(m_input.v, 0, 0);
+  m_Controller.reset();
+  mTheta = 0;
+  curTheta = 0;
 }
 
 void DriveSupervisor::reset(long leftTicks, long rightTicks)
 {
+  mTheta = 0;
+  curTheta = 0;
+
   m_Controller.reset();
   danger = false;
 
@@ -129,7 +143,11 @@ void DriveSupervisor::execute(long left_ticks, long right_ticks, double dt)
   // float w = m_output.w; // max(min(m_output.w, robot.max_w), -robot.max_w);
 
   // Vel vel;
-  mVel = robot.ensure_w(m_output.v, m_output.w);
+
+  v = m_output.v;
+  w = m_output.w;
+
+  mVel = robot.ensure_w(v, w);
 
   PWM_OUT pwm;
   pwm.pwm_l = (int)robot.vel_l_to_pwm(mVel.vel_l);

@@ -106,8 +106,8 @@ void Robot::updateState(long left_ticks, long right_ticks, double dt)
   d_left = (left_ticks - prev_left_ticks) * m_per_tick_l;
   d_right = (right_ticks - prev_right_ticks) * m_per_tick_r;
 
-  prev_right_ticks = right_ticks;
   prev_left_ticks = left_ticks;
+  prev_right_ticks = right_ticks;
 
   d_center = (d_right + d_left) / 2;
   velocity = d_center / dt;

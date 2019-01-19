@@ -401,12 +401,12 @@ void startDrive()
 
   const int oneSecInUsec = 1000000; // A second in mirco second unit.
   // time = oneSecInUsec / 100; // time is used to toggle the LED is divided by i
-  CurieTimerOne.start(oneSecInUsec / 20, &driveIsr); // set timer and callback
+  CurieTimerOne.start(oneSecInUsec / 50, &driveIsr); // set timer and callback
 }
 
 void driveIsr()
 {
-  driveSupervisor.execute(readLeftEncoder(), readRightEncoder(), 0.05);
+  driveSupervisor.execute(readLeftEncoder(), readRightEncoder(), 0.02);
 }
 
 void SetSimulateMode(bool val)

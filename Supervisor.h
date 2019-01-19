@@ -46,6 +46,27 @@ public:
       else
         Serial.println("FollowWall RIGHT");
     }
+
+    Serial.print("input-v:");
+    Serial.print(m_input.v);
+
+    Serial.print("; v:");
+    Serial.print(m_output.v);
+    Serial.print(", w:");
+    Serial.print(m_output.w);
+
+    Serial.print(", vel-l:");
+    Serial.print(mVel.vel_l);
+    Serial.print(", vel-r:");
+    Serial.println(mVel.vel_r);
+    // long c1, c2;
+    // c1 = (long)m_left_ticks;
+    // c2 = (long)m_right_ticks;
+    Serial.print("c1:");
+    Serial.print(m_left_ticks);
+    Serial.print(", c2:");
+    Serial.println(m_right_ticks);
+
     Serial.print("exec time:");
     Serial.println(execTime);
     robot.getRobotInfo();
@@ -107,6 +128,7 @@ private:
 
   Input m_input;
   Output m_output;
+  Vel mVel;
 };
 
 #endif /* _SUPERVISOR_H_ */

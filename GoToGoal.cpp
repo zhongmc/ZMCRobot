@@ -55,6 +55,14 @@ void GoToGoal::execute(Robot *robot, Input *input, Output *output, double dt)
   }
 
   output->w = w;
-
   lastError = e;
+
+  // Serial.print(theta_g);
+  // Serial.print(",");
+  // Serial.print(robot->theta);
+  // Serial.print(",");
+  // Serial.print(e);
+
+  // Serial.print(",");
+  // Serial.println(w);
 }

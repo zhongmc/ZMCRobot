@@ -229,7 +229,7 @@ void driveCharacteristicWritten(BLECentral &central, BLECharacteristic &characte
 void setConfigValue(const unsigned char *cfgArray)
 {
   int settingsType = (int)cfgArray[0];
-  Serial.print("congfig the robot via ble:");
+  Serial.print("config the robot via ble:");
   Serial.println(settingsType);
 
   SETTINGS settings;

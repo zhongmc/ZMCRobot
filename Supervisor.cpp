@@ -7,7 +7,7 @@
 Supervisor::Supervisor()
 {
   d_fw = 0.25; //distance to follow wall
-  d_stop = 0.02;
+  d_stop = 0.01;
   d_at_obs = 0.18;
   d_unsafe = 0.05;
   d_prog = 100;
@@ -23,10 +23,10 @@ Supervisor::Supervisor()
   // robot.setVel2PwmParam(0,9.59,18.73);
   robot.setIRSensorType(GP2Y0A21);
 
-  // robot.setHaveIrSensor(0, false);
-  // robot.setHaveIrSensor(2, false);
-  // robot.setHaveIrSensor(3, false);
-  // robot.setHaveIrSensor(4, false);
+  robot.setHaveIrSensor(0, false);
+  robot.setHaveIrSensor(2, false);
+  robot.setHaveIrSensor(3, false);
+  robot.setHaveIrSensor(4, false);
 
   mSimulateMode = false;
   mIgnoreObstacle = false;
@@ -91,6 +91,22 @@ void Supervisor::resetRobot()
   robot.x = 0;
   robot.y = 0;
   robot.theta = 0;
+
+  d_prog = 20;
+  m_GoToGoal.reset();
+  m_AvoidObstacle.reset();
+  m_FollowWall.reset();
+
+  m_FollowWall.dir = 0; //left
+
+  m_state = S_GTG; //gotoGoal;
+  m_currentController = &m_GoToGoal;
+
+  progress_made = false;
+  at_goal = false;
+  at_obstacle = false;
+  unsafe = false;
+  danger = false;
 }
 
 void Supervisor::reset(long leftTicks, long rightTicks)
@@ -189,7 +205,7 @@ void Supervisor::execute(long left_ticks, long right_ticks, double dt)
   //   v1 = m_output.v * log10(DIS_SPEED_DOWN_SCALE * m_distanceToGoal + 1); //DIS_SPEED_DOWN_SCALE 10
   // }
 
-  if (m_distanceToGoal < 1)
+  if (m_distanceToGoal < 0.5)
   {
     v2 = m_distanceToGoal * v1;
   }
@@ -197,16 +213,18 @@ void Supervisor::execute(long left_ticks, long right_ticks, double dt)
   float w = max(min(m_output.w, robot.max_w), -robot.max_w);
   float v = min(v1, v2);
 
-  if (v < robot.min_v)
-    v = robot.min_v;
+  if (v != 0 && v < robot.min_v)
+    v = 1.01 * robot.min_v;
 
-  Vel vel;
-  vel = robot.ensure_w(v, w);
+  m_output.v = v;
+  m_output.w = w;
+
+  mVel = robot.ensure_w(v, w);
 
   PWM_OUT pwm;
 
-  pwm.pwm_l = (int)robot.vel_l_to_pwm(vel.vel_l);
-  pwm.pwm_r = (int)robot.vel_r_to_pwm(vel.vel_r);
+  pwm.pwm_l = (int)robot.vel_l_to_pwm(mVel.vel_l);
+  pwm.pwm_r = (int)robot.vel_r_to_pwm(mVel.vel_r);
 
   // Serial.print(",");
 

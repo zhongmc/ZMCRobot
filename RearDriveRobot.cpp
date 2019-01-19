@@ -16,12 +16,14 @@ Vel RearDriveRobot::ensure_w(double v, double w)
 
   if (abs(v) > 0)
   {
-    double vv = v / (1 + abs(w));
-
     double v_lim, w_lim;
-    v_lim = abs(vv);
-    if (v_lim > this->max_v)
+    v_lim = abs(v) / (1 + abs(w));
+    if (v_lim > max_v)
       v_lim = max_v;
+
+    if (v_lim < min_v)
+      v_lim = min_v;
+
     w_lim = abs(w);
     if (w_lim > max_w)
       w_lim = max_w;

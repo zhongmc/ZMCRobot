@@ -13,6 +13,24 @@ public:
   void execute(Robot *robot, Input *input, Output *output, double dt);
   void setGoal(double v, double theta, double curTheta);
 
+  void PrintInfo()
+  {
+    Serial.println(" ctrl info:");
+    Serial.print(Kp);
+    Serial.print(",");
+    Serial.print(Ki);
+    Serial.print(",");
+    Serial.print(Kd);
+    Serial.print("; ");
+    Serial.print(lastError);
+    Serial.print(",");
+    Serial.println(lastErrorIntegration);
+    Serial.print("Q:");
+    Serial.print(mTheta);
+    Serial.print(',');
+    Serial.println(mW);
+  }
+
 private:
   double mTheta; //目标方向
   double mW;     //转弯
