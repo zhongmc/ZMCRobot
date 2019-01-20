@@ -22,19 +22,12 @@ void VelocityController::reset()
 void VelocityController::setGoal(double v, double theta, double curTheta)
 {
 
-  mTheta = curTheta;
-  mW = theta;
+    mTheta = curTheta;
+    mW = theta;
 
-  if (mW == 0)
-  {
     lastErrorIntegration = 0;
     lastError = 0;
-  }
-  // if (theta == 0)
-  // {
-  //   mTheta = curTheta; //to remain this direction??
-  //   lastErrorIntegration = 0;
-  // }
+
 }
 
 void VelocityController::execute(Robot *robot, Input *input, Output *output, double dt)
@@ -48,14 +41,21 @@ void VelocityController::execute(Robot *robot, Input *input, Output *output, dou
   //       e = mTheta - robot->theta;
   //   }
 
-  if (mW != 0) //转弯，开环控制
+  if (mW != 0) //转弯，控制角速度？
   {
     output->v = input->v;
-    // if (input->v != 0)
-    //   output->w = 2 * 10 * input->v * mW;
-    // else
-    //   output->w = 4 * mW;
-    output->w = Kp * mW;
+    e = mW/dt - robot->w;
+
+    e_I = lastErrorIntegration + e * dt;
+    e_D = (e - lastError) / dt;
+    w = 10 * e  + 0.1 * e_I; // + 0.5 * e_D;
+
+    lastErrorIntegration = e_I;
+    if (abs(lastErrorIntegration) > 100)
+      lastErrorIntegration = 0;
+
+    output->w = w;
+
     return;
     // e = mW;
     // p = 10;

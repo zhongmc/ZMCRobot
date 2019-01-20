@@ -175,8 +175,9 @@ void setup()
   mSettings.dfw = 0.25;     //0.25
   mSettings.velocity = 0.3; //0.3
 
-  supervisor.updateSettings(mSettings);
-  driveSupervisor.updateSettings(mSettings);
+  
+  // supervisor.updateSettings(mSettings);
+  // driveSupervisor.updateSettings(mSettings);
 
   supervisor.init();
   driveSupervisor.init();

@@ -7,14 +7,14 @@
 Supervisor::Supervisor()
 {
   d_fw = 0.25; //distance to follow wall
-  d_stop = 0.01;
+  d_stop = 0.02;
   d_at_obs = 0.18;
   d_unsafe = 0.05;
   d_prog = 100;
 
   m_input.x_g = 1;
   m_input.y_g = 0;
-  m_input.v = 0.2;
+  m_input.v = 0.4;
   m_FollowWall.d_fw = 0.25;
   m_FollowWall.dir = 0;
 
@@ -146,6 +146,10 @@ void Supervisor::execute(long left_ticks, long right_ticks, double dt)
     robot.updateState((long)m_left_ticks, (long)m_right_ticks, dt);
   else
     robot.updateState(left_ticks, right_ticks, dt);
+
+
+  if( m_state == S_STOP && at_goal )
+    return;
 
   check_states();
 

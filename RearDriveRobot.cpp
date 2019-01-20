@@ -3,11 +3,11 @@
 RearDriveRobot::RearDriveRobot()
 {
   //R, L, ticksr_l, ticksr_r, minRpm, maxRpm, GP2Y0A41);
-  init(0.065 / 2, 0.15, 330, 360, 40, 220, GP2Y0A41);
+  init(0.03181, 0.165, 330, 360, 80, 150, GP2Y0A41); //0.065/2 0.15
 
-  mPIDSettings.kp = 20; //25;
-  mPIDSettings.ki = 0.2;
-  mPIDSettings.kd = 0.0;
+  mPIDSettings.kp = 20; //25;  //20 0.5 2
+  mPIDSettings.ki = 0.5;
+  mPIDSettings.kd = 2.0;
 }
 
 Vel RearDriveRobot::ensure_w(double v, double w)

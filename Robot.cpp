@@ -76,8 +76,12 @@ void Robot::updateSettings(SETTINGS settings)
 
   max_v = max_vel * wheel_radius;
   min_v = min_vel * wheel_radius;
-  max_w = (wheel_radius / wheel_base_length) * (max_vel - min_vel);
-  min_w = (wheel_radius / wheel_base_length) * (2 * min_vel);
+
+  max_w = (wheel_radius / wheel_base_length) * (max_vel); // - min_vel);
+  min_w = (wheel_radius / wheel_base_length) * (min_vel);
+
+  // max_w = (wheel_radius / wheel_base_length) * (max_vel - min_vel);
+  // min_w = (wheel_radius / wheel_base_length) * (2 * min_vel);
   pwm_diff = settings.pwm_diff;
   angleOff = settings.angleOff;
 }
@@ -96,6 +100,7 @@ void Robot::updateState(long left_ticks, long right_ticks, double dt)
   //  long left_ticks, right_ticks;
   if (prev_right_ticks == right_ticks && prev_left_ticks == left_ticks)
   {
+    w = 0;
     readIRSensors();
     velocity = 0;
     return; //no change
@@ -113,6 +118,8 @@ void Robot::updateState(long left_ticks, long right_ticks, double dt)
   velocity = d_center / dt;
 
   double phi = (d_right - d_left) / wheel_base_length;
+
+  w = phi/dt;
 
   x = x + d_center * cos(theta);
   y = y + d_center * sin(theta);

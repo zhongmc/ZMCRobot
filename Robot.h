@@ -57,8 +57,9 @@ class Robot
 public:
   Robot();
   Robot(double R, double L, double ticksr_l, double ticksr_r, double maxRpm, double minRpm);
-  double x, y, theta;
 
+  
+  double x, y, theta, w;
   double velocity;
 
   virtual Vel ensure_w(double v, double w) = 0;
