@@ -119,11 +119,11 @@ void Robot::updateState(long left_ticks, long right_ticks, double dt)
 
   double d_right, d_left, d_center;
 
-  vel_l = abs(left_ticks - prev_left_ticks) / ticks_per_rev_l;
-  vel_r = abs(right_ticks - prev_right_ticks) / ticks_per_rev_r;
+  vel_l = ((double)abs(left_ticks - prev_left_ticks) / dt) / (double)ticks_per_rev_l;
+  vel_r = ((double)abs(right_ticks - prev_right_ticks) / dt) / (double)ticks_per_rev_r;
 
-  vel_l = 2 * 3.14159 * vel_l / dt;
-  vel_r = 2 * 3.14159 * vel_r / dt;
+  vel_l = 2 * 3.14159 * vel_l;
+  vel_r = 2 * 3.14159 * vel_r;
 
   d_left = (left_ticks - prev_left_ticks) * m_per_tick_l;
   d_right = (right_ticks - prev_right_ticks) * m_per_tick_r;
@@ -176,6 +176,11 @@ void Robot::getRobotInfo()
 
   Serial.print(",v:");
   Serial.println(10 * velocity);
+
+  Serial.print("vel-l:");
+  Serial.print(vel_l);
+  Serial.print(",vel-r:");
+  Serial.println(vel_r);
 
   Serial.print("max_vel:");
   Serial.print(max_vel);

@@ -666,10 +666,12 @@ void checkStepResponseState()
     c1 = count1;
     c2 = count2;
     driveSupervisor.updateRobot(c1, c2, 90, 0.02);
+    double vels[5];
+    driveSupervisor.getRobotVel(vels);
 
-    Serial.print(c1);
+    Serial.print(vels[0]);
     Serial.print(",");
-    Serial.println(c2);
+    Serial.println(vels[1]);
     testMillisPrev = curMillis;
   }
 }
