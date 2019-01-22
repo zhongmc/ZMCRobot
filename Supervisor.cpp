@@ -48,6 +48,7 @@ void Supervisor::updateSettings(SETTINGS settings)
 
   if (settings.sType == 0 || settings.sType == 1)
   {
+    robot.updatePID(settings);
     m_GoToGoal.updateSettings(settings);
     m_AvoidObstacle.updateSettings(settings);
     m_FollowWall.updateSettings(settings);
@@ -64,7 +65,15 @@ SETTINGS Supervisor::getSettings(byte settingsType)
   settings.velocity = m_input.v;
   settings.max_rpm = robot.max_rpm;
   settings.min_rpm = robot.min_rpm;
-  m_GoToGoal.getSettings(&settings);
+
+  settings.radius = robot.wheel_radius;
+  settings.length = robot.wheel_base_length;
+
+  SETTINGS pidSettings = robot.getPIDParams();
+  settings.kp = pidSettings.kp;
+  settings.ki = pidSettings.ki;
+  settings.kd = pidSettings.kd;
+  // m_GoToGoal.getSettings(&settings);
 
   return settings;
 }
@@ -147,8 +156,7 @@ void Supervisor::execute(long left_ticks, long right_ticks, double dt)
   else
     robot.updateState(left_ticks, right_ticks, dt);
 
-
-  if( m_state == S_STOP && at_goal )
+  if (m_state == S_STOP && at_goal)
     return;
 
   check_states();

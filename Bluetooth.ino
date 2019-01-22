@@ -202,6 +202,15 @@ void driveCharacteristicWritten(BLECentral &central, BLECharacteristic &characte
     Serial.print(",");
     Serial.println(theta);
   }
+
+  else if (cmd[0] == 'S' && cmd[1] == 'R') //step response
+  {
+    startStepResponse(90);
+  }
+  else if (cmd[0] == 'T' && cmd[1] == 'R') //turn around
+  {
+    startTurnAround(90);
+  }
 #else
   else if (cmd[0] == 'G' && cmd[1] == 'B') //start Balance mode
   {
@@ -258,9 +267,12 @@ void setConfigValue(const unsigned char *cfgArray)
     settings.max_rpm = byteToInt((byte *)(cfgArray + 9));
     settings.min_rpm = byteToInt((byte *)(cfgArray + 11));
 
-    settings.pwm_diff = (int)cfgArray[13]; //byteToInt((byte *)(cfgArray + 13) );
-    settings.pwm_zero = (int)cfgArray[14];
-    settings.angleOff = byteToFloat((byte *)(cfgArray + 15), 100);
+    settings.radius = byteToFloat((byte *)(cfgArray + 13), 1000);
+    settings.length = byteToFloat((byte *)(cfgArray + 15), 1000);
+
+    // settings.pwm_diff = (int)cfgArray[13]; //byteToInt((byte *)(cfgArray + 13) );
+    // settings.pwm_zero = (int)cfgArray[14];
+    // settings.angleOff = byteToFloat((byte *)(cfgArray + 15), 100);
 
     Serial.print(" atObstacle:");
     Serial.print(settings.atObstacle);
@@ -276,12 +288,17 @@ void setConfigValue(const unsigned char *cfgArray)
     Serial.print(settings.max_rpm);
     Serial.print(" min_rpm:");
     Serial.print(settings.min_rpm);
-    Serial.print(" pwm_diff:");
-    Serial.print(settings.pwm_diff);
-    Serial.print(" pwm_zero:");
-    Serial.print(settings.pwm_zero);
-    Serial.print(" angle_off:");
-    Serial.println(settings.angleOff);
+    Serial.print(" radius:");
+    Serial.print(settings.radius);
+    Serial.print(" length:");
+    Serial.println(settings.length);
+
+    // Serial.print(" pwm_diff:");
+    // Serial.print(settings.pwm_diff);
+    // Serial.print(" pwm_zero:");
+    // Serial.print(settings.pwm_zero);
+    // Serial.print(" angle_off:");
+    // Serial.println(settings.angleOff);
   }
   else if (settingsType == 5)
   {
@@ -437,7 +454,7 @@ void sendBalanceRobotStateValue(Position pos, double irDistance[5], double volta
 }
 
 //type, x, y, theta, d0,d1,d2,d3,d4,voltage
-void sendRobotStateValue(Position pos, double irDistance[5], double voltage)
+void sendRobotStateValue(byte stateType, Position pos, double irDistance[5], double voltage)
 {
   if (!bleConnected)
     return;
@@ -445,7 +462,7 @@ void sendRobotStateValue(Position pos, double irDistance[5], double voltage)
   byte buf[19];
   memset(buf, 0, 19);
 
-  buf[0] = 1;
+  buf[0] = stateType;
 
   double scale = 1000;
 
@@ -567,10 +584,12 @@ void SendSettings(SETTINGS settings)
     intToByte(settingsArray + 9, settings.max_rpm);
     intToByte(settingsArray + 11, settings.min_rpm);
 
-    settingsArray[13] = (byte)settings.pwm_diff;
-    settingsArray[14] = (byte)settings.pwm_zero;
+    floatToByte(settingsArray + 13, settings.radius, 1000);
 
-    floatToByte(settingsArray + 15, settings.angleOff, 100);
+    // settingsArray[13] = (byte)settings.pwm_diff;
+    // settingsArray[14] = (byte)settings.pwm_zero;
+
+    floatToByte(settingsArray + 15, settings.length, 1000);
 
     len = 13;
   }

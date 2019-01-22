@@ -33,6 +33,7 @@
 #define STATE_GOTOGOAL 3
 #define STATE_BALANCE 4
 #define STATE_CALIBRATE 5
+#define STATE_STEP_RESP 6
 
 #define START_KEY 0
 #define LEFT_KEY 1
@@ -65,6 +66,9 @@ bool doCheckBattleVoltage = true;
 bool openDebug = false;
 byte settingsReqQueue[8];
 short queueLen = 0;
+
+short testState = 0; //1 turnAround, 2, step Resopnse
+short testPWM = 90;
 
 //char *titles[] = {"Self balance", "Cruise", "Speed ", "Start", "Remote by BLE", "To Target", "Target X:", "Target Y:", "Start",
 //                         "PID of Balance", "KP: ", "KI: ", "KD: ", "Config", "Calibrate Motor", "balance angle"
@@ -145,6 +149,9 @@ void setup()
 
   //  Serial.println(sizeof(long));
 
+  testState = 0;
+  testPWM = 90;
+
   pinMode(A0, INPUT);
   pinMode(A1, INPUT);
   pinMode(A2, INPUT);
@@ -175,7 +182,6 @@ void setup()
   mSettings.dfw = 0.25;     //0.25
   mSettings.velocity = 0.3; //0.3
 
-  
   // supervisor.updateSettings(mSettings);
   // driveSupervisor.updateSettings(mSettings);
 
@@ -233,6 +239,9 @@ void loop()
   //ultrasonic process
   processUltrasonic();
 
+  checkTurnAroundState();
+  checkStepResponseState();
+
   unsigned long millisNow = millis();
   if (millisNow - millisPrev >= 40)
   {
@@ -246,13 +255,18 @@ void loop()
       //report states
       supervisor.getIRDistances(irDistance);
       pos = supervisor.getRobotPosition();
-      sendRobotStateValue(pos, irDistance, batteryVoltage);
+      sendRobotStateValue(1, pos, irDistance, batteryVoltage);
     }
     else if (currentState == STATE_DRIVE)
     {
       driveSupervisor.getIRDistances(irDistance);
       pos = driveSupervisor.getRobotPosition();
-      sendRobotStateValue(pos, irDistance, batteryVoltage);
+      sendRobotStateValue(1, pos, irDistance, batteryVoltage);
+    }
+    else if (currentState == STATE_STEP_RESP)
+    {
+      driveSupervisor.getRobotVel(irDistance);
+      sendRobotStateValue(3, pos, irDistance, batteryVoltage);
     }
 #else
     if (currentState == STATE_BALANCE)
@@ -293,7 +307,7 @@ void loop()
       if (ultrasonicDistance < MAX_ULTRASONIC_DIS) //irDistance[2] )
         irDistance[2] = ultrasonicDistance;
 
-      sendRobotStateValue(pos, irDistance, batteryVoltage);
+      sendRobotStateValue(1, pos, irDistance, batteryVoltage);
     }
 
     /*
@@ -570,4 +584,92 @@ void UltrasonicEcho()
   }
   else
     echoTime = micros() - trigTime;
+}
+
+extern long count1, count2;
+
+unsigned long testMillisPrev;
+//启动转圈测试，以测定轮距
+void startTurnAround(int pwm)
+{
+  if (testState != 0)
+    return;
+  testState = 1;
+  testPWM = pwm;
+
+  count1 = 0;
+  count2 = 0;
+  Serial.print("Start turn around test: ");
+  Serial.println(pwm);
+  testMillisPrev = millis();
+
+  MoveLeftMotor(pwm);
+}
+
+//启动阶跃响应测试
+void startStepResponse(int pwm)
+{
+
+  if (currentState == STATE_STEP_RESP)
+    return;
+
+  if (currentState != STATE_IDLE)
+  {
+    stopRobot();
+  }
+
+  currentState = STATE_STEP_RESP;
+  testPWM = pwm;
+  count1 = 0;
+  count2 = 0;
+  Serial.print("Start Step response test: ");
+  Serial.println(pwm);
+  testMillisPrev = millis();
+  MoveMotor(pwm);
+}
+
+void checkTurnAroundState()
+{
+  if (testState != 1)
+    return;
+
+  unsigned long curMillis = millis();
+  if (curMillis - testMillisPrev >= 20)
+  {
+    long c1, c2;
+    c1 = count1;
+    c2 = count2;
+
+    Serial.print(c1);
+    Serial.print(",");
+    Serial.println(c2);
+
+    if (c1 > 1676 || c2 > 1828)
+    {
+      stopRobot();
+      testState = 0; //over
+    }
+
+    testMillisPrev = curMillis;
+  }
+}
+
+void checkStepResponseState()
+{
+  if (currentState != STATE_STEP_RESP)
+    return;
+
+  unsigned long curMillis = millis();
+  if (curMillis - testMillisPrev >= 20)
+  {
+    long c1, c2;
+    c1 = count1;
+    c2 = count2;
+    driveSupervisor.updateRobot(c1, c2, 90, 0.02);
+
+    Serial.print(c1);
+    Serial.print(",");
+    Serial.println(c2);
+    testMillisPrev = curMillis;
+  }
 }

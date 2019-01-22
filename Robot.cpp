@@ -66,8 +66,19 @@ void Robot::setIRSensorType(SENSOR_TYPE sensorType)
     irSensors[i]->SetSensorType(sensorType);
 }
 
+void Robot::updatePID(SETTINGS pids)
+{
+  mPIDSettings.kd = pids.kd;
+  mPIDSettings.ki = pids.ki;
+  mPIDSettings.kp = pids.kp;
+}
+
 void Robot::updateSettings(SETTINGS settings)
 {
+
+  wheel_radius = settings.radius;
+  wheel_base_length = settings.length;
+
   max_rpm = settings.max_rpm; //267
   max_vel = max_rpm * 2 * PI / 60;
 
@@ -108,6 +119,12 @@ void Robot::updateState(long left_ticks, long right_ticks, double dt)
 
   double d_right, d_left, d_center;
 
+  vel_l = abs(left_ticks - prev_left_ticks) / ticks_per_rev_l;
+  vel_r = abs(right_ticks - prev_right_ticks) / ticks_per_rev_r;
+
+  vel_l = 2 * 3.14159 * vel_l / dt;
+  vel_r = 2 * 3.14159 * vel_r / dt;
+
   d_left = (left_ticks - prev_left_ticks) * m_per_tick_l;
   d_right = (right_ticks - prev_right_ticks) * m_per_tick_r;
 
@@ -119,7 +136,7 @@ void Robot::updateState(long left_ticks, long right_ticks, double dt)
 
   double phi = (d_right - d_left) / wheel_base_length;
 
-  w = phi/dt;
+  w = phi; // / dt;
 
   x = x + d_center * cos(theta);
   y = y + d_center * sin(theta);

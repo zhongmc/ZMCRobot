@@ -34,6 +34,8 @@ public:
 private:
   double mTheta; //目标方向
   double mW;     //转弯
+
+  int count;
 };
 
 #endif /* _VELOCITY_CONTROLLER_H_ */
