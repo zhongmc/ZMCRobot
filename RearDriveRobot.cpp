@@ -3,11 +3,11 @@
 RearDriveRobot::RearDriveRobot()
 {
   //R, L, ticksr_l, ticksr_r, minRpm, maxRpm, GP2Y0A41);
-  init(0.03181, 0.165, 330, 360, 80, 150, GP2Y0A41); //0.065/2 0.15
+  init(0.03181, 0.17544, 330, 360, 80, 150, GP2Y0A41); //0.065/2 0.15
 
   mPIDSettings.kp = 20; //25;  //20 0.5 2
   mPIDSettings.ki = 0.5;
-  mPIDSettings.kd = 2.0;
+  mPIDSettings.kd = 1.0;
 }
 
 Vel RearDriveRobot::ensure_w(double v, double w)
@@ -68,16 +68,34 @@ Vel RearDriveRobot::ensure_w(double v, double w)
   }
   else
   {
-    if (abs(w) < min_w)
+    vel = uni_to_diff(0, w);
+    if (abs(vel.vel_l) < min_vel)
     {
-      if (w < 0)
+      if (vel.vel_l > 0)
       {
-        w = -1 * (min_w + 0.01);
+        vel.vel_l = min_vel;
+        vel.vel_r = -min_vel;
       }
       else
-        w = (min_w + 0.01);
+      {
+        vel.vel_l = -min_vel;
+        vel.vel_r = min_vel;
+      }
     }
-    vel = uni_to_diff(v, w);
+    else if (abs(vel.vel_l) > (min_vel + max_vel) / 2.0)
+    {
+      double ve = (min_vel + max_vel) / 2.0;
+      if (vel.vel_l > 0)
+      {
+        vel.vel_l = ve;
+        vel.vel_r = -ve;
+      }
+      else
+      {
+        vel.vel_l = -ve;
+        vel.vel_r = ve;
+      }
+    }
   }
   return vel;
 }
@@ -86,7 +104,7 @@ double RearDriveRobot::vel_l_to_pwm(double vel)
 {
   //ax^2+bx+c
   double nvel = abs(vel);
-  if (nvel < min_vel)
+  if (nvel < min_vel - 0.1)
     return 0;
   //  nvel = min_vel;
 
@@ -107,7 +125,7 @@ double RearDriveRobot::vel_r_to_pwm(double vel)
   //ax^2+bx+c
   double nvel = abs(vel);
 
-  if (nvel < min_vel)
+  if (nvel < min_vel - 0.1)
     return 0; //nvel = min_vel;
 
   if (nvel > max_vel)

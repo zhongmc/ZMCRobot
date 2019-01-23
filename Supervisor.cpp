@@ -199,9 +199,9 @@ void Supervisor::execute(long left_ticks, long right_ticks, double dt)
   //  if ( noObstacle ) //obsDis > 0.29 ) //not within obstacle
   //     obsDis = m_distanceToGoal;
 
-  float v1, v2;
-  v1 = m_output.v;
-  v2 = m_output.v;
+  // float v1, v2;
+  // v1 = m_output.v;
+  // v2 = m_output.v;
 
   // if (abs(m_output.w) < 5)
   //   v2 = m_output.v / (1 + W_SPEED_DOWN_SCALE * abs(m_output.w) / 5); //W_SPEED_DOWN_SCALE 1
@@ -217,13 +217,13 @@ void Supervisor::execute(long left_ticks, long right_ticks, double dt)
   //   v1 = m_output.v * log10(DIS_SPEED_DOWN_SCALE * m_distanceToGoal + 1); //DIS_SPEED_DOWN_SCALE 10
   // }
 
-  if (m_distanceToGoal < 0.5)
-  {
-    v2 = m_distanceToGoal * v1;
-  }
+  // if (m_distanceToGoal < 0.5)
+  // {
+  //   v2 = m_distanceToGoal * v1;
+  // }
 
   float w = max(min(m_output.w, robot.max_w), -robot.max_w);
-  float v = min(v1, v2);
+  float v = m_output.v; // min(v1, v2);
 
   if (v != 0 && v < robot.min_v)
     v = 1.01 * robot.min_v;

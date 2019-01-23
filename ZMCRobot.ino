@@ -625,7 +625,7 @@ void startStepResponse(int pwm)
   Serial.print("Start Step response test: ");
   Serial.println(pwm);
   testMillisPrev = millis();
-  MoveMotor(pwm);
+  MoveMotor(100); //pwm
 }
 
 void checkTurnAroundState()
@@ -668,10 +668,11 @@ void checkStepResponseState()
     driveSupervisor.updateRobot(c1, c2, 90, 0.02);
     double vels[5];
     driveSupervisor.getRobotVel(vels);
-
-    Serial.print(vels[0]);
+    c1 = (int)(vels[0] * 10000.0);
+    c2 = (int)(vels[1] * 10000.0);
+    Serial.print(c1);
     Serial.print(",");
-    Serial.println(vels[1]);
+    Serial.println(c2);
     testMillisPrev = curMillis;
   }
 }
