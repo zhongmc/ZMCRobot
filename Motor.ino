@@ -52,6 +52,8 @@ void initMotor()
 
   analogWrite(LEFT_WHEEL_PWM, 0);
   analogWrite(RIGHT_WHEEL_PWM, 0);
+  count1 = 0;
+  count2 = 0;
 }
 
 void StopMotor()

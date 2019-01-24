@@ -20,7 +20,7 @@ extern long trigTime, echoTime;
 extern double ultrasonicDistance;
 
 static char comData[30];
-static int comDataCount;
+int comDataCount;
 
 //extern Supervisor supervisor;
 extern double gp2y0a41[3][4];
@@ -40,7 +40,7 @@ void checkSerialData()
     {
       char ch = Serial.read();
       comData[comDataCount++] = ch;
-      if (ch == ';') //new command
+      if (ch == ';' || ch == '\r' || ch == '\n') //new command
       {
         processCommand(comData, comDataCount);
         comDataCount = 0;
@@ -58,7 +58,6 @@ void checkSerialData()
 
 void printCmds()
 {
-  return;
 
   //  Serial.println("\r\n\r\n***** BLE Commands *******************************");
   //  Serial.println(" ST stop!");
@@ -73,13 +72,26 @@ void printCmds()
   //  Serial.println(" SD[v][w] set drive goal");
   //  Serial.println(" BS stop balance drive or goto goal\r\n\r\n");
   //
-  //  Serial.println("***** com commands ***********");
-  //  Serial.println(" ?; print this info");
-  //  Serial.println(" gr[]; controller infos");
-  //  Serial.println(" gs; settings");
-  //  Serial.println(" sb; start balance");
-  //  Serial.println(" st; stop robot");
-  //  Serial.println(" gd; distance of ultraSonic");
+  // Serial.println(" ?; print this info");
+  // Serial.println(" gr[]; controller infos");
+  // Serial.println(" sb; start balance");
+  // Serial.println(" st; stop robot");
+  // Serial.println(" gd; distance of ultraSonic");
+  // Serial.println(" od; open debug");
+  // Serial.println(" cd; close debug");
+  // Serial.println(" ci; read count");
+
+  // Serial.println(" mm[pwm]; move motor with pwm");
+  // Serial.println(" ml[pwm]; move left motor with pwm");
+  // Serial.println(" mr[pwm]; move right motor with pwm");
+  // Serial.println(" gg[xd]; start go to goal");
+
+  // Serial.println(" sm[0/1]; simulate mode");
+  // Serial.println(" io[0/1]; ignore obstacle");
+  // Serial.println(" rs; reset");
+  // Serial.println(" tl; turn around test left");
+  // Serial.println(" tr; turn around test right");
+
   //  Serial.println(" bp[]; balance kp");
   //  Serial.println(" bi[]; balance ki");
   //  Serial.println(" bd[]; balance kd");
@@ -87,13 +99,13 @@ void printCmds()
   //  Serial.println(" vp[]; velocity kp");
   //  Serial.println(" vi[]; velocity ki");
   //  Serial.println(" vd[]; velocity kd");
-  //  Serial.println(" od; open debug");
-  //  Serial.println(" cd; close debug");
-  //  Serial.println(" ci; calibrate imu");
 }
 
 void processCommand(char *buffer, int bufferLen)
 {
+  *(buffer + bufferLen) = 0;
+  Serial.println(buffer);
+
   if (tolower(buffer[0]) == '?')
   {
     printCmds();
@@ -109,25 +121,20 @@ void processCommand(char *buffer, int bufferLen)
     printMenu();
     return;
   }
-  else if (ch0 == 'g' && ch1 == 'i')
-  {
-    sendTestInfo();
-    return;
-  }
   else if (ch0 == 'g' && ch1 == 'r')
   {
-    Serial.println("\r\n\r\n=========================================================");
+    Serial.println("\r\n\r\n====");
     Serial.print("Voltage:");
     Serial.print(batteryVoltage);
     Serial.print(", ultrasonic dis:");
     Serial.println(ultrasonicDistance);
 #if CAR_TYPE == DRIVE_CAR
-    Serial.println("\r\n=========================================================");
+    Serial.println("\r\n====");
     supervisor.getRobotInfo();
-    Serial.println("\r\n=========================================================");
+    Serial.println("\r\n====");
     driveSupervisor.getRobotInfo();
 #else
-    Serial.println("\r\n=========================================================");
+    Serial.println("\r\n====");
     balanceSupervisor.getRobotInfo();
 #endif
   }
@@ -140,10 +147,7 @@ void processCommand(char *buffer, int bufferLen)
   {
     openDebug = false;
   }
-  else if (ch0 == 'g' && ch1 == 's')
-  {
-    sendSettings();
-  }
+
   else if (ch0 == 'g' && ch1 == 'd')
   {
     Serial.print("Distance of ultraSonic:");
@@ -219,6 +223,51 @@ void processCommand(char *buffer, int bufferLen)
     Serial.print("current time:");
     Serial.println(millis());
     MoveRightMotor(pwm);
+  }
+  else if (ch0 == 't' && ch1 == 'l') //turn around left test
+  {
+    int pwm = atoi(buffer + 2);
+    startTurnAround(pwm);
+  }
+  else if (ch0 == 't' && ch1 == 'r')
+  {
+    int pwm = atoi(buffer + 2);
+    startTurnAround(-pwm);
+  }
+  else if (ch0 == 'g' && ch1 == 'g') //go to goal
+  {
+    if (bufferLen > 3)
+    {
+      float d = atof(buffer + 2);
+      setGoal(d, 0, 0);
+    }
+    else
+      setGoal(1, 0, 0);
+
+    startGoToGoal();
+  }
+
+  else if (ch0 == 's' && ch1 == 'm') //simulate mode
+  {
+    int val = atoi(buffer + 2);
+
+    if (val == 1)
+      SetSimulateMode(true);
+    else
+      SetSimulateMode(false);
+  }
+  else if (ch0 == 'i' && ch1 == 'o') //ignore atObstacle
+  {
+    int val = atoi(buffer + 2);
+    if (val == 1)
+      SetIgnoreObstacle(true);
+    else
+      SetIgnoreObstacle(false);
+  }
+
+  else if (ch0 == 'r' && ch0 == 's') //RESET
+  {
+    ResetRobot();
   }
 
 #if CAR_TYPE == BALANCE_CAR
@@ -348,25 +397,6 @@ void CalibrateIMU()
 #endif
 */
 
-void sendSettings()
-{
-  /*
-    Serial.print("Settings:(kp,ki,kd):");
-    Serial.print(mSettings.kp);
-    Serial.print(",");
-    Serial.print(mSettings.ki);
-    Serial.print(",");
-    Serial.println(mSettings.kd);
-    Serial.print("Settings:(ato,usf,dfw):");
-    Serial.print(mSettings.atObstacle);
-    Serial.print(",");
-    Serial.print(mSettings.unsafe);
-    Serial.print(",");
-    Serial.println(mSettings.dfw);
-    Serial.print("V:");
-    Serial.println(mSettings.velocity);
-  */
-}
 void printMenu()
 {
 
@@ -396,14 +426,4 @@ void printMenu()
   //
   //  Serial.println(F("CS;\t\t\t\tSend stop command"));
   //  Serial.println(F("\r\n==========================================================================================\r\n"));
-}
-
-double pwm_to_ticks_r(double pwm, double dt);
-double pwm_to_ticks_l(double pwm, double dt);
-
-double vel_l_to_pwm(double vel);
-double vel_r_to_pwm(double vel);
-
-void sendTestInfo()
-{
 }

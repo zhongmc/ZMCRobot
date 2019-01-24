@@ -6,8 +6,8 @@ RearDriveRobot::RearDriveRobot()
   init(0.03181, 0.17544, 330, 360, 80, 150, GP2Y0A41); //0.065/2 0.15
 
   mPIDSettings.kp = 20; //25;  //20 0.5 2
-  mPIDSettings.ki = 0.5;
-  mPIDSettings.kd = 1.0;
+  mPIDSettings.ki = 0.01;
+  mPIDSettings.kd = 0.5;
 }
 
 Vel RearDriveRobot::ensure_w(double v, double w)
@@ -49,10 +49,10 @@ Vel RearDriveRobot::ensure_w(double v, double w)
       vel.vel_r = vel_d.vel_r - (vel_rl_max - max_vel);
       vel.vel_l = vel_d.vel_l - (vel_rl_max - max_vel);
     }
-    else if (vel_rl_min < 0) // min_vel)
+    else if (vel_rl_min < min_vel)
     {
-      vel.vel_r = vel_d.vel_r - vel_rl_min; //(min_vel - vel_rl_min);
-      vel.vel_l = vel_d.vel_l - vel_rl_min; //(min_vel - vel_rl_min);
+      vel.vel_r = vel_d.vel_r + (min_vel - vel_rl_min); //- vel_rl_min; //(min_vel - vel_rl_min);
+      vel.vel_l = vel_d.vel_l + (min_vel - vel_rl_min); //- vel_rl_min; //(min_vel - vel_rl_min);
     }
     else
     {

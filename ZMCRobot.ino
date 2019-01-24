@@ -70,6 +70,9 @@ short queueLen = 0;
 short testState = 0; //1 turnAround, 2, step Resopnse
 short testPWM = 90;
 
+extern long count1, count2;
+extern int comDataCount;
+
 //char *titles[] = {"Self balance", "Cruise", "Speed ", "Start", "Remote by BLE", "To Target", "Target X:", "Target Y:", "Start",
 //                         "PID of Balance", "KP: ", "KI: ", "KD: ", "Config", "Calibrate Motor", "balance angle"
 //                        };
@@ -151,6 +154,10 @@ void setup()
 
   testState = 0;
   testPWM = 90;
+
+  comDataCount = 0;
+  count1 = 0;
+  count2 = 0;
 
   pinMode(A0, INPUT);
   pinMode(A1, INPUT);
@@ -366,6 +373,9 @@ void loop()
 
 void setGoal(double x, double y, int theta)
 {
+  count1 = 0;
+  count2 = 0;
+
   supervisor.setGoal(x, y, theta);
 }
 
@@ -586,8 +596,6 @@ void UltrasonicEcho()
     echoTime = micros() - trigTime;
 }
 
-extern long count1, count2;
-
 unsigned long testMillisPrev;
 //启动转圈测试，以测定轮距
 void startTurnAround(int pwm)
@@ -602,8 +610,10 @@ void startTurnAround(int pwm)
   Serial.print("Start turn around test: ");
   Serial.println(pwm);
   testMillisPrev = millis();
-
-  MoveLeftMotor(pwm);
+  if (pwm > 0)
+    MoveLeftMotor(pwm);
+  else
+    MoveRightMotor(-pwm);
 }
 
 //启动阶跃响应测试

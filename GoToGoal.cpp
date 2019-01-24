@@ -51,14 +51,21 @@ void GoToGoal::execute(Robot *robot, Input *input, Output *output, double dt)
   {
     output->v = 0;
   }
-  else if (d < 1) //target controll
+  else if (d < 0.5) //target controll
   {
     double vei = lastVEI + d * dt;
     double ved = (d - lastVE) / dt;
-    output->v = Kp * d + Kd * ved; // 不能有超调
+    output->v = Kp * d / 20.0 + Kd * ved; // 不能有超调
     lastVEI = vei;
     lastVE = d;
   }
+
+  Serial.print(d);
+  Serial.print(",");
+  Serial.print(output->v);
+  Serial.print(",");
+  Serial.print(w);
+  Serial.print(",");
 
   output->w = w;
   lastError = e;

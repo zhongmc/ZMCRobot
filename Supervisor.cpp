@@ -238,6 +238,14 @@ void Supervisor::execute(long left_ticks, long right_ticks, double dt)
   pwm.pwm_l = (int)robot.vel_l_to_pwm(mVel.vel_l);
   pwm.pwm_r = (int)robot.vel_r_to_pwm(mVel.vel_r);
 
+  Serial.print(mVel.vel_l);
+  Serial.print(",");
+  Serial.print(mVel.vel_r);
+  Serial.print(",");
+  Serial.print(pwm.pwm_l);
+  Serial.print(",");
+  Serial.println(pwm.pwm_r);
+
   // Serial.print(",");
 
 /*

@@ -203,13 +203,22 @@ void driveCharacteristicWritten(BLECentral &central, BLECharacteristic &characte
     Serial.println(theta);
   }
 
+  else if (cmd[0] == 'M' && cmd[1] == 'G') //go to goal
+  {
+    setGoal(1, 0, 0);
+  }
+
   else if (cmd[0] == 'S' && cmd[1] == 'R') //step response
   {
     startStepResponse(90);
   }
+  else if (cmd[0] == 'T' && cmd[1] == 'L') //turn around
+  {
+    startTurnAround(100);
+  }
   else if (cmd[0] == 'T' && cmd[1] == 'R') //turn around
   {
-    startTurnAround(90);
+    startTurnAround(-100);
   }
 #else
   else if (cmd[0] == 'G' && cmd[1] == 'B') //start Balance mode
