@@ -60,12 +60,12 @@ void GoToGoal::execute(Robot *robot, Input *input, Output *output, double dt)
     lastVE = d;
   }
 
-  Serial.print(d);
-  Serial.print(",");
-  Serial.print(output->v);
-  Serial.print(",");
-  Serial.print(w);
-  Serial.print(",");
+  // Serial.print(d);
+  // Serial.print(",");
+  // Serial.print(output->v);
+  // Serial.print(",");
+  // Serial.print(w);
+  // Serial.print(",");
 
   output->w = w;
   lastError = e;

@@ -68,7 +68,6 @@ byte settingsReqQueue[8];
 short queueLen = 0;
 
 short testState = 0; //1 turnAround, 2, step Resopnse
-short testPWM = 90;
 
 extern long count1, count2;
 extern int comDataCount;
@@ -153,8 +152,6 @@ void setup()
   //  Serial.println(sizeof(long));
 
   testState = 0;
-  testPWM = 90;
-
   comDataCount = 0;
   count1 = 0;
   count2 = 0;
@@ -603,7 +600,6 @@ void startTurnAround(int pwm)
   if (testState != 0)
     return;
   testState = 1;
-  testPWM = pwm;
 
   count1 = 0;
   count2 = 0;
@@ -629,7 +625,7 @@ void startStepResponse(int pwm)
   }
 
   currentState = STATE_STEP_RESP;
-  testPWM = pwm;
+
   count1 = 0;
   count2 = 0;
   Serial.print("Start Step response test: ");

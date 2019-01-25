@@ -59,7 +59,7 @@ class Robot
 {
 public:
   Robot();
-  Robot(double R, double L, double ticksr_l, double ticksr_r, double maxRpm, double minRpm);
+  // Robot(double R, double L, double ticksr_l, double ticksr_r, double maxRpm, double minRpm);
 
   double x, y, theta, w;
   double velocity;

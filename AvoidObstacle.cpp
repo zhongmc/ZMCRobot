@@ -3,9 +3,6 @@
 
 AvoidObstacle::AvoidObstacle()
 {
-  Kp = 5;
-  Ki = 0.01;
-  Kd = 0.01;
   lastError = 0;
   lastErrorIntegration = 0;
 }

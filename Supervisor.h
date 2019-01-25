@@ -30,6 +30,8 @@ public:
   void resetRobot();
   void setGoal(double x, double y, int theta);
 
+  void setHaveIRSensor(int idx, bool val);
+
   void getRobotInfo()
   {
     Serial.print("GotoGoal robot info, current state:");

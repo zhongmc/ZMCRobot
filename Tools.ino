@@ -56,72 +56,59 @@ void checkSerialData()
   }
 }
 
-void printCmds()
-{
+//  Serial.println("\r\n\r\n***** BLE Commands *******************************");
+//  Serial.println(" ST stop!");
+//  Serial.println(" RS reset robot");
+//  Serial.println(" RP[type] require for settings, 1,2,3,4,5");
+//  Serial.println(" RT[type] Set robot type 0 normal 1 balance");
+//  Serial.println(" SM[val] Set simulate mode 1 true");
+//  Serial.println(" GO Start goto goal");
+//  Serial.println(" GG[][][] Set goto goal goan x,y,Q");
+//  Serial.println(" GD Start drive mode");
+//  Serial.println(" GB Start balance mode");
+//  Serial.println(" SD[v][w] set drive goal");
+//  Serial.println(" BS stop balance drive or goto goal\r\n\r\n");
+//
+// Serial.println(" ?; print this info");
+// Serial.println(" gr[]; controller infos");
+// Serial.println(" sb; start balance");
+// Serial.println(" st; stop robot");
+// Serial.println(" gd; distance of ultraSonic");
+// Serial.println(" od; open debug");
+// Serial.println(" cd; close debug");
+// Serial.println(" ci; read count");
 
-  //  Serial.println("\r\n\r\n***** BLE Commands *******************************");
-  //  Serial.println(" ST stop!");
-  //  Serial.println(" RS reset robot");
-  //  Serial.println(" RP[type] require for settings, 1,2,3,4,5");
-  //  Serial.println(" RT[type] Set robot type 0 normal 1 balance");
-  //  Serial.println(" SM[val] Set simulate mode 1 true");
-  //  Serial.println(" GO Start goto goal");
-  //  Serial.println(" GG[][][] Set goto goal goan x,y,Q");
-  //  Serial.println(" GD Start drive mode");
-  //  Serial.println(" GB Start balance mode");
-  //  Serial.println(" SD[v][w] set drive goal");
-  //  Serial.println(" BS stop balance drive or goto goal\r\n\r\n");
-  //
-  // Serial.println(" ?; print this info");
-  // Serial.println(" gr[]; controller infos");
-  // Serial.println(" sb; start balance");
-  // Serial.println(" st; stop robot");
-  // Serial.println(" gd; distance of ultraSonic");
-  // Serial.println(" od; open debug");
-  // Serial.println(" cd; close debug");
-  // Serial.println(" ci; read count");
+// Serial.println(" mm[pwm]; move motor with pwm");
+// Serial.println(" ml[pwm]; move left motor with pwm");
+// Serial.println(" mr[pwm]; move right motor with pwm");
+// Serial.println(" gg[xd]; start go to goal");
 
-  // Serial.println(" mm[pwm]; move motor with pwm");
-  // Serial.println(" ml[pwm]; move left motor with pwm");
-  // Serial.println(" mr[pwm]; move right motor with pwm");
-  // Serial.println(" gg[xd]; start go to goal");
+// Serial.println(" sm[0/1]; simulate mode");
+// Serial.println(" io[0/1]; ignore obstacle");
+// Serial.println(" rs; reset");
+// Serial.println(" tl; turn around test left");
+// Serial.println(" tr; turn around test right");
 
-  // Serial.println(" sm[0/1]; simulate mode");
-  // Serial.println(" io[0/1]; ignore obstacle");
-  // Serial.println(" rs; reset");
-  // Serial.println(" tl; turn around test left");
-  // Serial.println(" tr; turn around test right");
-
-  //  Serial.println(" bp[]; balance kp");
-  //  Serial.println(" bi[]; balance ki");
-  //  Serial.println(" bd[]; balance kd");
-  //
-  //  Serial.println(" vp[]; velocity kp");
-  //  Serial.println(" vi[]; velocity ki");
-  //  Serial.println(" vd[]; velocity kd");
-}
+//  Serial.println(" bp[]; balance kp");
+//  Serial.println(" bi[]; balance ki");
+//  Serial.println(" bd[]; balance kd");
+//
+//  Serial.println(" vp[]; velocity kp");
+//  Serial.println(" vi[]; velocity ki");
+//  Serial.println(" vd[]; velocity kd");
 
 void processCommand(char *buffer, int bufferLen)
 {
   *(buffer + bufferLen) = 0;
   Serial.println(buffer);
 
-  if (tolower(buffer[0]) == '?')
-  {
-    printCmds();
-    return;
-  }
   if (bufferLen <= 2)
     return;
   char ch0, ch1;
   ch0 = tolower(buffer[0]);
   ch1 = tolower(buffer[1]);
-  if (ch0 == 'm' && ch1 == 'u')
-  {
-    printMenu();
-    return;
-  }
-  else if (ch0 == 'g' && ch1 == 'r')
+
+  if (ch0 == 'g' && ch1 == 'r')
   {
     Serial.println("\r\n\r\n====");
     Serial.print("Voltage:");
@@ -139,130 +126,113 @@ void processCommand(char *buffer, int bufferLen)
 #endif
   }
 
-  else if (ch0 == 'o' && ch1 == 'd') //open debug
-  {
-    openDebug = true;
-  }
-  else if (ch0 == 'c' && ch1 == 'd') //close debug
-  {
-    openDebug = false;
-  }
+  // else if (ch0 == 'o' && ch1 == 'd') //open debug
+  // {
+  //   openDebug = true;
+  // }
+  // else if (ch0 == 'c' && ch1 == 'd') //close debug
+  // {
+  //   openDebug = false;
+  // }
 
-  else if (ch0 == 'g' && ch1 == 'd')
-  {
-    Serial.print("Distance of ultraSonic:");
-    if (echoTime > 0)
-    {
-      float dist = 0.017 * echoTime;
-      //     float dist = 17000/echoTime;
-      Serial.println(dist);
-    }
-    else
-    {
-      Serial.println("NA");
-    }
-  }
+  // else if (ch0 == 'g' && ch1 == 'd')
+  // {
+  //   Serial.print("Distance of ultraSonic:");
+  //   if (echoTime > 0)
+  //   {
+  //     float dist = 0.017 * echoTime;
+  //     //     float dist = 17000/echoTime;
+  //     Serial.println(dist);
+  //   }
+  //   else
+  //   {
+  //     Serial.println("NA");
+  //   }
+  // }
+
   else if (ch0 == 's' && ch1 == 't') //stop
   {
     Serial.println("Stop!");
     stopRobot();
   }
-  else if (ch0 == 's' && ch1 == 'b') //start balance
-  {
-    Serial.println("Start balance!");
-#if CAR_TYPE == BALANCE_CAR
-    startBalance();
-#endif
-  }
+
   else if (ch0 == 'c' && ch1 == 'i') //count info
   {
-    Serial.print("C1=");
-    Serial.print(count1);
-    Serial.print(", C2=");
-    Serial.println(count2);
+    printCountInfo();
   }
   else if (ch0 == 'm' && ch1 == 'm') // move motor
   {
     int pwm = atoi(buffer + 2);
-    Serial.print("Move motor: ");
-    Serial.println(pwm);
 
-    Serial.print("C1=");
-    Serial.print(count1);
-    Serial.print(", C2=");
-    Serial.println(count2);
-    Serial.print("current time:");
-    Serial.println(millis());
+    // Serial.print("Move motor: ");
+    // Serial.println(pwm);
+
+    printCountInfo();
     MoveMotor(pwm);
   }
 
   else if (ch0 == 'm' && ch1 == 'l') // move left motor
   {
     int pwm = atoi(buffer + 2);
-    Serial.print("Move left motor: ");
-    Serial.println(pwm);
+    // Serial.print("Move left motor: ");
+    // Serial.println(pwm);
 
-    Serial.print("C1=");
-    Serial.print(count1);
-    Serial.print(", C2=");
-    Serial.println(count2);
-    Serial.print("current time:");
-    Serial.println(millis());
+    // Serial.print("C1=");
+    // Serial.print(count1);
+    // Serial.print(", C2=");
+    // Serial.println(count2);
+    // Serial.print("time:");
+    // Serial.println(millis());
+
+    printCountInfo();
     MoveLeftMotor(pwm);
   }
   else if (ch0 == 'm' && ch1 == 'r') // move right motor
   {
     int pwm = atoi(buffer + 2);
-    Serial.print("Move right motor: ");
-    Serial.println(pwm);
+    // Serial.print("Move right motor: ");
+    // Serial.println(pwm);
 
-    Serial.print("C1=");
-    Serial.print(count1);
-    Serial.print(", C2=");
-    Serial.println(count2);
-    Serial.print("current time:");
-    Serial.println(millis());
+    // Serial.print("C1=");
+    // Serial.print(count1);
+    // Serial.print(", C2=");
+    // Serial.println(count2);
+    // Serial.print("current time:");
+    // Serial.println(millis());
+    printCountInfo();
     MoveRightMotor(pwm);
   }
-  else if (ch0 == 't' && ch1 == 'l') //turn around left test
+  else if (ch0 == 't' && ch1 == 'l') //turn around left/ right(-pwm) test
   {
     int pwm = atoi(buffer + 2);
     startTurnAround(pwm);
   }
-  else if (ch0 == 't' && ch1 == 'r')
-  {
-    int pwm = atoi(buffer + 2);
-    startTurnAround(-pwm);
-  }
   else if (ch0 == 'g' && ch1 == 'g') //go to goal
   {
-    if (bufferLen > 3)
-    {
-      float d = atof(buffer + 2);
-      setGoal(d, 0, 0);
-    }
-    else
-      setGoal(1, 0, 0);
-
+    float d = atof(buffer + 2);
+    setGoal(d, 0, 0);
     startGoToGoal();
   }
 
   else if (ch0 == 's' && ch1 == 'm') //simulate mode
   {
     int val = atoi(buffer + 2);
+    SetSimulateMode(val);
 
-    if (val == 1)
-      SetSimulateMode(true);
-    else
-      SetSimulateMode(false);
+    //     if (val == 1)
+    //         SetSimulateMode(true);
+    // else
+    //   SetSimulateMode(false);
   }
   else if (ch0 == 'i' && ch1 == 'o') //ignore atObstacle
   {
     int val = atoi(buffer + 2);
-    if (val == 1)
-      SetIgnoreObstacle(true);
-    else
-      SetIgnoreObstacle(false);
+    SetIgnoreObstacle(val);
+
+    // if (val == 1)
+    //   SetIgnoreObstacle(true);
+    // else
+    //   SetIgnoreObstacle(false);
   }
 
   else if (ch0 == 'r' && ch0 == 's') //RESET
@@ -271,6 +241,13 @@ void processCommand(char *buffer, int bufferLen)
   }
 
 #if CAR_TYPE == BALANCE_CAR
+
+  else if (ch0 == 's' && ch1 == 'b') //start balance
+  {
+    Serial.println("Start balance!");
+    startBalance();
+  }
+
   else if (ch0 == 'b') //setting  balance values
   {
     double val;
@@ -397,33 +374,12 @@ void CalibrateIMU()
 #endif
 */
 
-void printMenu()
+void printCountInfo()
 {
-
-  return;
-
-  //  Serial.println(F("\r\n========================================== Menu ==========================================\r\n"));
-  //  Serial.println(F("mu\t\t\t\tSend to show this menu\r\n"));
-  //  Serial.println(F("OF;\t\t\t\tSend to Stop. Send 'ON' again to continue\r\n"));
-  //
-  //  Serial.println(F("GP;\t\t\t\tGet PID values"));
-  //  Serial.println(F("GS;\t\t\t\tGet settings values"));
-  //  Serial.println(F("GI;\t\t\t\tGet info values\r\n"));
-  //
-  //  Serial.println(F("SP,Kp;\t\t\t\tUsed to set the Kp value"));
-  //  Serial.println(F("SI,Ki;\t\t\t\tUsed to set the Ki value"));
-  //  Serial.println(F("SD,Kd;\t\t\t\tUsed to set the Kd value"));
-  //  Serial.println(F("ST,targetAngle;\t\t\tUsed to set the target angle"));
-  //  Serial.println(F("SA,angle;\t\t\tUsed to set the maximum controlling angle"));
-  //  Serial.println(F("SU,value;\t\t\tUsed to set the maximum turning value"));
-  //  Serial.println(F("SB,value;\t\t\tUsed to set the back to spot value (true = 1, false = 0)\r\n"));
-  //
-  //  Serial.println(F("IB;\t\t\t\tStart sending IMU values"));
-  //  Serial.println(F("IS;\t\t\t\tStop sending IMU values"));
-  //
-  //  Serial.println(F("RB;\t\t\t\tStart sending report values"));
-  //  Serial.println(F("RS;\t\t\t\tStop sending report values\r\n"));
-  //
-  //  Serial.println(F("CS;\t\t\t\tSend stop command"));
-  //  Serial.println(F("\r\n==========================================================================================\r\n"));
+  Serial.print("C1=");
+  Serial.print(count1);
+  Serial.print(", C2=");
+  Serial.println(count2);
+  Serial.print("time:");
+  Serial.println(millis());
 }

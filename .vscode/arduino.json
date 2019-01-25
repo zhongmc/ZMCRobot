@@ -2,5 +2,6 @@
     "sketch": "ZMCRobot.ino",
     "board": "Intel:arc32:arduino_101",
     "output": "../build",
-    "port": "COM3"
+    "port": "COM3",
+    "programmer": "AVR ISP"
 }

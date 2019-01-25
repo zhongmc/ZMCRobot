@@ -24,6 +24,7 @@ Supervisor::Supervisor()
   robot.setIRSensorType(GP2Y0A21);
 
   robot.setHaveIrSensor(0, false);
+  robot.setHaveIrSensor(1, false);
   robot.setHaveIrSensor(2, false);
   robot.setHaveIrSensor(3, false);
   robot.setHaveIrSensor(4, false);
@@ -32,6 +33,11 @@ Supervisor::Supervisor()
   mIgnoreObstacle = false;
 
   danger = false;
+}
+
+void Supervisor::setHaveIRSensor(int idx, bool val)
+{
+  robot.setHaveIrSensor(idx, val);
 }
 
 void Supervisor::updateSettings(SETTINGS settings)
@@ -58,6 +64,8 @@ void Supervisor::updateSettings(SETTINGS settings)
 SETTINGS Supervisor::getSettings(byte settingsType)
 {
   SETTINGS settings;
+
+  settings.sType = settingsType;
 
   settings.atObstacle = d_at_obs;
   settings.unsafe = d_unsafe;
@@ -149,7 +157,7 @@ void Supervisor::reset(long leftTicks, long rightTicks)
 void Supervisor::execute(long left_ticks, long right_ticks, double dt)
 {
 
-  uint32_t timer = micros();
+  long startTime = micros();
 
   if (mSimulateMode)
     robot.updateState((long)m_left_ticks, (long)m_right_ticks, dt);
@@ -238,32 +246,14 @@ void Supervisor::execute(long left_ticks, long right_ticks, double dt)
   pwm.pwm_l = (int)robot.vel_l_to_pwm(mVel.vel_l);
   pwm.pwm_r = (int)robot.vel_r_to_pwm(mVel.vel_r);
 
-  Serial.print(mVel.vel_l);
-  Serial.print(",");
-  Serial.print(mVel.vel_r);
-  Serial.print(",");
-  Serial.print(pwm.pwm_l);
-  Serial.print(",");
-  Serial.println(pwm.pwm_r);
-
+  // Serial.print(mVel.vel_l);
   // Serial.print(",");
+  // Serial.print(mVel.vel_r);
+  // Serial.print(",");
+  // Serial.print(pwm.pwm_l);
+  // Serial.print(",");
+  // Serial.println(pwm.pwm_r);
 
-/*
-  Serial.print(m_output.v);
-  Serial.print(",");
-
-  Serial.print(v);
-  Serial.print(",");
-
-  Serial.print(vel.vel_l);
-  Serial.print(",");
-  Serial.print(vel.vel_r);
-
-  Serial.print(pwm.pwm_l);
-  Serial.print(",");
-  Serial.println(pwm.pwm_r);
-
-*/
 #ifdef _DEBUG_
   Serial.print(robot.x);
   Serial.print(",");
@@ -301,7 +291,7 @@ void Supervisor::execute(long left_ticks, long right_ticks, double dt)
 
   // uint32_t nowMicros = micros();
 
-  execTime = micros() - timer;
+  execTime = micros() - startTime;
 
   //    Serial.print( nowMicros - timer);
   //    Serial.print(",");

@@ -3,17 +3,10 @@
 
 SlidingMode::SlidingMode()
 {
-  Kp = 5;
-  Ki = 0.01;
-  Kd = 0.1;
-  lastError = 0;
-  lastErrorIntegration = 0;
 }
 
 void SlidingMode::reset()
 {
-  lastError = 0;
-  lastErrorIntegration = 0;
 }
 
 void SlidingMode::execute(Robot *robot, Input *input, Output *output, double dt)

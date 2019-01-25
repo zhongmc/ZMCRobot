@@ -1,8 +1,6 @@
 #include "Robot.h"
 #include "ZMCRobot.h"
 
-//#define PI 3.141592653589793
-
 extern double ultrasonicDistance;
 
 Robot::Robot()
@@ -11,10 +9,10 @@ Robot::Robot()
   init(0.065 / 2, 0.125, 20, 20, 40, 200, GP2Y0A41);
 }
 
-Robot::Robot(double R, double L, double ticksr_l, double ticksr_r, double minRpm, double maxRpm)
-{
-  init(R, L, ticksr_l, ticksr_r, minRpm, maxRpm, GP2Y0A41);
-}
+// Robot::Robot(double R, double L, double ticksr_l, double ticksr_r, double minRpm, double maxRpm)
+// {
+//   init(R, L, ticksr_l, ticksr_r, minRpm, maxRpm, GP2Y0A41);
+// }
 
 void Robot::init(double R, double L, double ticksr_l, double ticksr_r, double minRpm, double maxRpm, SENSOR_TYPE sensorType)
 {
@@ -122,8 +120,8 @@ void Robot::updateState(long left_ticks, long right_ticks, double dt)
   vel_l = ((double)abs(left_ticks - prev_left_ticks) / dt) / (double)ticks_per_rev_l;
   vel_r = ((double)abs(right_ticks - prev_right_ticks) / dt) / (double)ticks_per_rev_r;
 
-  vel_l = 2 * 3.14159 * vel_l;
-  vel_r = 2 * 3.14159 * vel_r;
+  vel_l = 2 * PI * vel_l;
+  vel_r = 2 * PI * vel_r;
 
   d_left = (left_ticks - prev_left_ticks) * m_per_tick_l;
   d_right = (right_ticks - prev_right_ticks) * m_per_tick_r;
@@ -283,8 +281,8 @@ Output Robot::diff_to_uni(double vel_l, double vel_r)
   Output out;
   if (vel_l + vel_r == 0)
   {
-    Serial.println("div by o...in robot 1");
-    out.v = 0.5;
+    // Serial.println("div by o...in robot 1");
+    out.v = 0.3;
     return out;
   }
   else
@@ -292,7 +290,7 @@ Output Robot::diff_to_uni(double vel_l, double vel_r)
 
   if (vel_r - vel_l == 0)
   {
-    Serial.println("div by o...in robot 2");
+    // Serial.println("div by o...in robot 2");
     out.w = PI / 2;
   }
   else
