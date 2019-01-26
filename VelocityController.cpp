@@ -10,6 +10,7 @@ VelocityController::VelocityController()
   lastErrorIntegration = 0;
   mTheta = 0;
   mW = 0;
+  count = 0;
 }
 
 void VelocityController::reset()
@@ -22,12 +23,16 @@ void VelocityController::reset()
 void VelocityController::setGoal(double v, double theta, double curTheta)
 {
 
-    mTheta = curTheta;
-    mW = theta;
+  mTheta = curTheta;
+  mW = theta;
 
-    lastErrorIntegration = 0;
-    lastError = 0;
+  if (mW == 0)
+  {
+    Serial.println("zero mw!");
+  }
 
+  lastErrorIntegration = 0;
+  lastError = 0;
 }
 
 void VelocityController::execute(Robot *robot, Input *input, Output *output, double dt)
@@ -44,11 +49,15 @@ void VelocityController::execute(Robot *robot, Input *input, Output *output, dou
   if (mW != 0) //转弯，控制角速度？
   {
     output->v = input->v;
-    e = mW/dt - robot->w;
+
+    if (output->v == 0)
+      e = mW - robot->w;
+    else
+      e = mW / 4 - robot->w;
 
     e_I = lastErrorIntegration + e * dt;
     e_D = (e - lastError) / dt;
-    w = 10 * e  + 0.1 * e_I; // + 0.5 * e_D;
+    w = Kp * e + Ki * e_I; // + 0.5 * e_D;
 
     lastErrorIntegration = e_I;
     if (abs(lastErrorIntegration) > 100)
@@ -56,6 +65,16 @@ void VelocityController::execute(Robot *robot, Input *input, Output *output, dou
 
     output->w = w;
 
+    count++;
+    if (count > 3)
+    {
+      Serial.print(input->v);
+      Serial.print(", ");
+      Serial.print(e);
+      Serial.print(", ");
+      Serial.println(w);
+      count = 0;
+    }
     return;
     // e = mW;
     // p = 10;

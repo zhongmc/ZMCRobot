@@ -32,7 +32,10 @@ void DriveSupervisor::updateSettings(SETTINGS settings)
   }
 
   if (settings.sType == 0 || settings.sType == 1)
+  {
+    robot.updatePID(settings);
     m_Controller.updateSettings(settings);
+  }
 }
 
 void DriveSupervisor::init()
@@ -57,7 +60,12 @@ void DriveSupervisor::setGoal(double v, double theta)
   Serial.print("Set drive goal to: ");
   Serial.print(v);
   Serial.print(",");
-  Serial.println(theta);
+  Serial.print(theta);
+  Serial.print("; ");
+  Serial.print(curTheta);
+  Serial.print(",");
+  Serial.print(mTheta);
+
   m_Controller.setGoal(v, theta, mTheta);
 }
 
@@ -88,6 +96,19 @@ void DriveSupervisor::reset(long leftTicks, long rightTicks)
   }
   else
     robot.reset(leftTicks, rightTicks);
+}
+
+//用于阶跃响应测试
+void DriveSupervisor::updateRobot(long left_ticks, long right_ticks, int pwm, double dt)
+{
+  if (mSimulateMode)
+  {
+    robot.updateState((long)m_left_ticks, (long)m_right_ticks, dt);
+    m_left_ticks = m_left_ticks + robot.pwm_to_ticks_l(pwm, dt);
+    m_right_ticks = m_right_ticks + robot.pwm_to_ticks_r(pwm, dt);
+  }
+  else
+    robot.updateState(left_ticks, right_ticks, dt);
 }
 
 void DriveSupervisor::execute(long left_ticks, long right_ticks, double dt)
@@ -234,4 +255,10 @@ void DriveSupervisor::getIRDistances(double dis[5])
   {
     dis[i] = irSensors[i]->distance;
   }
+}
+
+void DriveSupervisor::getRobotVel(double dis[5])
+{
+  dis[0] = robot.vel_l;
+  dis[1] = robot.vel_r;
 }

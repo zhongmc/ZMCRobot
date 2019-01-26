@@ -47,6 +47,9 @@ typedef struct
   double dfw;
   double velocity;
   int max_rpm, min_rpm;
+  //轮子半径，轮距
+  double radius, length;
+
   int pwm_diff;
   int max_pwm, pwm_zero;
   double angleOff, wheelSyncKp;
@@ -56,9 +59,8 @@ class Robot
 {
 public:
   Robot();
-  Robot(double R, double L, double ticksr_l, double ticksr_r, double maxRpm, double minRpm);
+  // Robot(double R, double L, double ticksr_l, double ticksr_r, double maxRpm, double minRpm);
 
-  
   double x, y, theta, w;
   double velocity;
 
@@ -94,6 +96,7 @@ public:
   void setIRSensorType(SENSOR_TYPE sensorType);
 
   void updateSettings(SETTINGS settings);
+  void updatePID(SETTINGS pids);
 
   void getRobotInfo();
 
@@ -110,6 +113,8 @@ public:
   double max_vel, min_vel;
   double max_v, min_v;
   double max_w, min_w;
+
+  double vel_l, vel_r;
 
   double angle;
   double gyro;

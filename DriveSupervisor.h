@@ -19,6 +19,8 @@ class DriveSupervisor
 public:
   DriveSupervisor();
   void execute(long left_ticks, long right_ticks, double dt);
+  void updateRobot(long left_ticks, long right_ticks, int pwm, double dt);
+
   void reset(long leftTicks, long rightTicks);
   void resetRobot();
   void setGoal(double v, double w);
@@ -49,6 +51,8 @@ public:
   }
 
   void getIRDistances(double dis[5]);
+  void getRobotVel(double dis[5]);
+
   Position getRobotPosition();
 
   void updateSettings(SETTINGS settings);

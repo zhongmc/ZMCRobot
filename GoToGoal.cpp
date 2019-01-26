@@ -8,12 +8,16 @@ GoToGoal::GoToGoal()
   Kd = 0.01;
   lastError = 0;
   lastErrorIntegration = 0;
+  lastVE = 0;
+  lastVEI = 0;
 }
 
 void GoToGoal::reset()
 {
   lastError = 0;
   lastErrorIntegration = 0;
+  lastVE = 0;
+  lastVEI = 0;
 }
 
 void GoToGoal::execute(Robot *robot, Input *input, Output *output, double dt)
@@ -40,19 +44,28 @@ void GoToGoal::execute(Robot *robot, Input *input, Output *output, double dt)
 
 #endif
 
-  output->v = input->v;
-
   double d = sqrt(pow(u_x, 2) + pow(u_y, 2));
   output->v = input->v;
 
-  if (d < 0.1) //slow down
+  if (d < 0.02) //slow down
   {
-    output->v = 4 * d;
+    output->v = 0;
   }
-  else
+  else if (d < 0.5) //target controll
   {
-    output->v = input->v / (1 + 10 * abs(theta_g - robot->theta));
+    double vei = lastVEI + d * dt;
+    double ved = (d - lastVE) / dt;
+    output->v = Kp * d / 20.0 + Kd * ved; // 不能有超调
+    lastVEI = vei;
+    lastVE = d;
   }
+
+  // Serial.print(d);
+  // Serial.print(",");
+  // Serial.print(output->v);
+  // Serial.print(",");
+  // Serial.print(w);
+  // Serial.print(",");
 
   output->w = w;
   lastError = e;
