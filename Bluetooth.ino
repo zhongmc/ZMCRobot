@@ -23,6 +23,8 @@ extern bool openDebug;            // = false;
 extern byte settingsReqQueue[8];
 extern short queueLen; // = 0;
 
+extern long count1, count2;
+
 BLEPeripheral blePeripheral;
 // BLE Peripheral Device (the board you're programming)
 BLEService zmcRobotService("3A37"); // BLE Heart Rate Service
@@ -208,6 +210,10 @@ void driveCharacteristicWritten(BLECentral &central, BLECharacteristic &characte
     float d = atof((char *)(data + 2));
     Serial.print("m gtg:");
     Serial.println(d);
+
+    count1 = 0;
+    count2 = 0;
+    supervisor.reset(0, 0);
 
     setGoal(d, 0, 0);
     startGoToGoal();

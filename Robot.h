@@ -100,6 +100,8 @@ public:
 
   void getRobotInfo();
 
+    void readIRSensors();
+
   double wheel_radius;
   double wheel_base_length;
 
@@ -130,7 +132,7 @@ private:
   long prev_left_ticks, prev_right_ticks;
   IRSensor *irSensors[5];
 
-  void readIRSensors();
+
 };
 
 #endif /* _ROBOT_H_ */

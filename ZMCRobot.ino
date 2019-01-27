@@ -68,6 +68,7 @@ byte settingsReqQueue[8];
 short queueLen = 0;
 
 short testState = 0; //1 turnAround, 2, step Resopnse
+int testPWM;
 
 extern long count1, count2;
 extern int comDataCount;
@@ -303,14 +304,14 @@ void loop()
 
     else
     {
-      for (int i = 0; i < 5; i++)
-      {
-        irDistance[i] = irSensor.readDistance(1 + i);
-        //delay(5);
-      }
-      if (ultrasonicDistance < MAX_ULTRASONIC_DIS) //irDistance[2] )
-        irDistance[2] = ultrasonicDistance;
+      // for (int i = 0; i < 5; i++)
+      // {
+      //   irDistance[i] = irSensor.readDistance(1 + i);
+      // }
+      // if (ultrasonicDistance < MAX_ULTRASONIC_DIS) //irDistance[2] )
+      //   irDistance[2] = ultrasonicDistance;
 
+      supervisor.readIRDistances(irDistance);
       sendRobotStateValue(1, pos, irDistance, batteryVoltage);
     }
 
@@ -370,8 +371,8 @@ void loop()
 
 void setGoal(double x, double y, int theta)
 {
-  count1 = 0;
-  count2 = 0;
+  // count1 = 0;
+  // count2 = 0;
 
   supervisor.setGoal(x, y, theta);
 }
@@ -601,15 +602,22 @@ void startTurnAround(int pwm)
     return;
   testState = 1;
 
-  count1 = 0;
+ 
   count2 = 0;
   Serial.print("Start turn around test: ");
   Serial.println(pwm);
   testMillisPrev = millis();
+  testPWM = pwm;
   if (pwm > 0)
+  {
+    count1 = 0;
     MoveLeftMotor(pwm);
+  }
   else
+  {
+    count2 = 0;
     MoveRightMotor(-pwm);
+  }
 }
 
 //启动阶跃响应测试
@@ -650,12 +658,12 @@ void checkTurnAroundState()
     Serial.print(",");
     Serial.println(c2);
 
-    if (c1 > 1676 || c2 > 1828)
+    if ((testPWM >0 && c1 > 1740) || ( testPWM < 0 && c2 > 1850) )
     {
       stopRobot();
       testState = 0; //over
     }
-
+  
     testMillisPrev = curMillis;
   }
 }

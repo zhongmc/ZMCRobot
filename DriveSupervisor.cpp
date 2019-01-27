@@ -16,6 +16,12 @@ DriveSupervisor::DriveSupervisor()
 
   robot.setIRSensorType(GP2Y0A21);
 
+  robot.setHaveIrSensor(0, false);
+  robot.setHaveIrSensor(1, true);
+  robot.setHaveIrSensor(2, false);
+  robot.setHaveIrSensor(3, true);
+  robot.setHaveIrSensor(4, false);
+
   mSimulateMode = false;
   mIgnoreObstacle = false;
 

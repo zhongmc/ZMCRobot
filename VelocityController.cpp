@@ -50,31 +50,31 @@ void VelocityController::execute(Robot *robot, Input *input, Output *output, dou
   {
     output->v = input->v;
 
-    if (output->v == 0)
+    // if (output->v == 0)
+    //   e = mW - robot->w;
+    // else
       e = mW - robot->w;
-    else
-      e = mW / 4 - robot->w;
 
     e_I = lastErrorIntegration + e * dt;
     e_D = (e - lastError) / dt;
-    w = Kp * e + Ki * e_I; // + 0.5 * e_D;
+    w = Kp * e + Ki * e_I + Kd * e_D; // + 0.5 * e_D;
 
     lastErrorIntegration = e_I;
-    if (abs(lastErrorIntegration) > 100)
+    if (abs(lastErrorIntegration) > 10)
       lastErrorIntegration = 0;
 
     output->w = w;
 
-    count++;
-    if (count > 3)
-    {
-      Serial.print(input->v);
-      Serial.print(", ");
-      Serial.print(e);
-      Serial.print(", ");
-      Serial.println(w);
-      count = 0;
-    }
+    // count++;
+    // if (count > 3)
+    // {
+    //   Serial.print(input->v);
+    //   Serial.print(", ");
+    //   Serial.print(e);
+    //   Serial.print(", ");
+    //   Serial.println(w);
+    //   count = 0;
+    // }
     return;
     // e = mW;
     // p = 10;
@@ -89,7 +89,7 @@ void VelocityController::execute(Robot *robot, Input *input, Output *output, dou
   e_D = (e - lastError) / dt;
   w = Kp * e + Ki * e_I + Kd * e_D;
   lastErrorIntegration = e_I;
-  if (abs(lastErrorIntegration) > 100)
+  if (abs(lastErrorIntegration) > 10)
     lastErrorIntegration = 0;
 
     // Serial.print(mTheta);

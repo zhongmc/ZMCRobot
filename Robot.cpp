@@ -228,10 +228,12 @@ void Robot::getRobotInfo()
   else
     Serial.println("IR GP2Y0A21 d:");
 
+  readIRSensors();
+
   for (int i = 0; i < 5; i++)
   {
-    if (haveIrSensor[i])
-      irSensors[i]->readPosition();
+    // if (haveIrSensor[i])
+    //   irSensors[i]->readPosition();
     Serial.print(irSensors[i]->distance);
     Serial.print(",");
   }

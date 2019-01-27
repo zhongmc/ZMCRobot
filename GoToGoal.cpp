@@ -47,7 +47,7 @@ void GoToGoal::execute(Robot *robot, Input *input, Output *output, double dt)
   double d = sqrt(pow(u_x, 2) + pow(u_y, 2));
   output->v = input->v;
 
-  if (d < 0.02) //slow down
+  if (d < 0.03) //slow down
   {
     output->v = 0;
   }

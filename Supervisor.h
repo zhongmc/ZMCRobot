@@ -82,6 +82,8 @@ public:
   Vector m_Goal;
 
   void getIRDistances(double dis[5]);
+  void readIRDistances(double dis[5]);
+  
   Position getRobotPosition();
 
   void init();

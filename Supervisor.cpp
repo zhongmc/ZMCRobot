@@ -24,9 +24,9 @@ Supervisor::Supervisor()
   robot.setIRSensorType(GP2Y0A21);
 
   robot.setHaveIrSensor(0, false);
-  robot.setHaveIrSensor(1, false);
+  robot.setHaveIrSensor(1, true);
   robot.setHaveIrSensor(2, false);
-  robot.setHaveIrSensor(3, false);
+  robot.setHaveIrSensor(3, true);
   robot.setHaveIrSensor(4, false);
 
   mSimulateMode = false;
@@ -109,6 +109,7 @@ void Supervisor::resetRobot()
   robot.y = 0;
   robot.theta = 0;
 
+  
   d_prog = 20;
   m_GoToGoal.reset();
   m_AvoidObstacle.reset();
@@ -128,6 +129,11 @@ void Supervisor::resetRobot()
 
 void Supervisor::reset(long leftTicks, long rightTicks)
 {
+
+  // robot.x = 0;
+  // robot.y = 0;
+  // robot.theta = 0;
+
   d_prog = 20;
   m_GoToGoal.reset();
   m_AvoidObstacle.reset();
@@ -590,4 +596,15 @@ void Supervisor::getIRDistances(double dis[5])
   {
     dis[i] = irSensors[i]->distance;
   }
+}
+
+void Supervisor::readIRDistances(double dis[5])
+{
+    robot.readIRSensors();
+  IRSensor **irSensors = robot.getIRSensors();
+  for (int i = 0; i < 5; i++)
+  {
+    dis[i] = irSensors[i]->distance;
+  }
+
 }

@@ -3,12 +3,17 @@
 RearDriveRobot::RearDriveRobot()
 {
   //R, L, ticksr_l, ticksr_r, minRpm, maxRpm, GP2Y0A41);
-  init(0.03181, 0.17544, 330, 360, 80, 150, GP2Y0A41); //0.065/2 0.15
+  init(0.0325, 0.1785, 330, 360, 80, 150, GP2Y0A41); //0.0325 0.1785； 0.0325， 0.156
 
-  mPIDSettings.kp = 20; //25;  //20 0.5 2
-  mPIDSettings.ki = 0.01;
-  mPIDSettings.kd = 0.5;
+  mPIDSettings.kp = 5; //25;  //20 0.5 2; 2019-01-26:   5, 0.02, 0.9; 5, 0.05, 1.2; 5,0.08,1.2
+  mPIDSettings.ki = 0.08;
+  mPIDSettings.kd = 1.2;
 }
+
+
+
+
+
 
 Vel RearDriveRobot::ensure_w(double v, double w)
 {
@@ -37,11 +42,21 @@ Vel RearDriveRobot::ensure_w(double v, double w)
     {
       vel_rl_min = vel_d.vel_r;
       vel_rl_max = vel_d.vel_l;
+      if( vel_rl_max - vel_rl_min > min_vel )  //限制转弯角速度
+      {
+        vel_d.vel_l = vel_rl_min + min_vel;
+        vel_rl_max = vel_d.vel_l;
+      }
     }
     else
     {
       vel_rl_min = vel_d.vel_l;
       vel_rl_max = vel_d.vel_r;
+      if( vel_rl_max - vel_rl_min > min_vel )  //限制转弯角速度
+      {
+        vel_d.vel_r = vel_rl_min + min_vel;
+        vel_rl_max = vel_d.vel_r;
+      }
     }
 
     if (vel_rl_max > max_vel)
@@ -49,10 +64,10 @@ Vel RearDriveRobot::ensure_w(double v, double w)
       vel.vel_r = vel_d.vel_r - (vel_rl_max - max_vel);
       vel.vel_l = vel_d.vel_l - (vel_rl_max - max_vel);
     }
-    else if (vel_rl_min < min_vel)
+    else if (vel_rl_min < 0) // min_vel)
     {
-      vel.vel_r = vel_d.vel_r + (min_vel - vel_rl_min); //- vel_rl_min; //(min_vel - vel_rl_min);
-      vel.vel_l = vel_d.vel_l + (min_vel - vel_rl_min); //- vel_rl_min; //(min_vel - vel_rl_min);
+      vel.vel_r = vel_d.vel_r - vel_rl_min; // + (min_vel - vel_rl_min); 
+      vel.vel_l = vel_d.vel_l  - vel_rl_min; // + (min_vel - vel_rl_min); 
     }
     else
     {
@@ -69,36 +84,25 @@ Vel RearDriveRobot::ensure_w(double v, double w)
   else
   {
     vel = uni_to_diff(0, w);
-    if (abs(vel.vel_l) < min_vel)
+
+    if( vel.vel_l < 0 )
     {
-      if (vel.vel_l > 0)
-      {
-        vel.vel_l = min_vel;
-        vel.vel_r = -min_vel;
-      }
-      else
-      {
-        vel.vel_l = -min_vel;
-        vel.vel_r = min_vel;
-      }
+      vel.vel_l = 0;
+      vel.vel_r = min_vel + 0.5;
     }
-    else if (abs(vel.vel_l) > (min_vel + max_vel) / 2.0)
+    else
     {
-      double ve = (min_vel + max_vel) / 2.0;
-      if (vel.vel_l > 0)
-      {
-        vel.vel_l = ve;
-        vel.vel_r = -ve;
-      }
-      else
-      {
-        vel.vel_l = -ve;
-        vel.vel_r = ve;
-      }
+      vel.vel_r = 0;
+       vel.vel_r = min_vel + 0.5;
     }
+    
   }
   return vel;
 }
+
+
+
+
 
 double RearDriveRobot::vel_l_to_pwm(double vel)
 {

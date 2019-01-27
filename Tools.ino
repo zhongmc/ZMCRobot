@@ -209,6 +209,12 @@ void processCommand(char *buffer, int bufferLen)
   }
   else if (ch0 == 'g' && ch1 == 'g') //go to goal
   {
+    
+    count1 = 0;
+    count2 = 0;
+
+    supervisor.reset(0, 0);
+
     float d = atof(buffer + 2);
     setGoal(d, 0, 0);
     startGoToGoal();
