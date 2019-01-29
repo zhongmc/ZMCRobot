@@ -7,13 +7,8 @@ RearDriveRobot::RearDriveRobot()
 
   mPIDSettings.kp = 5; //25;  //20 0.5 2; 2019-01-26:   5, 0.02, 0.9; 5, 0.05, 1.2; 5,0.08,1.2
   mPIDSettings.ki = 0.08;
-  mPIDSettings.kd = 1.2;
+  mPIDSettings.kd = 0.02;
 }
-
-
-
-
-
 
 Vel RearDriveRobot::ensure_w(double v, double w)
 {
@@ -21,59 +16,48 @@ Vel RearDriveRobot::ensure_w(double v, double w)
 
   if (abs(v) > 0)
   {
-    double v_lim, w_lim;
-    v_lim = abs(v) / (1 + abs(w));
-    if (v_lim > max_v)
-      v_lim = max_v;
+    Vel vel_d = uni_to_diff(abs(v), w); // w_lim);
 
-    if (v_lim < min_v)
-      v_lim = min_v;
-
-    w_lim = abs(w);
-    if (w_lim > max_w)
-      w_lim = max_w;
-
-    if (w < 0)
-      w_lim = -1 * w_lim;
-
-    Vel vel_d = uni_to_diff(v_lim, w_lim);
     double vel_rl_max, vel_rl_min;
     if (vel_d.vel_l > vel_d.vel_r)
     {
       vel_rl_min = vel_d.vel_r;
       vel_rl_max = vel_d.vel_l;
-      if( vel_rl_max - vel_rl_min > min_vel )  //限制转弯角速度
-      {
-        vel_d.vel_l = vel_rl_min + min_vel;
-        vel_rl_max = vel_d.vel_l;
-      }
     }
     else
     {
       vel_rl_min = vel_d.vel_l;
       vel_rl_max = vel_d.vel_r;
-      if( vel_rl_max - vel_rl_min > min_vel )  //限制转弯角速度
-      {
-        vel_d.vel_r = vel_rl_min + min_vel;
-        vel_rl_max = vel_d.vel_r;
-      }
     }
 
     if (vel_rl_max > max_vel)
     {
       vel.vel_r = vel_d.vel_r - (vel_rl_max - max_vel);
       vel.vel_l = vel_d.vel_l - (vel_rl_max - max_vel);
+      if ((vel_rl_min - (vel_rl_max - max_vel)) < min_vel) //大拐弯？
+      {
+        vel = zeroMinVel(vel);
+      }
     }
-    else if (vel_rl_min < 0) // min_vel)
+    else if (vel_rl_min < min_vel)
     {
-      vel.vel_r = vel_d.vel_r - vel_rl_min; // + (min_vel - vel_rl_min); 
-      vel.vel_l = vel_d.vel_l  - vel_rl_min; // + (min_vel - vel_rl_min); 
+      vel.vel_r = vel_d.vel_r + (min_vel - vel_rl_min);
+      vel.vel_l = vel_d.vel_l + (min_vel - vel_rl_min);
+      // if (vel_rl_max + (min_vel - vel_rl_min) > max_vel) //大拐弯
+      // {
+      //   vel = zeroMinVel(vel);
+      // }
     }
     else
     {
       vel.vel_r = vel_d.vel_r;
       vel.vel_l = vel_d.vel_l;
     }
+
+    if (vel.vel_l > max_vel)
+      vel.vel_l = max_vel;
+    else if (vel.vel_r > max_vel)
+      vel.vel_r = max_vel;
 
     if (v < 0)
     {
@@ -84,25 +68,35 @@ Vel RearDriveRobot::ensure_w(double v, double w)
   else
   {
     vel = uni_to_diff(0, w);
-
-    if( vel.vel_l < 0 )
-    {
-      vel.vel_l = 0;
-      vel.vel_r = min_vel + 0.5;
-    }
-    else
-    {
-      vel.vel_r = 0;
-       vel.vel_r = min_vel + 0.5;
-    }
-    
+    vel = zeroMinVel(vel);
+    // if (vel.vel_l < 0)
+    // {
+    //   vel.vel_l = 0;
+    //   vel.vel_r = min_vel + 0.5;
+    // }
+    // else
+    // {
+    //   vel.vel_r = 0;
+    //   vel.vel_l = min_vel + 0.5;
+    // }
   }
   return vel;
 }
 
-
-
-
+Vel RearDriveRobot::zeroMinVel(Vel vel)
+{
+  if (vel.vel_l > vel.vel_r)
+  {
+    vel.vel_r = 0;
+    vel.vel_l = min_vel;
+  }
+  else
+  {
+    vel.vel_l = 0;
+    vel.vel_r = min_vel;
+  }
+  return vel;
+}
 
 double RearDriveRobot::vel_l_to_pwm(double vel)
 {

@@ -6,16 +6,16 @@
 
 Supervisor::Supervisor()
 {
-  d_fw = 0.25; //distance to follow wall
+  d_fw = 0.35; //distance to follow wall
   d_stop = 0.02;
-  d_at_obs = 0.18;
-  d_unsafe = 0.05;
+  d_at_obs = 0.40;
+  d_unsafe = 0.10;
   d_prog = 100;
 
   m_input.x_g = 1;
   m_input.y_g = 0;
   m_input.v = 0.4;
-  m_FollowWall.d_fw = 0.25;
+  m_FollowWall.d_fw = 0.35;
   m_FollowWall.dir = 0;
 
   //  robot.setVel2PwmParam(0, 6.4141, 14.924); // vel to pwm parameters
@@ -109,7 +109,6 @@ void Supervisor::resetRobot()
   robot.y = 0;
   robot.theta = 0;
 
-  
   d_prog = 20;
   m_GoToGoal.reset();
   m_AvoidObstacle.reset();
@@ -252,9 +251,9 @@ void Supervisor::execute(long left_ticks, long right_ticks, double dt)
   pwm.pwm_l = (int)robot.vel_l_to_pwm(mVel.vel_l);
   pwm.pwm_r = (int)robot.vel_r_to_pwm(mVel.vel_r);
 
-  // Serial.print(mVel.vel_l);
-  // Serial.print(",");
-  // Serial.print(mVel.vel_r);
+  Serial.print(mVel.vel_l);
+  Serial.print(",");
+  Serial.println(mVel.vel_r);
   // Serial.print(",");
   // Serial.print(pwm.pwm_l);
   // Serial.print(",");
@@ -600,11 +599,10 @@ void Supervisor::getIRDistances(double dis[5])
 
 void Supervisor::readIRDistances(double dis[5])
 {
-    robot.readIRSensors();
+  robot.readIRSensors();
   IRSensor **irSensors = robot.getIRSensors();
   for (int i = 0; i < 5; i++)
   {
     dis[i] = irSensors[i]->distance;
   }
-
 }

@@ -62,8 +62,8 @@ void GoToGoal::execute(Robot *robot, Input *input, Output *output, double dt)
 
   // Serial.print(d);
   // Serial.print(",");
-  // Serial.print(output->v);
-  // Serial.print(",");
+  Serial.print(output->v);
+  Serial.print(",");
   // Serial.print(w);
   // Serial.print(",");
 
@@ -74,8 +74,8 @@ void GoToGoal::execute(Robot *robot, Input *input, Output *output, double dt)
   // Serial.print(",");
   // Serial.print(robot->theta);
   // Serial.print(",");
-  // Serial.print(e);
-
-  // Serial.print(",");
-  // Serial.println(w);
+  Serial.print(e);
+  Serial.print(",");
+  Serial.print(w);
+  Serial.print(",");
 }

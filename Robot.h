@@ -74,7 +74,10 @@ public:
   void setHaveIrSensor(int idx, bool value)
   {
     if (idx >= 0 && idx < 5)
+    {
       haveIrSensor[idx] = value;
+      irSensors[idx]->setDistance(irSensors[idx]->getMaxDistance());
+    }
   }
 
   bool haveIrSensor[5];
@@ -100,7 +103,7 @@ public:
 
   void getRobotInfo();
 
-    void readIRSensors();
+  void readIRSensors();
 
   double wheel_radius;
   double wheel_base_length;
@@ -131,8 +134,6 @@ private:
   double m_per_tick_l, m_per_tick_r;
   long prev_left_ticks, prev_right_ticks;
   IRSensor *irSensors[5];
-
-
 };
 
 #endif /* _ROBOT_H_ */

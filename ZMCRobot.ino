@@ -522,10 +522,10 @@ void setDriveGoal(double v, double w)
 #if CAR_TYPE == DRIVE_CAR
   if (currentState == STATE_DRIVE)
   {
-    if (abs(v) < 0.001 && abs(w) < 0.01) //stop
+    if (abs(v) < 0.001 && abs(w) < 0.001) //stop
       stopRobot();
-    else
-      driveSupervisor.setGoal(v, w);
+    // else
+    driveSupervisor.setGoal(v, w);
   }
   else
   {
@@ -554,27 +554,30 @@ void processUltrasonic()
       if (ultrasonicDistance > MAX_ULTRASONIC_DIS)
         ultrasonicDistance = MAX_ULTRASONIC_DIS - 0.01;
       waitForEcho = false;
+      echoTime = 0;
     }
     else if (millis() - lastTrigTimer > 50)
     {
       waitForEcho = false;
-      //      Serial.println("ultrasonic No echo ...");
-      ultrasonicDistance = MAX_ULTRASONIC_DIS;
+      //      Serial.println("u ...");
+      ultrasonicDistance = 1.2; //MAX_ULTRASONIC_DIS;
     }
   }
   else
   {
     long curTime = millis();
-    if (curTime - lastTrigTimer < 20)
+    if (curTime - lastTrigTimer < 40)
       return;
     lastTrigTimer = curTime;
     waitForEcho = true;
+
     digitalWrite(ULTRASONIC_TRIG, HIGH); //trig the ultrosonic
-    //delayMicroseconds(2); //2us
-    for (int i = 0; i < 100; i++)
+
+    long curMicros = micros();
+    while (true) //10us pules
     {
-      int k;
-      k = i;
+      if (micros() - curMicros > 10)
+        break;
     }
     digitalWrite(ULTRASONIC_TRIG, LOW); //trig the ultrosonic
   }
@@ -602,7 +605,6 @@ void startTurnAround(int pwm)
     return;
   testState = 1;
 
- 
   count2 = 0;
   Serial.print("Start turn around test: ");
   Serial.println(pwm);
@@ -658,12 +660,12 @@ void checkTurnAroundState()
     Serial.print(",");
     Serial.println(c2);
 
-    if ((testPWM >0 && c1 > 1740) || ( testPWM < 0 && c2 > 1850) )
+    if ((testPWM > 0 && c1 > 1740) || (testPWM < 0 && c2 > 1850))
     {
       stopRobot();
       testState = 0; //over
     }
-  
+
     testMillisPrev = curMillis;
   }
 }
