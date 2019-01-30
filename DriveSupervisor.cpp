@@ -25,6 +25,9 @@ DriveSupervisor::DriveSupervisor()
   mSimulateMode = false;
   mIgnoreObstacle = false;
 
+  mTheta = 0;
+  curTheta = 0;
+
   danger = false;
 }
 
@@ -70,7 +73,7 @@ void DriveSupervisor::setGoal(double v, double theta)
   Serial.print("; ");
   Serial.print(curTheta);
   Serial.print(",");
-  Serial.print(mTheta);
+  Serial.println(mTheta);
 
   m_Controller.setGoal(v, theta, mTheta);
 }
@@ -88,8 +91,8 @@ void DriveSupervisor::resetRobot()
 
 void DriveSupervisor::reset(long leftTicks, long rightTicks)
 {
-  mTheta = 0;
-  curTheta = 0;
+  // mTheta = 0;
+  // curTheta = 0;
 
   m_Controller.reset();
   danger = false;
