@@ -163,12 +163,8 @@ void processCommand(char *buffer, int bufferLen)
   else if (ch0 == 'm' && ch1 == 'm') // move motor
   {
     int pwm = atoi(buffer + 2);
-
-    // Serial.print("Move motor: ");
-    // Serial.println(pwm);
-
-    printCountInfo();
-    MoveMotor(pwm);
+    motorSpeed(pwm);
+    MoveMotor(0);
   }
 
   else if (ch0 == 'm' && ch1 == 'l') // move left motor
@@ -187,6 +183,28 @@ void processCommand(char *buffer, int bufferLen)
     printCountInfo();
     MoveLeftMotor(pwm);
   }
+  else if (ch0 == 's' && ch1 == 'p') //speed test
+  {
+    int pwm0, pwm1, step = 0;
+    pwm0 = atoi(buffer + 2);
+    char *buf = strchr((buffer + 2), ',');
+    pwm1 = atoi(buf + 1);
+    buf = strchr((buf + 1), ',');
+    step = atoi(buf);
+
+    // sscanf((buffer + 2), "%d,%d,%d", &pwm0, &pwm1, &step);
+    Serial.print("SP:");
+    Serial.print(pwm0);
+    Serial.print(",");
+    Serial.print(pwm1);
+    Serial.print(",");
+    Serial.println(step);
+    if (step == 0)
+      step = 10;
+
+    speedTest(pwm0, pwm1, step);
+  }
+
   else if (ch0 == 'm' && ch1 == 'r') // move right motor
   {
     int pwm = atoi(buffer + 2);
@@ -209,7 +227,7 @@ void processCommand(char *buffer, int bufferLen)
   }
   else if (ch0 == 'g' && ch1 == 'g') //go to goal
   {
-    
+
     count1 = 0;
     count2 = 0;
 
@@ -382,10 +400,48 @@ void CalibrateIMU()
 
 void printCountInfo()
 {
-  Serial.print("C1=");
+  Serial.print(millis());
+  Serial.print(',');
   Serial.print(count1);
-  Serial.print(", C2=");
+  Serial.print(',');
   Serial.println(count2);
-  Serial.print("time:");
-  Serial.println(millis());
+
+  // Serial.print("C1=");
+  // Serial.print(count1);
+  // Serial.print(", C2=");
+  // Serial.println(count2);
+  // Serial.print("time:");
+  // Serial.println(millis());
+}
+
+void speedTest(int pwm0, int pwm1, int step)
+{
+  // long c1, c2, lt;
+  for (int i = pwm0; i < pwm1; i += step)
+  {
+    motorSpeed(i);
+  }
+  MoveMotor(0);
+}
+
+void motorSpeed(int pwm)
+{
+  long c1, c2, lt;
+  MoveMotor(pwm);
+  Serial.print(pwm);
+  Serial.print(',');
+  delay(300);
+  c1 = count1;
+  c2 = count2;
+  lt = millis();
+  delay(1000);
+
+  c1 = count1 - c1;
+  c2 = count2 - c2;
+  lt = millis() - lt;
+  Serial.print(lt);
+  Serial.print(',');
+  Serial.print(c1);
+  Serial.print(',');
+  Serial.println(c2);
 }

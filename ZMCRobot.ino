@@ -245,7 +245,7 @@ void loop()
   processUltrasonic();
 
   checkTurnAroundState();
-  checkStepResponseState();
+  // checkStepResponseState();
 
   unsigned long millisNow = millis();
   if (millisNow - millisPrev >= 40)
@@ -347,7 +347,7 @@ void loop()
       }
 
       batteryCounter = 0;
-      batteryVoltage = (double)analogRead(VOLT_IN_PIN) * 0.0352771; /// 65.7424242f;
+      batteryVoltage = (double)analogRead(VOLT_IN_PIN) * 0.0352771 + 0.2; /// 65.7424242f; 0.2 二极管压降
       // v = D * 3.3*(R1+R2)/(R2*1023);  R1 = 46.5 R2 = 4.68 V = d* 0.0352771;
       // VBAT is connected to analog input 5 which is not broken out. This is then connected to a 56k-15k voltage divider - 1023.0/(3.3/(15.0/(15.0+56.0))) = 63.050847458
 
@@ -605,7 +605,7 @@ void startTurnAround(int pwm)
     return;
   testState = 1;
 
-  count2 = 0;
+  // count2 = 0;
   Serial.print("Start turn around test: ");
   Serial.println(pwm);
   testMillisPrev = millis();
@@ -622,6 +622,35 @@ void startTurnAround(int pwm)
   }
 }
 
+void checkTurnAroundState()
+{
+  if (testState != 1)
+    return;
+
+  unsigned long curMillis = millis();
+  if (curMillis - testMillisPrev >= 100)
+  {
+    long c1, c2;
+    c1 = count1;
+    c2 = count2;
+
+    Serial.print(c1);
+    Serial.print(",");
+    Serial.println(c2);
+
+    if ((testPWM > 0 && c1 > 1600) || (testPWM < 0 && c2 > 1600))
+    {
+      stopRobot();
+      testState = 0; //over
+    }
+
+    testMillisPrev = curMillis;
+  }
+}
+
+/**
+ 
+ 
 //启动阶跃响应测试
 void startStepResponse(int pwm)
 {
@@ -644,31 +673,6 @@ void startStepResponse(int pwm)
   MoveMotor(100); //pwm
 }
 
-void checkTurnAroundState()
-{
-  if (testState != 1)
-    return;
-
-  unsigned long curMillis = millis();
-  if (curMillis - testMillisPrev >= 20)
-  {
-    long c1, c2;
-    c1 = count1;
-    c2 = count2;
-
-    Serial.print(c1);
-    Serial.print(",");
-    Serial.println(c2);
-
-    if ((testPWM > 0 && c1 > 1740) || (testPWM < 0 && c2 > 1850))
-    {
-      stopRobot();
-      testState = 0; //over
-    }
-
-    testMillisPrev = curMillis;
-  }
-}
 
 void checkStepResponseState()
 {
@@ -692,3 +696,4 @@ void checkStepResponseState()
     testMillisPrev = curMillis;
   }
 }
+*/

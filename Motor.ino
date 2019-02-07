@@ -130,7 +130,7 @@ void Code2()
 {
 #if MOTOR == DUAL_MOTOR
   int wheelDir = digitalRead(RIGHT_WHEEL_B);
-  if (wheelDir == HIGH)
+  if (wheelDir == LOW) //HIGH)
     count2++;
   else
     count2--;

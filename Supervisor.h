@@ -23,7 +23,7 @@ public:
   Supervisor();
   void execute(long left_ticks, long right_ticks, double dt);
 
-  void executeFollowWall(double dt);
+  // void executeFollowWall(double dt);
   void executeAvoidAndGotoGoal(double dt);
 
   void reset(long leftTicks, long rightTicks);
@@ -69,6 +69,12 @@ public:
     Serial.print(", c2:");
     Serial.println(m_right_ticks);
 
+    Serial.print("at ob:");
+    Serial.println(d_at_obs);
+    Serial.print(", ");
+    Serial.print("dfw:");
+    Serial.println(d_fw);
+
     Serial.print("exec time:");
     Serial.println(execTime);
     robot.getRobotInfo();
@@ -83,7 +89,7 @@ public:
 
   void getIRDistances(double dis[5]);
   void readIRDistances(double dis[5]);
-  
+
   Position getRobotPosition();
 
   void init();
@@ -98,6 +104,8 @@ private:
   void
   set_progress_point();
   void check_states();
+
+  void changeToFollowWall();
 
   bool progress_made;
   bool at_goal;

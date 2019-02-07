@@ -219,10 +219,10 @@ void driveCharacteristicWritten(BLECentral &central, BLECharacteristic &characte
     startGoToGoal();
   }
 
-  else if (cmd[0] == 'S' && cmd[1] == 'R') //step response
-  {
-    startStepResponse(90);
-  }
+  // else if (cmd[0] == 'S' && cmd[1] == 'R') //step response
+  // {
+  //   startStepResponse(90);
+  // }
   else if (cmd[0] == 'T' && cmd[1] == 'L') //turn around
   {
     startTurnAround(100);
