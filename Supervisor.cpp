@@ -14,7 +14,7 @@ Supervisor::Supervisor()
 
   m_input.x_g = 1;
   m_input.y_g = 0;
-  m_input.v = 0.4;
+  m_input.v = 0.3;
   m_FollowWall.d_fw = 0.3;
   m_FollowWall.dir = 0;
 
@@ -25,7 +25,7 @@ Supervisor::Supervisor()
 
   robot.setHaveIrSensor(0, true);
   robot.setHaveIrSensor(1, true);
-  robot.setHaveIrSensor(2, true);
+  robot.setHaveIrSensor(2, false);
   robot.setHaveIrSensor(3, true);
   robot.setHaveIrSensor(4, true);
 

@@ -67,9 +67,6 @@ bool openDebug = false;
 byte settingsReqQueue[8];
 short queueLen = 0;
 
-short testState = 0; //1 turnAround, 2, step Resopnse
-int testPWM;
-
 extern long count1, count2;
 extern int comDataCount;
 
@@ -152,7 +149,6 @@ void setup()
 
   //  Serial.println(sizeof(long));
 
-  testState = 0;
   comDataCount = 0;
   count1 = 0;
   count2 = 0;
@@ -243,9 +239,6 @@ void loop()
 
   //ultrasonic process
   processUltrasonic();
-
-  checkTurnAroundState();
-  // checkStepResponseState();
 
   unsigned long millisNow = millis();
   if (millisNow - millisPrev >= 40)
@@ -450,7 +443,8 @@ void SetSimulateMode(bool val)
 
 void SetIgnoreObstacle(bool igm)
 {
-  Serial.println("set ignore obstacle mode: " + igm);
+  Serial.print("set ignore obstacle mode: ");
+  Serial.println(igm);
   supervisor.mIgnoreObstacle = igm;
   driveSupervisor.mIgnoreObstacle = igm;
 }
@@ -597,103 +591,4 @@ void UltrasonicEcho()
     echoTime = micros() - trigTime;
 }
 
-unsigned long testMillisPrev;
-//启动转圈测试，以测定轮距
-void startTurnAround(int pwm)
-{
-  if (testState != 0)
-    return;
-  testState = 1;
 
-  // count2 = 0;
-  Serial.print("Start turn around test: ");
-  Serial.println(pwm);
-  testMillisPrev = millis();
-  testPWM = pwm;
-  if (pwm > 0)
-  {
-    count1 = 0;
-    MoveLeftMotor(pwm);
-  }
-  else
-  {
-    count2 = 0;
-    MoveRightMotor(-pwm);
-  }
-}
-
-void checkTurnAroundState()
-{
-  if (testState != 1)
-    return;
-
-  unsigned long curMillis = millis();
-  if (curMillis - testMillisPrev >= 100)
-  {
-    long c1, c2;
-    c1 = count1;
-    c2 = count2;
-
-    Serial.print(c1);
-    Serial.print(",");
-    Serial.println(c2);
-
-    if ((testPWM > 0 && c1 > 1600) || (testPWM < 0 && c2 > 1600))
-    {
-      stopRobot();
-      testState = 0; //over
-    }
-
-    testMillisPrev = curMillis;
-  }
-}
-
-/**
- 
- 
-//启动阶跃响应测试
-void startStepResponse(int pwm)
-{
-
-  if (currentState == STATE_STEP_RESP)
-    return;
-
-  if (currentState != STATE_IDLE)
-  {
-    stopRobot();
-  }
-
-  currentState = STATE_STEP_RESP;
-
-  count1 = 0;
-  count2 = 0;
-  Serial.print("Start Step response test: ");
-  Serial.println(pwm);
-  testMillisPrev = millis();
-  MoveMotor(100); //pwm
-}
-
-
-void checkStepResponseState()
-{
-  if (currentState != STATE_STEP_RESP)
-    return;
-
-  unsigned long curMillis = millis();
-  if (curMillis - testMillisPrev >= 20)
-  {
-    long c1, c2;
-    c1 = count1;
-    c2 = count2;
-    driveSupervisor.updateRobot(c1, c2, 90, 0.02);
-    double vels[5];
-    driveSupervisor.getRobotVel(vels);
-    c1 = (int)(vels[0] * 10000.0);
-    c2 = (int)(vels[1] * 10000.0);
-    Serial.print(c1);
-    Serial.print(",");
-    Serial.println(c2);
-    testMillisPrev = curMillis;
-  }
-}
-*/

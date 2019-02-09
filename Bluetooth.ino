@@ -225,11 +225,15 @@ void driveCharacteristicWritten(BLECentral &central, BLECharacteristic &characte
   // }
   else if (cmd[0] == 'T' && cmd[1] == 'L') //turn around
   {
-    startTurnAround(100);
+    turnAround(100);
   }
   else if (cmd[0] == 'T' && cmd[1] == 'R') //turn around
   {
-    startTurnAround(-100);
+    turnAround(-100);
+  }
+  else if( cmd[0] == 'P' && cmd[1] == 'I') //pid
+  {
+      setPID((char *)(data+2));
   }
 #else
   else if (cmd[0] == 'G' && cmd[1] == 'B') //start Balance mode

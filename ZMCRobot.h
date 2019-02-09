@@ -44,7 +44,8 @@ void processSetingsRequire();
 void sendRobotStateValue(byte stateType, Position pos, double irDistance[5], double voltage);
 void MoveMotor(int pwm);
 
-void startTurnAround(int pwm);
-void startStepResponse(int pwm);
+void turnAround( int pwm );
+void setPID(char *buffer);
+
 
 #endif

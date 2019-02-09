@@ -5,12 +5,71 @@ RearDriveRobot::RearDriveRobot()
   //R, L, ticksr_l, ticksr_r, minRpm, maxRpm, GP2Y0A41);
   // init(0.0325, 0.1785, 330, 360, 60, 150, GP2Y0A41); //0.0325 0.1785； 0.0325， 0.156
 
-  init(0.0330, 0.16, 390, 390, 50, 180, GP2Y0A41); //0.0325 0.1785； 0.0325， 0.156
-  mPIDSettings.kp = 10;                            //25;  //20 0.5 2; 2019-01-26:   5, 0.02, 0.9; 5, 0.05, 1.2; 5,0.08,1.2
+  // init(0.0330, 0.16, 390, 390, 50, 180, GP2Y0A41); 2019-02-09 蓝色轮子，有一边转弯差点
+  //0.0325 0.1785； 0.0325， 0.156
+  init(0.0313, 0.1631, 390, 390, 50, 180, GP2Y0A41);
+
+  mPIDSettings.kp = 5;                            //25;  //20 0.5 2; 2019-01-26:   5, 0.02, 0.9; 5, 0.05, 1.2; 5,0.08,1.2 2019-02-09 5, 0.01, 0.2
   mPIDSettings.ki = 0.01;
-  mPIDSettings.kd = 0.02;
+  mPIDSettings.kd = 0.2;
 }
 
+
+Vel RearDriveRobot::ensure_w(double v, double w)
+{
+  Vel vel;
+
+  if (abs(v) > 0)
+  {
+      if( abs(w) > 1.2 )
+      {
+        vel = uni_to_diff(v, w);
+        vel = zeroMinVel(vel);
+        return vel;
+      }
+
+      Vel vel_d = uni_to_diff(abs(v), w); // w_lim);
+
+      vel.vel_r = vel_d.vel_r;
+      vel.vel_l = vel_d.vel_l;
+
+    if (vel.vel_l > max_vel)
+      vel.vel_l = max_vel;
+    if (vel.vel_r > max_vel)
+      vel.vel_r = max_vel;
+
+    if( vel.vel_l < 0 )
+      vel.vel_l = 0;
+    if( vel.vel_r < 0 )
+      vel.vel_r = 0;
+
+    if (v < 0)
+    {
+      vel.vel_l = -vel.vel_l;
+      vel.vel_r = -vel.vel_r;
+    }
+  }
+  else
+  {
+    vel = uni_to_diff(0, w);
+    vel = zeroMinVel(vel);
+    // if (vel.vel_l < 0)
+    // {
+    //   vel.vel_l = 0;
+    //   vel.vel_r = min_vel + 0.5;
+    // }
+    // else
+    // {
+    //   vel.vel_r = 0;
+    //   vel.vel_l = min_vel + 0.5;
+    // }
+  }
+  return vel;
+}
+
+
+
+/*
 Vel RearDriveRobot::ensure_w(double v, double w)
 {
   Vel vel;
@@ -83,18 +142,18 @@ Vel RearDriveRobot::ensure_w(double v, double w)
   }
   return vel;
 }
-
+*/
 Vel RearDriveRobot::zeroMinVel(Vel vel)
 {
   if (vel.vel_l > vel.vel_r)
   {
     vel.vel_r = 0;
-    vel.vel_l = min(vel.vel_l, (min_vel + max_vel) / 2);
+    vel.vel_l = min( max(min_vel, vel.vel_l), (min_vel + 5));
   }
   else
   {
     vel.vel_l = 0;
-    vel.vel_r = min(vel.vel_r, (min_vel + max_vel) / 2);
+    vel.vel_r = min(max(min_vel, vel.vel_r), (min_vel + 5));
     //    vel.vel_r = min_vel;
   }
   return vel;

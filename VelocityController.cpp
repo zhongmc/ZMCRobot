@@ -29,10 +29,9 @@ void VelocityController::setGoal(double v, double theta, double curTheta)
   if (mW == 0)
   {
     Serial.println("zero mw!");
+    lastErrorIntegration = 0;
+    lastError = 0;
   }
-
-  lastErrorIntegration = 0;
-  lastError = 0;
 }
 
 void VelocityController::execute(Robot *robot, Input *input, Output *output, double dt)
@@ -57,7 +56,7 @@ void VelocityController::execute(Robot *robot, Input *input, Output *output, dou
 
     e_I = lastErrorIntegration + e * dt;
     e_D = (e - lastError) / dt;
-    w = Kp * e + Ki * e_I + Kd * e_D; // + 0.5 * e_D;
+    w = Kp * e + Kd * e_D + Ki * e_I;
 
     lastErrorIntegration = e_I;
     if (abs(lastErrorIntegration) > 10)
@@ -66,10 +65,10 @@ void VelocityController::execute(Robot *robot, Input *input, Output *output, dou
     output->w = w;
 
     // count++;
-    // if (count > 3)
+    // if (count > 2)
     // {
-    //   Serial.print(input->v);
-    //   Serial.print(", ");
+    //   // Serial.print(input->v);
+    //   // Serial.print(", ");
     //   Serial.print(e);
     //   Serial.print(", ");
     //   Serial.println(w);
@@ -91,6 +90,17 @@ void VelocityController::execute(Robot *robot, Input *input, Output *output, dou
   lastErrorIntegration = e_I;
   if (abs(lastErrorIntegration) > 10)
     lastErrorIntegration = 0;
+
+    // count++;
+    // if (count > 2)
+    // {
+    //   // Serial.print(input->v);
+    //   // Serial.print(", ");
+    //   Serial.print(e);
+    //   Serial.print(", ");
+    //   Serial.println(w);
+    //   count = 0;
+    // }
 
     // Serial.print(mTheta);
     // Serial.print(",");

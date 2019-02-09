@@ -16,11 +16,11 @@ DriveSupervisor::DriveSupervisor()
 
   robot.setIRSensorType(GP2Y0A21);
 
-  robot.setHaveIrSensor(0, false);
+  robot.setHaveIrSensor(0, true);
   robot.setHaveIrSensor(1, true);
   robot.setHaveIrSensor(2, false);
   robot.setHaveIrSensor(3, true);
-  robot.setHaveIrSensor(4, false);
+  robot.setHaveIrSensor(4, true);
 
   mSimulateMode = false;
   mIgnoreObstacle = false;
@@ -60,13 +60,13 @@ void DriveSupervisor::setGoal(double v, double theta)
 
   if (theta == 0 && curTheta != 0) //remain the current theta; 加速过程中会有晃动；保留初始角度？
   {
-    curTheta = 0;
     mTheta = robot.theta; //转弯结束，保留当前角度
   }
-  else
-    curTheta = theta;
 
-  Serial.print("Set drive goal to: ");
+  curTheta = theta;
+  m_Controller.setGoal(v, theta, mTheta);
+
+  Serial.print("SG:");
   Serial.print(v);
   Serial.print(",");
   Serial.print(theta);
@@ -75,7 +75,6 @@ void DriveSupervisor::setGoal(double v, double theta)
   Serial.print(",");
   Serial.println(mTheta);
 
-  m_Controller.setGoal(v, theta, mTheta);
 }
 
 void DriveSupervisor::resetRobot()

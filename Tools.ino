@@ -160,6 +160,21 @@ void processCommand(char *buffer, int bufferLen)
   {
     printCountInfo();
   }
+
+  else if (ch0 == 'm' && ch1 == 'l') // move left motor
+  {
+    int pwm = atoi(buffer + 2);
+    printCountInfo();
+    MoveLeftMotor(pwm);
+  }
+
+  else if (ch0 == 'm' && ch1 == 'r') // move right motor
+  {
+    int pwm = atoi(buffer + 2);
+    printCountInfo();
+    MoveRightMotor(pwm);
+  }
+
   else if (ch0 == 'm' && ch1 == 'm') // move motor
   {
     int pwm = atoi(buffer + 2);
@@ -167,21 +182,10 @@ void processCommand(char *buffer, int bufferLen)
     MoveMotor(0);
   }
 
-  else if (ch0 == 'm' && ch1 == 'l') // move left motor
+  else if( ch0 == 's' && ch1 == 'r') // step response
   {
-    int pwm = atoi(buffer + 2);
-    // Serial.print("Move left motor: ");
-    // Serial.println(pwm);
-
-    // Serial.print("C1=");
-    // Serial.print(count1);
-    // Serial.print(", C2=");
-    // Serial.println(count2);
-    // Serial.print("time:");
-    // Serial.println(millis());
-
-    printCountInfo();
-    MoveLeftMotor(pwm);
+    int pwm = atoi(buffer + 2 );
+    stepResponseTest( pwm );
   }
   else if (ch0 == 's' && ch1 == 'p') //speed test
   {
@@ -190,9 +194,8 @@ void processCommand(char *buffer, int bufferLen)
     char *buf = strchr((buffer + 2), ',');
     pwm1 = atoi(buf + 1);
     buf = strchr((buf + 1), ',');
-    step = atoi(buf);
+    step = atoi(buf+1);
 
-    // sscanf((buffer + 2), "%d,%d,%d", &pwm0, &pwm1, &step);
     Serial.print("SP:");
     Serial.print(pwm0);
     Serial.print(",");
@@ -204,26 +207,16 @@ void processCommand(char *buffer, int bufferLen)
 
     speedTest(pwm0, pwm1, step);
   }
-
-  else if (ch0 == 'm' && ch1 == 'r') // move right motor
+  else if( ch0 == 'p' && ch1 == 'i' ) //pid
   {
-    int pwm = atoi(buffer + 2);
-    // Serial.print("Move right motor: ");
-    // Serial.println(pwm);
 
-    // Serial.print("C1=");
-    // Serial.print(count1);
-    // Serial.print(", C2=");
-    // Serial.println(count2);
-    // Serial.print("current time:");
-    // Serial.println(millis());
-    printCountInfo();
-    MoveRightMotor(pwm);
+    setPID( buffer+2 );
   }
+
   else if (ch0 == 't' && ch1 == 'l') //turn around left/ right(-pwm) test
   {
     int pwm = atoi(buffer + 2);
-    startTurnAround(pwm);
+    turnAround(pwm);
   }
   else if (ch0 == 'g' && ch1 == 'g') //go to goal
   {
@@ -232,9 +225,16 @@ void processCommand(char *buffer, int bufferLen)
     count2 = 0;
 
     supervisor.reset(0, 0);
+    supervisor.resetRobot();
+    
+    float x = atof(buffer + 2);
+    float y = 0;
+    char *buf = strchr(buffer, ',');
+ 
+    if( buf != NULL )
+      y = atof( buf+1);
 
-    float d = atof(buffer + 2);
-    setGoal(d, 0, 0);
+    setGoal(x, y, 0);
     startGoToGoal();
   }
 
@@ -251,12 +251,12 @@ void processCommand(char *buffer, int bufferLen)
   else if (ch0 == 'i' && ch1 == 'o') //ignore atObstacle
   {
     int val = atoi(buffer + 2);
-    SetIgnoreObstacle(val);
+    // SetIgnoreObstacle(val);
 
-    // if (val == 1)
-    //   SetIgnoreObstacle(true);
-    // else
-    //   SetIgnoreObstacle(false);
+    if (val == 1)
+      SetIgnoreObstacle(true);
+    else
+      SetIgnoreObstacle(false);
   }
 
   else if (ch0 == 'r' && ch0 == 's') //RESET
@@ -444,4 +444,79 @@ void motorSpeed(int pwm)
   Serial.print(c1);
   Serial.print(',');
   Serial.println(c2);
+}
+
+void stepResponseTest( int pwm )
+{
+  Serial.print("SR: ");
+  Serial.println(pwm);
+  printCountInfo();
+  printCountInfo();
+  int count = 100;
+  while( count > 0 )
+  {
+    delay(20);
+    printCountInfo();
+  }
+  printCountInfo();
+  MoveMotor(0);
+}
+
+
+void turnAround( int pwm )
+{
+  Serial.print("TR:");
+  Serial.println( pwm );
+  if (pwm > 0)
+  {
+    count1 = 0;
+    MoveLeftMotor(pwm);
+  }
+  else
+  {
+    count2 = 0;
+    MoveRightMotor(-pwm);
+  }
+
+  while( true )
+  {
+   if ((pwm > 0 && count1 > 1700) || (pwm < 0 && count2 > 1700))
+    {
+      stopRobot();
+      break;
+    }
+    delay(50);
+  }
+
+  delay(100);
+
+  Serial.print(count1);
+  Serial.print(',');
+  Serial.println( count2 );
+}
+
+
+void setPID(char *buffer)
+{
+    double p,i,d;
+    p = atof((buffer));
+    char *buf = strchr(buffer, ',');
+    i = atof( (buf + 1));
+    buf = strchr((buf+1), ',');
+    d = atof( buf+1 );
+
+    Serial.print("PID:");
+    Serial.print(p);
+    Serial.print(",");
+    Serial.print(i);
+    Serial.print(",");
+    Serial.println(d);
+
+    SETTINGS settings;
+    settings.sType = 1;
+    settings.kp = p;
+    settings.ki = i;
+    settings.kd = d;
+    supervisor.updateSettings( settings );
+    driveSupervisor.updateSettings( settings );
 }
