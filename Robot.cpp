@@ -45,11 +45,17 @@ void Robot::init(double R, double L, double ticksr_l, double ticksr_r, double mi
   pwm_diff = 0;
   angleOff = 0;
 
-		irSensors[0] = new IRSensor(-0.045, 0.05, PI / 2, A1, sensorType);
-		irSensors[1] = new IRSensor(0.160, 0.045, PI / 6, A2, sensorType);
-		irSensors[2] = new IRSensor(0.162, 0.0, 0, A3, sensorType);
-		irSensors[3] = new IRSensor(0.160, -0.045, -50.0*PI /180.0, A4, sensorType);
-		irSensors[4] = new IRSensor(-0.045, -0.05, -PI / 2, A5, sensorType);
+  // irSensors[0] = new IRSensor(-0.045, 0.05, PI / 2, A1, sensorType);
+  // irSensors[1] = new IRSensor(0.160, 0.045, PI / 6, A2, sensorType);
+  // irSensors[2] = new IRSensor(0.162, 0.0, 0, A3, sensorType);
+  // irSensors[3] = new IRSensor(0.160, -0.045, -50.0*PI /180.0, A4, sensorType);
+  // irSensors[4] = new IRSensor(-0.045, -0.05, -PI / 2, A5, sensorType);
+
+  irSensors[0] = new IRSensor(-0.045, 0.05, PI / 2, A1, sensorType);
+  irSensors[1] = new IRSensor(0.10, 0.04, PI / 4, A2, sensorType); //0.16,0.045, PI/6 0.075, 0.035
+  irSensors[2] = new IRSensor(0.162, 0.0, 0, A3, sensorType);
+  irSensors[3] = new IRSensor(0.10, -0.04, 2 * PI - PI / 4, A4, sensorType);
+  irSensors[4] = new IRSensor(-0.045, -0.05, 2 * PI - PI / 2, A5, sensorType);
 
   // irSensors[0] = new IRSensor(-0.1, 0.055, PI / 2, A1, sensorType); //A1
   // irSensors[1] = new IRSensor(0.075, 0.06, PI / 4, A2, sensorType);
@@ -166,6 +172,14 @@ void Robot::readIRSensors()
   }
   for (int i = 0; i < 5; i++)
     irSensors[i]->applyGeometry(x, y, sinTheta, cosTheta);
+}
+
+void Robot::setObstacleDistance(double dis[5])
+{
+  for (int i = 0; i < 5; i++)
+  {
+    irSensors[i]->setDistance(dis[i]);
+  }
 }
 
 void Robot::getRobotInfo()

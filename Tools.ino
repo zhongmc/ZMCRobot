@@ -126,10 +126,25 @@ void processCommand(char *buffer, int bufferLen)
 #endif
   }
 
-  // else if (ch0 == 'o' && ch1 == 'd') //open debug
-  // {
-  //   openDebug = true;
-  // }
+  else if (ch0 == 'o' && ch1 == 'd') //set obstacle distance
+  {
+    double ods[5];
+    getDoubleValues(buffer + 2, 5, ods);
+
+    // char *buf = buffer + 2;
+    // for (int i = 0; i < 5; i++)
+    // {
+    //   ods[i] = (float)atoi(buf) / 1000.0;
+    //   buf = strchr(buf, ',');
+    //   if (buf == NULL)
+    //     break;
+    //   buf++;
+    //   Serial.print(ods[i]);
+    //   Serial.print(',');
+    // }
+    // Serial.println(';');
+    supervisor.setObstacleDistance(ods);
+  }
   // else if (ch0 == 'c' && ch1 == 'd') //close debug
   // {
   //   openDebug = false;
@@ -149,11 +164,30 @@ void processCommand(char *buffer, int bufferLen)
   //     Serial.println("NA");
   //   }
   // }
+  else if (ch0 == 'g' && ch1 == 'o') //start go to goal
+  {
+    startGoToGoal();
+  }
 
   else if (ch0 == 's' && ch1 == 't') //stop
   {
-    Serial.println("Stop!");
+    // Serial.println("Stop!");
     stopRobot();
+  }
+  else if (ch0 == 'r' && ch1 == 'p') //set robot position
+  {
+    double fvs[3];
+    getDoubleValues(buffer + 2, 3, fvs);
+    supervisor.setRobotPosition(fvs[0], fvs[1], fvs[2]);
+    //to do
+  }
+
+  else if (ch0 == 'g' && ch1 == 'g') //set goto goal goal
+  {
+
+    double fvs[3];
+    getDoubleValues(buffer + 2, 3, fvs);
+    setGoal(fvs[0], fvs[1], fvs[2]);
   }
 
   else if (ch0 == 'c' && ch1 == 'i') //count info
@@ -182,10 +216,10 @@ void processCommand(char *buffer, int bufferLen)
     MoveMotor(0);
   }
 
-  else if( ch0 == 's' && ch1 == 'r') // step response
+  else if (ch0 == 's' && ch1 == 'r') // step response
   {
-    int pwm = atoi(buffer + 2 );
-    stepResponseTest( pwm );
+    int pwm = atoi(buffer + 2);
+    stepResponseTest(pwm);
   }
   else if (ch0 == 's' && ch1 == 'p') //speed test
   {
@@ -194,7 +228,7 @@ void processCommand(char *buffer, int bufferLen)
     char *buf = strchr((buffer + 2), ',');
     pwm1 = atoi(buf + 1);
     buf = strchr((buf + 1), ',');
-    step = atoi(buf+1);
+    step = atoi(buf + 1);
 
     Serial.print("SP:");
     Serial.print(pwm0);
@@ -207,10 +241,9 @@ void processCommand(char *buffer, int bufferLen)
 
     speedTest(pwm0, pwm1, step);
   }
-  else if( ch0 == 'p' && ch1 == 'i' ) //pid
+  else if (ch0 == 'p' && ch1 == 'i') //pid
   {
-
-    setPID( buffer+2 );
+    setPID(buffer + 2);
   }
 
   else if (ch0 == 't' && ch1 == 'l') //turn around left/ right(-pwm) test
@@ -218,22 +251,17 @@ void processCommand(char *buffer, int bufferLen)
     int pwm = atoi(buffer + 2);
     turnAround(pwm);
   }
-  else if (ch0 == 'g' && ch1 == 'g') //go to goal
+  else if (ch0 == 'm' && ch1 == 'g') //go to goal
   {
-
     count1 = 0;
     count2 = 0;
-
     supervisor.reset(0, 0);
     supervisor.resetRobot();
-    
     float x = atof(buffer + 2);
     float y = 0;
     char *buf = strchr(buffer, ',');
- 
-    if( buf != NULL )
-      y = atof( buf+1);
-
+    if (buf != NULL)
+      y = atof(buf + 1);
     setGoal(x, y, 0);
     startGoToGoal();
   }
@@ -251,12 +279,12 @@ void processCommand(char *buffer, int bufferLen)
   else if (ch0 == 'i' && ch1 == 'o') //ignore atObstacle
   {
     int val = atoi(buffer + 2);
-    // SetIgnoreObstacle(val);
+    SetIgnoreObstacle(val);
 
-    if (val == 1)
-      SetIgnoreObstacle(true);
-    else
-      SetIgnoreObstacle(false);
+    // if (val == 1)
+    //   SetIgnoreObstacle(true);
+    // else
+    //   SetIgnoreObstacle(false);
   }
 
   else if (ch0 == 'r' && ch0 == 's') //RESET
@@ -430,7 +458,7 @@ void motorSpeed(int pwm)
   MoveMotor(pwm);
   Serial.print(pwm);
   Serial.print(',');
-  delay(300);
+  delay(500);
   c1 = count1;
   c2 = count2;
   lt = millis();
@@ -446,14 +474,14 @@ void motorSpeed(int pwm)
   Serial.println(c2);
 }
 
-void stepResponseTest( int pwm )
+void stepResponseTest(int pwm)
 {
   Serial.print("SR: ");
   Serial.println(pwm);
   printCountInfo();
   printCountInfo();
   int count = 100;
-  while( count > 0 )
+  while (count > 0)
   {
     delay(20);
     printCountInfo();
@@ -462,11 +490,10 @@ void stepResponseTest( int pwm )
   MoveMotor(0);
 }
 
-
-void turnAround( int pwm )
+void turnAround(int pwm)
 {
   Serial.print("TR:");
-  Serial.println( pwm );
+  Serial.println(pwm);
   if (pwm > 0)
   {
     count1 = 0;
@@ -478,9 +505,9 @@ void turnAround( int pwm )
     MoveRightMotor(-pwm);
   }
 
-  while( true )
+  while (true)
   {
-   if ((pwm > 0 && count1 > 1700) || (pwm < 0 && count2 > 1700))
+    if ((pwm > 0 && count1 > 1700) || (pwm < 0 && count2 > 1700))
     {
       stopRobot();
       break;
@@ -492,31 +519,46 @@ void turnAround( int pwm )
 
   Serial.print(count1);
   Serial.print(',');
-  Serial.println( count2 );
+  Serial.println(count2);
 }
 
+void getDoubleValues(char *buffer, int c, double *fvs)
+{
+  char *buf = buffer;
+  for (int i = 0; i < c; i++)
+  {
+    fvs[i] = (float)atoi(buf) / 1000.0;
+    buf = strchr(buf, ',');
+    if (buf == NULL)
+      break;
+    buf++;
+    Serial.print(fvs[i]);
+    Serial.print(',');
+  }
+  Serial.println(';');
+}
 
 void setPID(char *buffer)
 {
-    double p,i,d;
-    p = atof((buffer));
-    char *buf = strchr(buffer, ',');
-    i = atof( (buf + 1));
-    buf = strchr((buf+1), ',');
-    d = atof( buf+1 );
+  double p, i, d;
+  p = atof((buffer));
+  char *buf = strchr(buffer, ',');
+  i = atof((buf + 1));
+  buf = strchr((buf + 1), ',');
+  d = atof(buf + 1);
 
-    Serial.print("PID:");
-    Serial.print(p);
-    Serial.print(",");
-    Serial.print(i);
-    Serial.print(",");
-    Serial.println(d);
+  Serial.print("PID:");
+  Serial.print(p);
+  Serial.print(",");
+  Serial.print(i);
+  Serial.print(",");
+  Serial.println(d);
 
-    SETTINGS settings;
-    settings.sType = 1;
-    settings.kp = p;
-    settings.ki = i;
-    settings.kd = d;
-    supervisor.updateSettings( settings );
-    driveSupervisor.updateSettings( settings );
+  SETTINGS settings;
+  settings.sType = 1;
+  settings.kp = p;
+  settings.ki = i;
+  settings.kd = d;
+  supervisor.updateSettings(settings);
+  driveSupervisor.updateSettings(settings);
 }

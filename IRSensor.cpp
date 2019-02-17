@@ -1,5 +1,8 @@
 #include "IRSensor.h"
 
+//fallow wall 时给出的无障碍物时的坐标距离
+#define WALL_DIS 0.35
+
 /*
 static double ab[10][2] = {
 {-0.00015346, 0.207142857},
@@ -70,6 +73,17 @@ void IRSensor::readPosition()
   distance = getDistance(digVal);
   x = x_s + distance * cos_theta;
   y = y_s + distance * sin_theta;
+
+  if (distance > WALL_DIS)
+  {
+    w_x = x_s + WALL_DIS * cos_theta;
+    w_y = y_s + WALL_DIS * sin_theta;
+  }
+  else
+  {
+    w_x = x;
+    w_y = y;
+  }
 }
 
 void IRSensor::setDistance(double dis)
@@ -83,6 +97,16 @@ void IRSensor::applyGeometry(double xc, double yc, double sinTheta, double cosTh
 {
   xw = xc + x * cosTheta - y * sinTheta;
   yw = yc + x * sinTheta + y * cosTheta;
+  if (distance > WALL_DIS)
+  {
+    w_xw = xc + w_x * cosTheta - w_y * sinTheta;
+    w_yw = yc + w_x * sinTheta + w_y * cosTheta;
+  }
+  else
+  {
+    w_xw = xw;
+    w_yw = yw;
+  }
 }
 
 static double gp2y0a21[4][4] = {

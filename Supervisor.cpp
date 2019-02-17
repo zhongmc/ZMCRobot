@@ -23,11 +23,11 @@ Supervisor::Supervisor()
   // robot.setVel2PwmParam(0,9.59,18.73);
   robot.setIRSensorType(GP2Y0A21);
 
-  robot.setHaveIrSensor(0, true);
-  robot.setHaveIrSensor(1, true);
+  robot.setHaveIrSensor(0, false);
+  robot.setHaveIrSensor(1, false);
   robot.setHaveIrSensor(2, false);
-  robot.setHaveIrSensor(3, true);
-  robot.setHaveIrSensor(4, true);
+  robot.setHaveIrSensor(3, false);
+  robot.setHaveIrSensor(4, false);
 
   mSimulateMode = false;
   mIgnoreObstacle = false;
@@ -157,6 +157,18 @@ void Supervisor::reset(long leftTicks, long rightTicks)
   }
   else
     robot.reset(leftTicks, rightTicks);
+}
+
+void Supervisor::setObstacleDistance(double dis[5])
+{
+  robot.setObstacleDistance(dis);
+}
+
+void Supervisor::setRobotPosition(double x, double y, double theta)
+{
+  robot.x = x;
+  robot.y = y;
+  robot.theta = theta;
 }
 
 void Supervisor::execute(long left_ticks, long right_ticks, double dt)
@@ -293,6 +305,15 @@ void Supervisor::execute(long left_ticks, long right_ticks, double dt)
   // uint32_t nowMicros = micros();
 
   execTime = micros() - startTime;
+
+  Serial.print("RB");
+  Serial.print(robot.x);
+  Serial.print(",");
+  Serial.print(robot.y);
+  Serial.print(",");
+  Serial.print(robot.theta);
+  Serial.print(",");
+  Serial.println(robot.velocity);
 
   //    Serial.print( nowMicros - timer);
   //    Serial.print(",");
@@ -651,7 +672,7 @@ void Supervisor::check_states()
 
   m_distanceToGoal = d;
 
-  if (d < (d_prog - 0.1))
+  if (d < (d_prog - 0.3))
     progress_made = true;
   else
     progress_made = false;

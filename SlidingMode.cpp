@@ -12,7 +12,7 @@ void SlidingMode::reset()
 void SlidingMode::execute(Robot *robot, Input *input, Output *output, double dt)
 {
 
-  double sensor_gains[] = {1, 1, 0.5, 1, 1};
+  double sensor_gains[] = {1, 1, 1, 1, 1};
   IRSensor **irSensors = robot->getIRSensors();
   double uao_x = 0, uao_y = 0;
   for (int i = 0; i < 5; i++)
@@ -38,17 +38,17 @@ void SlidingMode::execute(Robot *robot, Input *input, Output *output, double dt)
   switch (idx)
   {
   case 0:
-    u_fw_l.x = irSensors[2]->xw - irSensors[1]->xw;
-    u_fw_l.y = irSensors[2]->yw - irSensors[1]->yw;
+    u_fw_l.x = irSensors[2]->w_xw - irSensors[1]->w_xw;
+    u_fw_l.y = irSensors[2]->w_yw - irSensors[1]->w_yw;
     break;
   case 1:
-    u_fw_l.x = irSensors[2]->xw - irSensors[0]->xw;
-    u_fw_l.y = irSensors[2]->yw - irSensors[0]->yw;
+    u_fw_l.x = irSensors[2]->w_xw - irSensors[0]->w_xw;
+    u_fw_l.y = irSensors[2]->w_yw - irSensors[0]->w_yw;
 
     break;
   case 2:
-    u_fw_l.x = irSensors[1]->xw - irSensors[0]->xw;
-    u_fw_l.y = irSensors[1]->yw - irSensors[0]->yw;
+    u_fw_l.x = irSensors[1]->w_xw - irSensors[0]->w_xw;
+    u_fw_l.y = irSensors[1]->w_yw - irSensors[0]->w_yw;
 
     break;
   }
@@ -71,17 +71,17 @@ void SlidingMode::execute(Robot *robot, Input *input, Output *output, double dt)
   switch (idx)
   {
   case 2:
-    u_fw_r.x = irSensors[3]->xw - irSensors[4]->xw;
-    u_fw_r.y = irSensors[3]->yw - irSensors[4]->yw;
+    u_fw_r.x = irSensors[3]->w_xw - irSensors[4]->w_xw;
+    u_fw_r.y = irSensors[3]->w_yw - irSensors[4]->w_yw;
     break;
   case 3:
-    u_fw_r.x = irSensors[2]->xw - irSensors[4]->xw;
-    u_fw_r.y = irSensors[2]->yw - irSensors[4]->yw;
+    u_fw_r.x = irSensors[2]->w_xw - irSensors[4]->w_xw;
+    u_fw_r.y = irSensors[2]->w_yw - irSensors[4]->w_yw;
 
     break;
   case 4:
-    u_fw_r.x = irSensors[2]->xw - irSensors[3]->xw;
-    u_fw_r.y = irSensors[2]->yw - irSensors[3]->yw;
+    u_fw_r.x = irSensors[2]->w_xw - irSensors[3]->w_xw;
+    u_fw_r.y = irSensors[2]->w_yw - irSensors[3]->w_yw;
 
     break;
   }

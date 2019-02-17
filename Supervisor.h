@@ -90,7 +90,11 @@ public:
   void getIRDistances(double dis[5]);
   void readIRDistances(double dis[5]);
 
+  void setObstacleDistance(double dis[5]);
+
   Position getRobotPosition();
+
+  void setRobotPosition(double x, double y, double theta);
 
   void init();
 

@@ -71,6 +71,8 @@ public:
   virtual double pwm_to_ticks_r(double pwm, double dt) = 0;
   virtual double pwm_to_ticks_l(double pwm, double dt) = 0;
 
+  void setObstacleDistance(double dis[5]);
+
   void setHaveIrSensor(int idx, bool value)
   {
     if (idx >= 0 && idx < 5)
