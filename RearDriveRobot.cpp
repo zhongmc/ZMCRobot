@@ -11,7 +11,7 @@ RearDriveRobot::RearDriveRobot()
 
   mPIDSettings.kp = 5;                            //25;  //20 0.5 2; 2019-01-26:   5, 0.02, 0.9; 5, 0.05, 1.2; 5,0.08,1.2 2019-02-09 5, 0.01, 0.2
   mPIDSettings.ki = 0.01;
-  mPIDSettings.kd = 0.2;
+  mPIDSettings.kd = 0.02; //0.2
 }
 
 

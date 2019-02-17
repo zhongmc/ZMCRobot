@@ -1,5 +1,7 @@
-
 #include "FollowWall.h"
+
+//fallow wall 时给出的无障碍物时的坐标距离
+#define WALL_DIS 0.35
 
 FollowWall::FollowWall()
 {
@@ -19,85 +21,11 @@ void FollowWall::reset()
 void FollowWall::execute(Robot *robot, Input *input, Output *output, double dt)
 {
 
-  IRSensor **irSensors = robot->getIRSensors();
+  getWall( robot );
 
-  Vector u_fw_t;
-
-  Vector p1;
-  //get the left wall
-  int idx = 0;
-
-  if (dir == 0) // follow left
-  {
-
-    for (int i = 1; i < 3; i++)
-    {
-      if (irSensors[i]->distance >= irSensors[idx]->distance)
-        idx = i;
-    }
-
-    switch (idx)
-    {
-    case 0:
-      u_fw_t.x = irSensors[2]->w_xw - irSensors[1]->w_xw;
-      u_fw_t.y = irSensors[2]->w_yw - irSensors[1]->w_yw;
-      p1.x = irSensors[1]->w_xw;
-      p1.y = irSensors[1]->w_yw;
-      break;
-    case 1:
-      u_fw_t.x = irSensors[2]->w_xw - irSensors[0]->w_xw;
-      u_fw_t.y = irSensors[2]->w_yw - irSensors[0]->w_yw;
-
-      p1.x = irSensors[0]->w_xw;
-      p1.y = irSensors[0]->w_yw;
-      break;
-    case 2:
-      u_fw_t.x = irSensors[1]->w_xw - irSensors[0]->w_xw;
-      u_fw_t.y = irSensors[1]->w_yw - irSensors[0]->w_yw;
-      p1.x = irSensors[0]->w_xw;
-      p1.y = irSensors[0]->w_yw;
-
-      break;
-    }
-  }
-
-  else
-  {
-    //get the right wall
-
-    idx = 2;
-    for (int i = 3; i < 5; i++)
-    {
-      if (irSensors[i]->distance > irSensors[idx]->distance)
-        idx = i;
-    }
-
-    switch (idx)
-    {
-    case 2:
-      u_fw_t.x = irSensors[3]->w_xw - irSensors[4]->w_xw;
-      u_fw_t.y = irSensors[3]->w_yw - irSensors[4]->w_yw;
-      p1.x = irSensors[4]->w_xw;
-      p1.y = irSensors[4]->w_yw;
-
-      break;
-    case 3:
-      u_fw_t.x = irSensors[2]->w_xw - irSensors[4]->w_xw;
-      u_fw_t.y = irSensors[2]->w_yw - irSensors[4]->w_yw;
-      p1.x = irSensors[4]->w_xw;
-      p1.y = irSensors[4]->w_yw;
-
-      break;
-    case 4:
-      u_fw_t.x = irSensors[2]->w_xw - irSensors[3]->w_xw;
-      u_fw_t.y = irSensors[2]->w_yw - irSensors[3]->w_yw;
-      p1.x = irSensors[3]->w_xw;
-      p1.y = irSensors[3]->w_yw;
-
-      break;
-    }
-  }
-
+  u_fw_t.x = p0.x - p1.x;
+  u_fw_t.y = p0.y - p1.y;
+  
   //u_fw_tp = u_fw_t/norm(u_fw_t);
   double norm_ufwt = sqrt(u_fw_t.x * u_fw_t.x + u_fw_t.y * u_fw_t.y);
   Vector u_fw_tp;
@@ -146,3 +74,64 @@ void FollowWall::execute(Robot *robot, Input *input, Output *output, double dt)
 
   lastError = e;
 }
+
+void FollowWall::getWall(Robot *robot)
+{
+
+  IRSensor **irSensors = robot->getIRSensors();
+  int idx = 0;
+if (dir == 0) // follow left
+  {
+    for (int i = 1; i < 3; i++)
+    {
+      if (irSensors[i]->distance >= irSensors[idx]->distance)
+        idx = i;
+    }
+
+    switch (idx)
+    {
+    case 0:
+      p1 = irSensors[1]->getWallVector(robot->x, robot->y, robot->theta, WALL_DIS);
+      p0 = irSensors[2]->getWallVector(robot->x, robot->y, robot->theta, WALL_DIS);
+      break;
+    case 1:
+      p1 = irSensors[0]->getWallVector(robot->x, robot->y, robot->theta, WALL_DIS);
+      p0 = irSensors[2]->getWallVector(robot->x, robot->y, robot->theta, WALL_DIS);
+      break;
+    case 2:
+      p1 = irSensors[0]->getWallVector(robot->x, robot->y, robot->theta, WALL_DIS);
+      p0 = irSensors[1]->getWallVector(robot->x, robot->y, robot->theta, WALL_DIS);
+      break;
+    }
+  }
+
+  else
+  {
+    //get the right wall
+
+    idx = 2;
+    for (int i = 3; i < 5; i++)
+    {
+      if (irSensors[i]->distance > irSensors[idx]->distance)
+        idx = i;
+    }
+
+    switch (idx)
+    {
+    case 2:
+      p1 = irSensors[4]->getWallVector(robot->x, robot->y, robot->theta, WALL_DIS);
+      p0 = irSensors[3]->getWallVector(robot->x, robot->y, robot->theta, WALL_DIS);
+      break;
+    case 3:
+      p1 = irSensors[4]->getWallVector(robot->x, robot->y, robot->theta, WALL_DIS);
+      p0 = irSensors[2]->getWallVector(robot->x, robot->y, robot->theta, WALL_DIS);
+      break;
+    case 4:
+      p1 = irSensors[3]->getWallVector(robot->x, robot->y, robot->theta, WALL_DIS);
+      p0 = irSensors[2]->getWallVector(robot->x, robot->y, robot->theta, WALL_DIS);
+      break;
+    }
+  }
+
+}
+

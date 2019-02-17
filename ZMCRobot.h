@@ -1,7 +1,8 @@
-#include "Robot.h"
-
 #ifndef _ZMC_ROBOT_H_
 #define _ZMC_ROBOT_H_
+
+#include <Arduino.h>
+
 
 #define BALANCE_CAR 1
 #define DRIVE_CAR 2
@@ -15,6 +16,19 @@
 #define SPEED_DOWN_DIS 0.2 //distance to goal to speed down
 #define DIS_SPEED_DOWN_SCALE 10
 #define W_SPEED_DOWN_SCALE 1
+
+
+typedef struct
+{
+  double x, y;
+} Vector;
+
+
+typedef struct
+{
+  double x, y, theta;
+} Position;
+
 
 long readLeftEncoder();
 long readRightEncoder();

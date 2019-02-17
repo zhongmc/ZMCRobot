@@ -19,7 +19,7 @@ extern BalanceSupervisor balanceSupervisor;
 extern long trigTime, echoTime;
 extern double ultrasonicDistance;
 
-static char comData[30];
+static char comData[32];
 int comDataCount;
 
 //extern Supervisor supervisor;
@@ -45,7 +45,7 @@ void checkSerialData()
         processCommand(comData, comDataCount);
         comDataCount = 0;
       }
-      if (comDataCount > 20) //some error
+      if (comDataCount > 30) //some error
       {
         Serial.print("UnKnow Command:");
         comData[comDataCount] = 0;
@@ -100,7 +100,7 @@ void checkSerialData()
 void processCommand(char *buffer, int bufferLen)
 {
   *(buffer + bufferLen) = 0;
-  Serial.println(buffer);
+  //Serial.println(buffer);
 
   if (bufferLen <= 2)
     return;
@@ -532,10 +532,10 @@ void getDoubleValues(char *buffer, int c, double *fvs)
     if (buf == NULL)
       break;
     buf++;
-    Serial.print(fvs[i]);
-    Serial.print(',');
+    // Serial.print(fvs[i]);
+    // Serial.print(',');
   }
-  Serial.println(';');
+  // Serial.println(';');
 }
 
 void setPID(char *buffer)

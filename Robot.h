@@ -24,15 +24,6 @@ typedef struct
   double vel_l;
 } Vel;
 
-typedef struct
-{
-  double x, y, theta;
-} Position;
-
-typedef struct
-{
-  double x, y;
-} Vector;
 
 typedef struct
 {

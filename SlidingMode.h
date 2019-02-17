@@ -20,9 +20,13 @@ class SlidingMode :public Controller{
         Vector u_gtg, u_ao, u_fw_l, u_fw_r;
         Vector sigma_l, sigma_r;
   private:
+        void getWall(Robot * robot);
+        Vector getSegma(Vector u_gtg, Vector u_ao, Vector u_fw );
+
       bool leftObstacle, rightObstacle;
       bool slideLeft, slideRight;
-//    private:
+
+ //    private:
 //        double fuckEk_l;
 //        double E_k;
 //        double Kp, Ki, Kd;

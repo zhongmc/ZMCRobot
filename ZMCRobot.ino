@@ -178,8 +178,8 @@ void setup()
   mSettings.max_rpm = 200;
   mSettings.min_rpm = 40; //45
 
-  mSettings.atObstacle = 0.20; //0.15
-  mSettings.unsafe = 0.08;
+  mSettings.atObstacle = 0.30; //0.15
+  mSettings.unsafe = 0.1;
   mSettings.dfw = 0.25;     //0.25
   mSettings.velocity = 0.3; //0.3
 

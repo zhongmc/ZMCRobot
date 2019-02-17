@@ -11,8 +11,15 @@ class FollowWall :public Controller{
         FollowWall();
         void reset();
         void execute(Robot *robot, Input *input, Output* output, double dt);
+
         double d_fw;
         byte dir;  // 0 left 1 right
+
+    private:
+        void getWall(Robot *robot);
+          Vector p1, p0;
+          Vector u_fw_t;
+
 };
 
 

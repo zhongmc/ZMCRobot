@@ -2,6 +2,7 @@
 #define _IRSENSOR_H_
 
 #include <Arduino.h>
+#include "ZMCRobot.h"
 
 typedef enum
 {
@@ -24,7 +25,7 @@ public:
   double x, y;     //the obtacle position in robot geometry
   double xw, yw;   //the obtacle pos in real geometry
 
-  double w_x, w_y, w_xw, w_yw; // position for fallow wall;
+  // double w_x, w_y, w_xw, w_yw; // position for fallow wall;
 
   double readDistance(byte pin);
 
@@ -39,6 +40,8 @@ public:
   double getDistance(int digitalVal);
   double getMaxDistance();
   double getMinDistance();
+
+  Vector getWallVector(double xc, double yc, double theta, double d);
 
 private:
   byte anologPin = A1;
