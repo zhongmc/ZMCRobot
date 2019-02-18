@@ -108,7 +108,7 @@ private:
   void
   set_progress_point();
   void check_states();
-
+  int getOstacleDir();
   void changeToFollowWall();
 
   bool progress_made;

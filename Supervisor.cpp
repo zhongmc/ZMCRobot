@@ -208,6 +208,9 @@ void Supervisor::execute(long left_ticks, long right_ticks, double dt)
   /////////////////////////////////////////////////////////
   executeAvoidAndGotoGoal(dt);
 
+  if (m_currentController == NULL) //unsafe stoped
+    return;
+
   m_output.v = 0;
   m_output.w = 0;
 
@@ -304,15 +307,13 @@ void Supervisor::execute(long left_ticks, long right_ticks, double dt)
 
   // uint32_t nowMicros = micros();
 
-  execTime = micros() - startTime;
-
-//send robot position 
+  //send robot position
   Serial.print("RP");
-  Serial.print(robot.x);
+  Serial.print((int)(10000 * robot.x));
   Serial.print(",");
-  Serial.print(robot.y);
+  Serial.print((int)(10000 * robot.y));
   Serial.print(",");
-  Serial.print(robot.theta);
+  Serial.print((int)(10000 * robot.theta));
   Serial.print(",");
   Serial.println(robot.velocity);
 
@@ -321,6 +322,8 @@ void Supervisor::execute(long left_ticks, long right_ticks, double dt)
   //    Serial.print(pwm.pwm_l);
   //    Serial.print(",");
   //    Serial.println(pwm.pwm_r);
+
+  execTime = micros() - startTime;
 }
 
 /**
@@ -568,7 +571,7 @@ void Supervisor::executeAvoidAndGotoGoal(double dt)
     return;
   }
 
-  if( m_currentController != &m_GoToGoal && m_currentController  != &m_FollowWall )
+  if (m_currentController != &m_GoToGoal && m_currentController != &m_FollowWall)
   {
     m_currentController = &m_GoToGoal;
     m_GoToGoal.reset();
@@ -576,38 +579,35 @@ void Supervisor::executeAvoidAndGotoGoal(double dt)
     return;
   }
 
-  if( m_state == S_GTG ) //goto goal state
+  if (m_state == S_GTG) //goto goal state
   {
-    if( at_obstacle )
+    if (at_obstacle)
     {
-        changeToFollowWall();
-        return; 
+      changeToFollowWall();
+      return;
     }
   }
   else //follow wall
   {
-      if( !progress_made )
-        return;
+    if (!progress_made)
+      return;
 
     m_SlidingMode.execute(&robot, &m_input, &m_output, 0.02);
-    if( m_FollowWall.dir == 0 && m_SlidingMode.quitSlidingLeft() )
+    if (m_FollowWall.dir == 0 && m_SlidingMode.quitSlidingLeft())
     {
-        m_state = S_GTG;
-        m_currentController = &m_GoToGoal;
-        m_GoToGoal.reset();
-        Serial.println("Chg to GTG from FW L");
+      m_state = S_GTG;
+      m_currentController = &m_GoToGoal;
+      m_GoToGoal.reset();
+      Serial.println("Chg to GTG from FW L");
     }
-    else if( m_FollowWall.dir == 1 && m_SlidingMode.quitSlidingRight())
+    else if (m_FollowWall.dir == 1 && m_SlidingMode.quitSlidingRight())
     {
-        m_state = S_GTG;
-        m_currentController = &m_GoToGoal;
-        m_GoToGoal.reset();
-        Serial.println("Chg to GTG from FW L");
+      m_state = S_GTG;
+      m_currentController = &m_GoToGoal;
+      m_GoToGoal.reset();
+      Serial.println("Chg to GTG from FW L");
     }
   }
-  
-
-
 }
 
 void Supervisor::changeToFollowWall()
@@ -635,13 +635,52 @@ void Supervisor::changeToFollowWall()
   else
   {
     Serial.println("FLW failed!");
-    m_FollowWall.dir = 0; //left
+
+    m_FollowWall.dir = getOstacleDir() - 1;
+    if (m_FollowWall.dir == 0)
+      Serial.println("FLW-L");
+    else
+      Serial.println("FLW-R");
+    // m_FollowWall.dir = 0; //left
     m_currentController = &m_FollowWall;
     m_state = S_FW; //followWall;
     m_FollowWall.reset();
     set_progress_point();
-    Serial.println("FLW-L");
   }
+}
+
+int Supervisor::getOstacleDir()
+{
+
+  IRSensor **irSensors = robot.getIRSensors();
+
+  double maxDis = irSensors[0]->getMaxDistance() - 0.01;
+
+  int l = 0;
+  for (int i = 0; i < 3; i++)
+  {
+    if (irSensors[i]->distance < maxDis)
+    {
+      l++;
+    }
+  }
+
+  int r = 0;
+  for (int i = 2; i < 5; i++)
+  {
+    if (irSensors[i]->distance < maxDis)
+    {
+      r++;
+    }
+  }
+
+  if (l == 0 && r == 0)
+    return 0;
+
+  if (l >= r)
+    return 1;
+  else
+    return 2;
 }
 
 void Supervisor::set_progress_point()

@@ -166,7 +166,7 @@ void Robot::readIRSensors()
     if (haveIrSensor[i])
       irSensors[i]->readPosition();
   }
-  if (ultrasonicDistance < MAX_ULTRASONIC_DIS)
+  if (haveIrSensor[2] && ultrasonicDistance < MAX_ULTRASONIC_DIS)
   {
     irSensors[2]->setDistance(ultrasonicDistance);
   }
