@@ -461,7 +461,7 @@ void startBalance()
 
 void balanceIsr()
 {
-  balanceSupervisor.execute(readLeftEncoder(), readRightEncoder(), 0.01); // 1.0 / (double)GYRO_RATE);
+  balanceSupervisor.execute(readLeftEncoder(), readRightEncoder(), 0.005); // 1.0 / (double)GYRO_RATE);
 }
 
 void SetIgnoreObstacle(bool igm)

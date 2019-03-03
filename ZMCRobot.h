@@ -6,9 +6,11 @@
 #define BALANCE_CAR 1
 #define DRIVE_CAR 2
 
-#define CAR_TYPE DRIVE_CAR // BALANCE_CAR
+#define CAR_TYPE BALANCE_CAR // BALANCE_CAR DRIVE_CAR
 
-#define MOTOR DUAL_MOTOR //TT_MOTOR
+
+// TT 单相测速， dual A/B相测速， CHANGE A/B相，以改变中断计数，上升沿、下降沿都计数，精度加倍
+#define MOTOR DUAL_MOTOR //TT_MOTOR DUAL_MOTOR CHANGE_MOTOR
 
 #define MAX_ULTRASONIC_DIS 1
 #define MAX_IRSENSOR_DIS 0.3

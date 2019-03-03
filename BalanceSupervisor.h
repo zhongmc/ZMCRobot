@@ -23,7 +23,7 @@
 
 #include <Kalman.h>
 
-#define GYRO_RATE 100
+#define GYRO_RATE 200
 
 class BalanceSupervisor
 {

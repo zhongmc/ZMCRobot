@@ -5,7 +5,7 @@
 BalanceSupervisor::BalanceSupervisor()
 {
 
-  m_per_tick = 2 * PI * 0.0325 / 390; //330;
+  // m_per_tick = 2 * PI * 0.0325 / 390; //330;
   prev_left_ticks = 0;
   prev_right_ticks = 0;
 
@@ -38,8 +38,8 @@ BalanceSupervisor::BalanceSupervisor()
   speedCounter = 5;
   mVel.vel_l = 0;
   mVel.vel_r = 0;
-  pwm_diff = 0; //35
-  pwm_zero = 0; //60
+  pwm_diff = 10; //35
+  pwm_zero = 50; //60
   //  mSyncPWM = 0;
   max_pwm = 240;
 
@@ -73,17 +73,27 @@ void BalanceSupervisor::init()
   // start the IMU and filter
   CurieIMU.begin();
 
-  //公司板
+  //公司板 com3
   //144.3， 19.5， -89.7， -0.79, 1.04， -0.12
 
-  //31.20  -11.70  -3.90 0.67  0.55  -1.04
-  //  23.40  -15.60  -3.90 0.67  0.55  -1.10
-  CurieIMU.setAccelerometerOffset(X_AXIS, 144.3);
-  CurieIMU.setAccelerometerOffset(Y_AXIS, 19.5);
-  CurieIMU.setAccelerometerOffset(Z_AXIS, -89.7);
-  CurieIMU.setGyroOffset(X_AXIS, -0.79);
-  CurieIMU.setGyroOffset(Y_AXIS, 1.04);
-  CurieIMU.setGyroOffset(Z_AXIS, -0.12);
+  //家 com5
+//35.10	-27.30	42.90	0.85	-0.12	-0.55
+ 
+//  com3
+  // CurieIMU.setAccelerometerOffset(X_AXIS, 144.3);
+  // CurieIMU.setAccelerometerOffset(Y_AXIS, 19.5);
+  // CurieIMU.setAccelerometerOffset(Z_AXIS, -89.7);
+  // CurieIMU.setGyroOffset(X_AXIS, -0.79);
+  // CurieIMU.setGyroOffset(Y_AXIS, 1.04);
+  // CurieIMU.setGyroOffset(Z_AXIS, -0.12);
+
+//  com5
+  CurieIMU.setAccelerometerOffset(X_AXIS, 35.10);
+  CurieIMU.setAccelerometerOffset(Y_AXIS, -27.3);
+  CurieIMU.setAccelerometerOffset(Z_AXIS, 42.9);
+  CurieIMU.setGyroOffset(X_AXIS, 0.85);
+  CurieIMU.setGyroOffset(Y_AXIS, -0.12);
+  CurieIMU.setGyroOffset(Z_AXIS, -0.55);
 
   CurieIMU.setGyroRate(GYRO_RATE);
   CurieIMU.setAccelerometerRate(GYRO_RATE);
@@ -262,23 +272,16 @@ void BalanceSupervisor::execute(long leftTicks, long rightTicks, double dt)
 
   sendIMUInfo();
 
-  double curAngle; // = readIMU();
-  //  //m_sensor_angle, m_estima_angle, g_fGravityAngle;
-  if (angleType == 0)
-    curAngle = m_kalman_angle;
-  else
-    curAngle = m_km_angle;
-
-  robot.angle = curAngle; //m_sensor_angle; // m_estima_angle m_sensor_angle
+  robot.angle = m_kalman_angle; //m_sensor_angle; // m_estima_angle m_sensor_angle
   robot.gyro = m_gyro;
 
-  if (!layingDown && (curAngle < -25 || curAngle > 25))
+  if (!layingDown && (m_kalman_angle < -25 || m_kalman_angle > 25))
   {
     layingDown = true; // The robot is in a unsolvable position, so turn off both motors and wait until it's vertical again
     stopAndReset();    //stop motor
     return;
   }
-  else if (layingDown && (curAngle > -5 && curAngle < 5))
+  else if (layingDown && (m_kalman_angle > -5 && m_kalman_angle < 5))
   {
     layingDown = false; // It's no longer laying down
   }
@@ -313,7 +316,7 @@ void BalanceSupervisor::execute(long leftTicks, long rightTicks, double dt)
     mwPWM_R = 0;
 
     speedCounter++;
-    if (speedCounter >= 5)
+    if (speedCounter >= 4)
     {
       if (mSimulateMode)
       {
@@ -324,7 +327,7 @@ void BalanceSupervisor::execute(long leftTicks, long rightTicks, double dt)
         robot.updateState(leftTicks, rightTicks, dt * speedCounter);
       }
 
-      if (m_input.v != 0 || m_input.theta != 0) //转向和直线控制
+   //   if (m_input.v != 0 || m_input.theta != 0) //转向和直线控制
       {
         m_thetaController.execute(&robot, &m_input, &m_output, speedCounter * dt);
 
@@ -535,7 +538,7 @@ void BalanceSupervisor::readIMU(double dt)
   // m_km_angle = km.getAngle(Angle_accY, gx, dt);
 
   double angle_accX = atan2((double)ax, (double)az) * RAD_TO_DEG;
-  m_x_angle = angle_accX;
+  m_x_angle = estima_cal(m_x_angle, angle_accX, gy, dt, 0.05);
 }
 
 double BalanceSupervisor::convertRawAcceleration(int aRaw)
