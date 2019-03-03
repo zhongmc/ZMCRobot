@@ -88,24 +88,24 @@ void IRSensor::applyGeometry(double xc, double yc, double sinTheta, double cosTh
   yw = yc + x * sinTheta + y * cosTheta;
 }
 
- Vector IRSensor::getWallVector(double xc, double yc, double theta, double d)
- {
-   Vector p;
-   p.x = xw;
-   p.y = yw;
-   if( distance > d )
-   {
-     double dis = distance;
-     setDistance(d);
-     applyGeometry(xc, yc, sin(theta), cos(theta));
-     p.x = xw;
-     p.y = yw;
+Vector IRSensor::getWallVector(double xc, double yc, double theta, double d)
+{
+  Vector p;
+  p.x = xw;
+  p.y = yw;
+  if (distance > d)
+  {
+    double dis = distance;
+    setDistance(d);
+    applyGeometry(xc, yc, sin(theta), cos(theta));
+    p.x = xw;
+    p.y = yw;
 
-     setDistance(dis);
-     applyGeometry(xc, yc, sin(theta), cos(theta));
-   }
-   return p;
- }
+    setDistance(dis);
+    applyGeometry(xc, yc, sin(theta), cos(theta));
+  }
+  return p;
+}
 
 static double gp2y0a21[4][4] = {
     {233, 2.00E-05, -0.0109, 1.8439},

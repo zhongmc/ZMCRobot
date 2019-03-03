@@ -3,6 +3,7 @@
 #define _BALANCE_SUPERVISOR_H_
 
 #include <Arduino.h>
+
 #include "Controller.h"
 #include "Robot.h"
 #include "BalanceRobot.h"
@@ -12,7 +13,10 @@
 #include "VelocityController.h" //w controller
 
 #include <CurieIMU.h>
+
 #include <MadgwickAHRS.h>
+
+#include "kalmanFilter.h"
 
 //#include "MyMPU6050.h"
 //#include "MPU6050.h"
@@ -35,6 +39,7 @@ public:
   void setGoal(double v, double w);
   void stopDrive();
 
+  void init();
   void updateSettings(SETTINGS settings);
   SETTINGS getSettings(byte settingsType);
 
@@ -45,7 +50,7 @@ public:
 
   void setSpeedCtrlParam(double val, int idx)
   {
-    m_SpeedController.setCtrlParam(val, idx);
+    // m_SpeedController.setCtrlParam(val, idx);
   }
 
   void getRobotInfo()
@@ -54,19 +59,18 @@ public:
     Serial.print("exec time:");
     Serial.print(execTime);
     Serial.print(", max_pwm:");
-    Serial.print(max_pwm);
+    Serial.println(max_pwm);
 
-    Serial.print(", pwm_diff:");
-    Serial.print(pwm_diff);
-    Serial.print(", pwm_zero:");
-    Serial.println(pwm_zero);
+    // Serial.print(", pwm_diff:");
+    // Serial.print(pwm_diff);
+    // Serial.print(", pwm_zero:");
+    // Serial.println(pwm_zero);
 
     Serial.print("pwmInfo(b,s,wl，wr):");
     Serial.print(mBalancePWM);
     Serial.print(",");
-
-    Serial.print(mSpeedPWM);
-    Serial.print(",");
+    // Serial.print(mSpeedPWM);
+    // Serial.print(",");
     Serial.print(mwPWM_L);
     Serial.print(",");
     Serial.println(mwPWM_R);
@@ -77,11 +81,11 @@ public:
     Serial.println(m_input.theta);
 
     robot.getRobotInfo();
-    Serial.print("balance ");
+    Serial.println("balance ");
     m_BalanceController.PrintInfo();
-    Serial.print("velocity ");
-    m_SpeedController.PrintInfo();
-    Serial.print("Diff:");
+    // Serial.print("velocity ");
+    // m_SpeedController.PrintInfo();
+    Serial.println("Diff:");
     m_thetaController.PrintInfo();
   }
 
@@ -118,24 +122,29 @@ private:
   void check_states();
 
   int m_state;
-  double m_sensor_angle, m_estima_angle, g_fGravityAngle;
-  double m_gyro;
 
+  //传感器角度（atan（ax/ay）, kalman, madgwick filter, Kalman1
+  double m_sensor_angle, m_kalman_angle, m_km_angle; //m_madgwick_angle
+  double m_gyro, m_kalman_gyro;
+
+  double KG, m_x_angle; // m_x_angle 通过融合滤波得到，用于判断小车被提起
   //     MPU6050 accelgyro;
-
   //        MyMPU6050 mpu6050;
 
-  double readIMU();
+  void readIMU(double dt);
+
   double convertRawAcceleration(int aRaw);
   double convertRawGyro(int gRaw);
 
-  double estima_cal(double estima, double metron, double KG);
+  //一阶融合滤波, angle 当前角度，g_angle重力加速度计角度，gyro 陀螺仪角速度
+  // angle = KG * g_angle + (1-KG)*(angle + gyro * dt)
+  double estima_cal(double angle, double g_angle, double gyro, double dt, double KG);
 
-  bool layingDown;
+  bool layingDown, hangUp;
 
   Madgwick filter; //, filter2;
-
   Kalman kalman;
+  KalmanFilter km;
 
   bool progress_made;
   bool at_goal;
@@ -157,6 +166,8 @@ private:
   BalanceRobot robot;
 
   double normalize(double in, double limit);
+
+  void sendIMUInfo();
 
   long execTime;
 

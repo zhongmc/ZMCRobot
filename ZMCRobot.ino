@@ -33,7 +33,6 @@
 #define STATE_GOTOGOAL 3
 #define STATE_BALANCE 4
 #define STATE_CALIBRATE 5
-#define STATE_STEP_RESP 6
 
 #define START_KEY 0
 #define LEFT_KEY 1
@@ -178,10 +177,10 @@ void setup()
   mSettings.max_rpm = 200;
   mSettings.min_rpm = 40; //45
 
-  mSettings.atObstacle = 0.30; //0.15
+  mSettings.atObstacle = 0.25; //0.15
   mSettings.unsafe = 0.1;
-  mSettings.dfw = 0.25;     //0.25
-  mSettings.velocity = 0.3; //0.3
+  mSettings.dfw = 0.2;      //0.25
+  mSettings.velocity = 0.2; //0.3
 
   // supervisor.updateSettings(mSettings);
   // driveSupervisor.updateSettings(mSettings);
@@ -210,7 +209,7 @@ void setup()
   mSettings.velocity = 0.4;    //0.3
 
   mSettings.wheelSyncKp = 0;
-  balanceSupervisor.updateSettings(mSettings);
+  // balanceSupervisor.updateSettings(mSettings);
 
   //
   //  mSettings.sType = 2;
@@ -223,7 +222,8 @@ void setup()
   mSettings.kp = 200;
   mSettings.ki = 10;
   mSettings.kd = 0.0;
-  balanceSupervisor.updateSettings(mSettings);
+  // balanceSupervisor.updateSettings(mSettings);
+  balanceSupervisor.init();
 #endif
 
   millisPrevKey = millis();
@@ -261,10 +261,10 @@ void loop()
       pos = driveSupervisor.getRobotPosition();
       sendRobotStateValue(1, pos, irDistance, batteryVoltage);
     }
-    else if (currentState == STATE_STEP_RESP)
+    else
     {
-      driveSupervisor.getRobotVel(irDistance);
-      sendRobotStateValue(3, pos, irDistance, batteryVoltage);
+      supervisor.readIRDistances(irDistance);
+      sendRobotStateValue(1, pos, irDistance, batteryVoltage);
     }
 #else
     if (currentState == STATE_BALANCE)
@@ -293,20 +293,13 @@ void loop()
               Serial.println(irDistance[2]);
       */
     }
-#endif
-
     else
     {
-      // for (int i = 0; i < 5; i++)
-      // {
-      //   irDistance[i] = irSensor.readDistance(1 + i);
-      // }
-      // if (ultrasonicDistance < MAX_ULTRASONIC_DIS) //irDistance[2] )
-      //   irDistance[2] = ultrasonicDistance;
-
-      supervisor.readIRDistances(irDistance);
-      sendRobotStateValue(1, pos, irDistance, batteryVoltage);
+      // balanceSupervisor.getIRDistances(irDistance);
+      // sendBalanceRobotStateValue(pos, irDistance, batteryVoltage);
     }
+
+#endif
 
     /*
     if ( LED_ON )
@@ -468,7 +461,7 @@ void startBalance()
 
 void balanceIsr()
 {
-  balanceSupervisor.execute(readLeftEncoder(), readRightEncoder(), 1 / (double)GYRO_RATE);
+  balanceSupervisor.execute(readLeftEncoder(), readRightEncoder(), 0.01); // 1.0 / (double)GYRO_RATE);
 }
 
 void SetIgnoreObstacle(bool igm)
@@ -590,5 +583,3 @@ void UltrasonicEcho()
   else
     echoTime = micros() - trigTime;
 }
-
-

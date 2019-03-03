@@ -2,8 +2,7 @@
 
 #include "ZMCRobot.h"
 
-//Robot::Robot(double R, double L, double ticksr, double minRpm, double maxRpm)
-BalanceSupervisor::BalanceSupervisor() //: robot(0.0325, 0.155, 390, -120, 140)
+BalanceSupervisor::BalanceSupervisor()
 {
 
   m_per_tick = 2 * PI * 0.0325 / 390; //330;
@@ -16,34 +15,6 @@ BalanceSupervisor::BalanceSupervisor() //: robot(0.0325, 0.155, 390, -120, 140)
   mIgnoreObstacle = false;
 
   execTime = 0;
-
-  // start the IMU and filter
-  CurieIMU.begin();
-
-  //31.20  -11.70  -3.90 0.67  0.55  -1.04
-  //  23.40  -15.60  -3.90 0.67  0.55  -1.10
-  //  CurieIMU.setAccelerometerOffset(X_AXIS, 31.20);
-  //  CurieIMU.setAccelerometerOffset(Y_AXIS, -11.7);
-  //  CurieIMU.setAccelerometerOffset(Z_AXIS, -3.90);
-  //  CurieIMU.setGyroOffset(X_AXIS, 0.67);
-  //  CurieIMU.setGyroOffset(Y_AXIS, 0.55);
-  //  CurieIMU.setGyroOffset(Z_AXIS, -1.04);
-
-  CurieIMU.setGyroRate(GYRO_RATE);
-  CurieIMU.setAccelerometerRate(GYRO_RATE);
-  // Set the accelerometer range to 2G
-  CurieIMU.setAccelerometerRange(2);
-  // Set the gyroscope range to 250 degrees/second
-  CurieIMU.setGyroRange(250);
-
-  //mpu6050.initialize();
-
-  //  accelgyro.initialize();
-
-  filter.begin(GYRO_RATE);
-  // filter2.begin(GYRO_RATE);
-
-  // robot.setVel2PwmParam(0.1811, 1.4199, 1.8548); // vel to pwm parameters
 
   d_stop = 0.05;
   d_at_obs = 0.15;
@@ -63,9 +34,6 @@ BalanceSupervisor::BalanceSupervisor() //: robot(0.0325, 0.155, 390, -120, 140)
 
   layingDown = false;
 
-  g_fGravityAngle = 0;
-  m_estima_angle = 0;
-
   //  m_vController.setGoal(0, 0, 0);
   speedCounter = 5;
   mVel.vel_l = 0;
@@ -73,7 +41,7 @@ BalanceSupervisor::BalanceSupervisor() //: robot(0.0325, 0.155, 390, -120, 140)
   pwm_diff = 0; //35
   pwm_zero = 0; //60
   //  mSyncPWM = 0;
-  max_pwm = 160;
+  max_pwm = 240;
 
   mwPWM_L = 0;
   mwPWM_R = 0;
@@ -81,10 +49,12 @@ BalanceSupervisor::BalanceSupervisor() //: robot(0.0325, 0.155, 390, -120, 140)
   SETTINGS settings;
 
   settings.kp = 5;
-  settings.ki = 0.0;
+  settings.ki = 0.01;
   settings.kd = 0.05;
   m_thetaController.updateSettings(settings);
 
+  KG = 0.05;
+  m_x_angle = 0;
   //  settings.sType = 2;
   //  settings.kp = 30;
   //  settings.ki = 0.0;
@@ -98,6 +68,37 @@ BalanceSupervisor::BalanceSupervisor() //: robot(0.0325, 0.155, 390, -120, 140)
   //  m_SpeedController.updateSettings(settings);
 }
 
+void BalanceSupervisor::init()
+{
+  // start the IMU and filter
+  CurieIMU.begin();
+
+  //公司板
+  //144.3， 19.5， -89.7， -0.79, 1.04， -0.12
+
+  //31.20  -11.70  -3.90 0.67  0.55  -1.04
+  //  23.40  -15.60  -3.90 0.67  0.55  -1.10
+  CurieIMU.setAccelerometerOffset(X_AXIS, 144.3);
+  CurieIMU.setAccelerometerOffset(Y_AXIS, 19.5);
+  CurieIMU.setAccelerometerOffset(Z_AXIS, -89.7);
+  CurieIMU.setGyroOffset(X_AXIS, -0.79);
+  CurieIMU.setGyroOffset(Y_AXIS, 1.04);
+  CurieIMU.setGyroOffset(Z_AXIS, -0.12);
+
+  CurieIMU.setGyroRate(GYRO_RATE);
+  CurieIMU.setAccelerometerRate(GYRO_RATE);
+  // Set the accelerometer range to 2G
+  CurieIMU.setAccelerometerRange(2);
+  // Set the gyroscope range to 250 degrees/second
+  CurieIMU.setGyroRange(250);
+  filter.begin(GYRO_RATE);
+
+  //mpu6050.initialize();
+  //  accelgyro.initialize();
+  // filter2.begin(GYRO_RATE);
+  // robot.setVel2PwmParam(0.1811, 1.4199, 1.8548); // vel to pwm parameters
+}
+
 void BalanceSupervisor::updateSettings(SETTINGS settings)
 {
   if (settings.sType == 2 || settings.sType == 0)
@@ -106,6 +107,7 @@ void BalanceSupervisor::updateSettings(SETTINGS settings)
   if (settings.sType == 3)
   {
     m_SpeedController.updateSettings(settings);
+    m_thetaController.updateSettings(settings);
   }
 
   if (settings.sType == 5 || settings.sType == 0)
@@ -152,7 +154,8 @@ SETTINGS BalanceSupervisor::getSettings(byte settingsType)
     m_BalanceController.getSettings(&settings);
   else if (settingsType == 3)
   {
-    m_SpeedController.getSettings(&settings);
+    m_thetaController.getSettings(&settings);
+    // m_SpeedController.getSettings(&settings);
   }
 
   return settings;
@@ -204,6 +207,8 @@ void BalanceSupervisor::reset(long leftTicks, long rightTicks)
 
   robot.reset(leftTicks, rightTicks);
   layingDown = false;
+  hangUp = false;
+
   speedCounter = 0;
   mSpeedPWM = 0;
   //mSyncPWM = 0;
@@ -219,7 +224,7 @@ void BalanceSupervisor::reset(long leftTicks, long rightTicks)
   prev_left_ticks = leftTicks;
   prev_right_ticks = rightTicks;
 
-  g_fGravityAngle = 0;
+  // m_estima_angle = 0;
   m_gyro = 0; //mBalancePWM;
 
   resetKalman();
@@ -241,27 +246,28 @@ void BalanceSupervisor::getIRDistances(double dis[5])
   {
     dis[i] = irSensors[i]->distance;
   }
-  dis[0] = m_sensor_angle;  // m_sensor_angle;
-  dis[1] = g_fGravityAngle; //m_estima_angle;
-  dis[2] = m_gyro;          //g_fGravityAngle;
-  dis[3] = mBalancePWM;     //mBalancePWM;
+  dis[0] = m_sensor_angle; // m_sensor_angle;
+  dis[1] = m_kalman_angle; //m_estima_angle;
+  dis[2] = m_kalman_gyro;  //g_fGravityAngle;
+  dis[3] = mBalancePWM;    //mBalancePWM;
   dis[4] = mSpeedPWM;
 }
 
 void BalanceSupervisor::execute(long leftTicks, long rightTicks, double dt)
 {
-  uint32_t timer = micros();
 
-  readIMU();
+  long startTime = micros();
+
+  readIMU(dt);
+
+  sendIMUInfo();
 
   double curAngle; // = readIMU();
   //  //m_sensor_angle, m_estima_angle, g_fGravityAngle;
   if (angleType == 0)
-    curAngle = m_sensor_angle;
-  else if (angleType == 1)
-    curAngle = m_estima_angle;
+    curAngle = m_kalman_angle;
   else
-    curAngle = g_fGravityAngle;
+    curAngle = m_km_angle;
 
   robot.angle = curAngle; //m_sensor_angle; // m_estima_angle m_sensor_angle
   robot.gyro = m_gyro;
@@ -270,106 +276,97 @@ void BalanceSupervisor::execute(long leftTicks, long rightTicks, double dt)
   {
     layingDown = true; // The robot is in a unsolvable position, so turn off both motors and wait until it's vertical again
     stopAndReset();    //stop motor
+    return;
   }
   else if (layingDown && (curAngle > -5 && curAngle < 5))
   {
     layingDown = false; // It's no longer laying down
   }
 
-  if (!layingDown)
+  if (!hangUp)
+  {
+    if (abs(m_x_angle) > 10)
+    {
+      hangUp = true;
+      stopAndReset();
+      Serial.print(m_x_angle);
+      Serial.println(", hang up...");
+      return;
+    }
+  }
+  else
+  {
+    if (abs(m_x_angle) < 5)
+    {
+      hangUp = false;
+      Serial.print(m_x_angle);
+      Serial.println(", recover from hang up ! ");
+    }
+  }
+
+  if (!layingDown && !hangUp)
   {
     m_BalanceController.execute(&robot, &m_input, &m_output, dt);
-
     mBalancePWM = m_output.w;
+
+    mwPWM_L = 0;
+    mwPWM_R = 0;
 
     speedCounter++;
     if (speedCounter >= 5)
     {
-
       if (mSimulateMode)
       {
         robot.updateState((long)m_left_ticks, (long)m_right_ticks, dt * speedCounter);
-        //        prev_left_ticks = m_left_ticks;
-        //        prev_right_ticks = m_right_ticks;
       }
       else
       {
         robot.updateState(leftTicks, rightTicks, dt * speedCounter);
-        //        prev_left_ticks = leftTicks;
-        //        prev_right_ticks = rightTicks;
       }
-
-      m_SpeedController.execute(&robot, &m_input, &m_output, speedCounter * dt);
-      mSpeedPWM = m_output.w;
 
       if (m_input.v != 0 || m_input.theta != 0) //转向和直线控制
       {
         m_thetaController.execute(&robot, &m_input, &m_output, speedCounter * dt);
 
-        if (abs(m_output.w) > 0)
-        {
-          Vel vel = robot.uni_to_diff(0, m_output.w);
-          mwPWM_L = robot.vel_l_to_pwm(vel.vel_l);
-          mwPWM_R = robot.vel_r_to_pwm(vel.vel_r);
-
-          mwPWM_L = normalize(mwPWM_L, 40);
-          mwPWM_R = normalize(mwPWM_R, 40);
-        }
-        else
-        {
-          mwPWM_L = 0;
-          mwPWM_R = 0;
-        }
-      }
-      else
-      {
-        mwPWM_L = 0;
-        mwPWM_R = 0;
+        Vel vel = robot.uni_to_diff(0, m_output.w);
+        mwPWM_L = robot.vel_l_to_pwm(vel.vel_l);
+        mwPWM_R = robot.vel_r_to_pwm(vel.vel_r);
+        mwPWM_L = normalize(mwPWM_L, 80);
+        mwPWM_R = normalize(mwPWM_R, 80);
       }
       speedCounter = 0;
     }
+  }
 
-    /*
-        Serial.print( m_sensor_angle);
-        Serial.print(",");
-        Serial.print(m_gyro);
-        Serial.print(",");
-        Serial.print(g_fGravityAngle);
-        Serial.print(",");
+  double pwm_l, pwm_r;
 
-        Serial.print( mBalancePWM );
-        Serial.print(",");
-        Serial.print(pwm.pwm_l);
-        Serial.print(",");
-        Serial.println(pwm.pwm_r);
-    */
-    double pwm_l, pwm_r;
+  // mBalancePWM = normalize(mBalancePWM, max_pwm);
 
-    mBalancePWM = normalize(mBalancePWM, max_pwm);
+  pwm_l = mBalancePWM + mSpeedPWM + mwPWM_L;
+  pwm_r = mBalancePWM + mSpeedPWM + mwPWM_R;
 
-    pwm_l = mBalancePWM + mSpeedPWM + mwPWM_L;
-    pwm_r = mBalancePWM + mSpeedPWM + mwPWM_R;
+  if (pwm_l > 0)
+    pwm.pwm_l = pwm_l + pwm_zero;
+  else
+    pwm.pwm_l = pwm_l - pwm_zero;
 
-    if (pwm_l > 0)
-      pwm.pwm_l = pwm_l + pwm_zero;
-    else
-      pwm.pwm_l = pwm_l - pwm_zero;
+  if (pwm_r > 0)
+    pwm.pwm_r = pwm_r + pwm_diff + pwm_zero;
+  else
+    pwm.pwm_r = pwm_r - pwm_diff - pwm_zero;
 
-    if (pwm_r > 0)
-      pwm.pwm_r = pwm_r + pwm_diff + pwm_zero;
-    else
-      pwm.pwm_r = pwm_r - pwm_diff - pwm_zero;
+  pwm_l = normalize(pwm_l, max_pwm);
+  pwm_r = normalize(pwm_r, max_pwm);
 
-    if (mSimulateMode)
-    {
-      m_left_ticks = m_left_ticks + robot.pwm_to_ticks_l(pwm.pwm_l, dt);
-      m_right_ticks = m_right_ticks + robot.pwm_to_ticks_r(pwm.pwm_r, dt);
-    }
-    else
-    {
-      MoveLeftMotor(pwm.pwm_l);
-      MoveRightMotor(pwm.pwm_r);
-    }
+  if (mSimulateMode)
+  {
+    m_left_ticks = m_left_ticks + robot.pwm_to_ticks_l(pwm.pwm_l, dt);
+    m_right_ticks = m_right_ticks + robot.pwm_to_ticks_r(pwm.pwm_r, dt);
+  }
+  else
+  {
+    MoveLeftMotor(pwm.pwm_l);
+    MoveRightMotor(pwm.pwm_r);
   }
 
 #ifdef _DEBUG_
@@ -389,11 +386,48 @@ void BalanceSupervisor::execute(long leftTicks, long rightTicks, double dt)
 
 #endif
 
-  long ect = micros() - timer;
+  long ect = micros() - startTime;
   if (ect > execTime)
     execTime = ect;
 
   //  check_states();
+}
+
+void BalanceSupervisor::sendIMUInfo()
+{
+  String retStr;
+
+  char tmp[10];
+  itoa((int)(10000 * m_sensor_angle), tmp, 10);
+  String sa = tmp;
+
+  itoa((int)(10000 * m_gyro), tmp, 10);
+  String sg = tmp;
+
+  itoa((int)(10000 * m_kalman_angle), tmp, 10);
+  String ka = tmp;
+
+  // itoa((int)(10000 * m_kalman_gyro), tmp, 10);
+  // String kg = tmp;
+  // itoa((int)(10000 * m_x_angle), tmp, 10);
+  // String ma = tmp;
+  // itoa((int)(10000 * m_km_angle), tmp, 10);
+  // String kma = tmp;
+
+  retStr = "MU" + sa + "," + sg + "," + ka; //  + "," + kg + "," + kma;
+  Serial.println(retStr);
+  // Serial.print("MU");
+  // Serial.print((int)(10000 * m_sensor_angle));
+  // Serial.print(",");
+  // Serial.print((int)(10000 * m_gyro));
+  // Serial.print(",");
+  // Serial.print((int)(10000 * m_kalman_angle));
+  // Serial.print(",");
+  // Serial.print((int)(10000 * m_kalman_gyro));
+  // Serial.print(",");
+  // Serial.println((int)(10000 * m_madgwick_angle));
+  // Serial.print(",");
+  // Serial.println((int)(10000 * m_km_angle));
 }
 
 double BalanceSupervisor::normalize(double in, double limit)
@@ -451,11 +485,12 @@ void BalanceSupervisor::resetKalman()
 
   double Angle_accY = atan2((double)ay, (double)az) * RAD_TO_DEG;
   kalman.setAngle(Angle_accY);
-  m_estima_angle = Angle_accY;
+  km.setAngle(Angle_accY);
+  // m_estima_angle = Angle_accY;
   //  double dt = (double)1.0 / (double)GYRO_RATE;
 }
 
-double BalanceSupervisor::readIMU()
+void BalanceSupervisor::readIMU(double dt)
 {
   int aix, aiy, aiz;
   int gix, giy, giz;
@@ -474,50 +509,33 @@ double BalanceSupervisor::readIMU()
   m_gyro = gx; //
 
   // update the filter, which computes orientation
-  filter.updateIMU(gx, gy, gz, ax, ay, az);
+  // filter.updateIMU(gx, gy, gz, ax, ay, az);
+
   // print the heading, pitch and roll
-  //double roll = filter.getRoll();
-
-  m_sensor_angle = filter.getRoll(); // roll;
-
-  //m_sensor_angle, m_kalman_angle, m_estima_angle,m_filter_angle
+  //    double roll = filter.getRoll();
   //    pitch = filter.getPitch();
   //    heading = filter.getYaw();
 
-  // double Angle_accY =atan(ay/sqrt(ax*ax + az*az))*180/3.14; //offset
-  double Angle_accY = atan2((double)ay, (double)az) * RAD_TO_DEG;
-  double dt = (double)1.0 / (double)GYRO_RATE;
+  double Angle_accY = atan(ay / sqrt(ax * ax + az * az)) * 180 / 3.14; //offset
 
-  if ((Angle_accY < -90 && m_estima_angle > 90) || (Angle_accY > 90 && m_estima_angle < -90))
+  m_sensor_angle = Angle_accY; //filter.getRoll();
+
+  // if ((Angle_accY < -90 && m_estima_angle > 90) || (Angle_accY > 90 && m_estima_angle < -90))
+  // {
+  //   kalman.setAngle(Angle_accY);
+  //   m_kalman_angle = Angle_accY;
+  //   m_kalman_gyro = m_gyro;
+  // }
+  // else
   {
-    kalman.setAngle(Angle_accY);
-    m_estima_angle = Angle_accY;
+    m_kalman_angle = kalman.getAngle(m_sensor_angle, gx, dt); // Calculate the angle using a Kalman filter
+    m_kalman_gyro = kalman.getRate();
   }
-  else
-    m_estima_angle = kalman.getAngle(Angle_accY, gx, dt); // Calculate the angle using a Kalman filter
+  // double Angle_accY = atan2((double)ay, (double)az) * RAD_TO_DEG;
+  // m_km_angle = km.getAngle(Angle_accY, gx, dt);
 
-  //  kalmanAngle =  kalman.getAngle(Angle_accY, (double)gx, dt);
-  // m_estima_angle = 0.98 * (g_fGravityAngle + gx * dt) + 0.02 * Angle_accY; // * RAD_TO_DEG;
-  g_fGravityAngle = 0.98 * (g_fGravityAngle + gx * dt) + 0.02 * Angle_accY; //Angle_accY; //0.98 0.02
-
-  //    m_gyro = 0.60*m_gyro + 0.4*m_sensor_angle;
-
-  //    mpu6050.readMotionSensor(aix, aiy, aiz, gix, giy, giz);
-  //   // convert from raw data to gravity and degrees/second units
-  //    ax = convertRawAcceleration(aix);
-  //    ay = convertRawAcceleration(aiy);
-  //    az = convertRawAcceleration(aiz);
-  //    gx = convertRawGyro(gix);
-  //    gy = convertRawGyro(giy);
-  //    gz = convertRawGyro(giz);
-  //
-  //    filter2.updateIMU(gx, gy, gz, ax, ay, az);
-  //    m_estima_angle = filter.getRoll(); // roll;
-
-  //  Angle_accY = atan2((double)ay, (double)az) * RAD_TO_DEG;
-  // g_fGravityAngle = 0.98 * (g_fGravityAngle + gx * dt) + 0.02 * Angle_accY; //0.98 0.02
-
-  return m_estima_angle; //g_fGravityAngle;// m_sensor_angle;
+  double angle_accX = atan2((double)ax, (double)az) * RAD_TO_DEG;
+  m_x_angle = angle_accX;
 }
 
 double BalanceSupervisor::convertRawAcceleration(int aRaw)
@@ -540,9 +558,10 @@ double BalanceSupervisor::convertRawGyro(int gRaw)
   return g;
 }
 
-//------------------------------------------------------------------
-double BalanceSupervisor::estima_cal(double estima, double metron, double KG)
+//一阶融合滤波, angle 当前角度，g_angle重力加速度计角度，gyro 陀螺仪角速度
+// angle = KG * g_angle + (1-KG)*(angle + gyro * dt)
+double BalanceSupervisor::estima_cal(double angle, double g_angle, double gyro, double dt, double KG)
 {
-  double result1 = estima + KG * (metron - estima);
-  return result1;
+  double result = KG * g_angle + (1 - KG) * (angle + gyro * dt);
+  return result;
 }

@@ -6,28 +6,27 @@
 
 Supervisor::Supervisor()
 {
-  d_fw = 0.25; //distance to follow wall
+  d_fw = 0.20; //distance to follow wall
   d_stop = 0.02;
-  d_at_obs = 0.3;
+  d_at_obs = 0.25;
   d_unsafe = 0.1;
   d_prog = 100;
 
   m_input.x_g = 1;
   m_input.y_g = 0;
-  m_input.v = 0.3;
-  m_FollowWall.d_fw = 0.25;
+  m_input.v = 0.2;
+  m_FollowWall.d_fw = 0.20;
   m_FollowWall.dir = 0;
 
   //  robot.setVel2PwmParam(0, 6.4141, 14.924); // vel to pwm parameters
 
   // robot.setVel2PwmParam(0,9.59,18.73);
-  robot.setIRSensorType(GP2Y0A21);
-
-  robot.setHaveIrSensor(0, false);
-  robot.setHaveIrSensor(1, false);
-  robot.setHaveIrSensor(2, false);
-  robot.setHaveIrSensor(3, false);
-  robot.setHaveIrSensor(4, false);
+  // robot.setIRSensorType(GP2Y0A21);
+  // robot.setHaveIrSensor(0, true);
+  // robot.setHaveIrSensor(1, true);
+  // robot.setHaveIrSensor(2, false);
+  // robot.setHaveIrSensor(3, true);
+  // robot.setHaveIrSensor(4, true);
 
   mSimulateMode = false;
   mIgnoreObstacle = false;
@@ -590,7 +589,16 @@ void Supervisor::executeAvoidAndGotoGoal(double dt)
   else //follow wall
   {
     if (!progress_made)
+    {
+      if (noObstacle)
+      {
+        m_state = S_GTG;
+        m_currentController = &m_GoToGoal;
+        m_GoToGoal.reset();
+        Serial.println("Chg to GTG while no obs!");
+      }
       return;
+    }
 
     m_SlidingMode.execute(&robot, &m_input, &m_output, 0.02);
     if (m_FollowWall.dir == 0 && m_SlidingMode.quitSlidingLeft())
@@ -605,7 +613,7 @@ void Supervisor::executeAvoidAndGotoGoal(double dt)
       m_state = S_GTG;
       m_currentController = &m_GoToGoal;
       m_GoToGoal.reset();
-      Serial.println("Chg to GTG from FW L");
+      Serial.println("Chg to GTG from FW R");
     }
   }
 }
@@ -721,7 +729,15 @@ void Supervisor::check_states()
   {
     if (irSensors[i]->distance < d_at_obs)
       at_obstacle = true;
-    if (irSensors[i]->distance < MAX_IRSENSOR_DIS)
+    if (irSensors[i]->distance < irSensors[i]->getMaxDistance() - 0.01) //  MAX_IRSENSOR_DIS)
+      noObstacle = false;
+  }
+
+  if (noObstacle)
+  {
+    if (irSensors[0]->distance < irSensors[0]->getMaxDistance() - 0.01)
+      noObstacle = false;
+    else if (irSensors[4]->distance < irSensors[4]->getMaxDistance() - 0.01)
       noObstacle = false;
   }
 

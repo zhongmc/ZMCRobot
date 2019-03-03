@@ -3,11 +3,10 @@
 
 #include <Arduino.h>
 
-
 #define BALANCE_CAR 1
 #define DRIVE_CAR 2
 
-#define CAR_TYPE DRIVE_CAR //DRIVE_CAR BALANCE_CAR
+#define CAR_TYPE DRIVE_CAR // BALANCE_CAR
 
 #define MOTOR DUAL_MOTOR //TT_MOTOR
 
@@ -17,18 +16,15 @@
 #define DIS_SPEED_DOWN_SCALE 10
 #define W_SPEED_DOWN_SCALE 1
 
-
 typedef struct
 {
   double x, y;
 } Vector;
 
-
 typedef struct
 {
   double x, y, theta;
 } Position;
-
 
 long readLeftEncoder();
 long readRightEncoder();
@@ -56,10 +52,12 @@ void checkSerialData();
 //ble cmd process
 void processSetingsRequire();
 void sendRobotStateValue(byte stateType, Position pos, double irDistance[5], double voltage);
+
+void sendBalanceRobotStateValue(Position pos, double irDistance[5], double voltage);
+
 void MoveMotor(int pwm);
 
-void turnAround( int pwm );
+void turnAround(int pwm);
 void setPID(char *buffer);
-
 
 #endif

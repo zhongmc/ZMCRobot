@@ -24,7 +24,6 @@ typedef struct
   double vel_l;
 } Vel;
 
-
 typedef struct
 {
   int pwm_l, pwm_r;
@@ -122,11 +121,12 @@ protected:
 
   SETTINGS mPIDSettings;
 
+  IRSensor *irSensors[5];
+
 private:
   int ticks_per_rev_l, ticks_per_rev_r;
   double m_per_tick_l, m_per_tick_r;
   long prev_left_ticks, prev_right_ticks;
-  IRSensor *irSensors[5];
 };
 
 #endif /* _ROBOT_H_ */

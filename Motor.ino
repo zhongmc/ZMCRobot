@@ -32,6 +32,7 @@ void initMotor()
   pinMode(2, INPUT);
   pinMode(3, INPUT);
 
+  //改为change 让精度增加一倍
   attachInterrupt(digitalPinToInterrupt(LEFT_WHEEL_A), Code1, FALLING);
   attachInterrupt(digitalPinToInterrupt(RIGHT_WHEEL_A), Code2, FALLING);
 

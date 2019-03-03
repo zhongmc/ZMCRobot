@@ -231,9 +231,21 @@ void driveCharacteristicWritten(BLECentral &central, BLECharacteristic &characte
   {
     turnAround(-100);
   }
-  else if( cmd[0] == 'P' && cmd[1] == 'I') //pid
+  else if (cmd[0] == 'I' && cmd[1] == 'R')
   {
-      setPID((char *)(data+2));
+    short idx = *(data + 2) - '0';
+    bool val = *(data + 3) - '0';
+    Serial.print("set ir sensor: ");
+    Serial.print(idx);
+    Serial.print(", ");
+    Serial.println(val);
+
+    supervisor.setHaveIRSensor(idx, val);
+  }
+
+  else if (cmd[0] == 'P' && cmd[1] == 'I') //pid
+  {
+    setPID((char *)(data + 2));
   }
 #else
   else if (cmd[0] == 'G' && cmd[1] == 'B') //start Balance mode
@@ -256,17 +268,6 @@ void driveCharacteristicWritten(BLECentral &central, BLECharacteristic &characte
     v = byteToFloat((byte *)(data + 2), 100);
     w = byteToFloat((byte *)(data + 4), 100);
     setDriveGoal(v, w);
-  }
-  else if (cmd[0] == 'I' && cmd[1] == 'R')
-  {
-    short idx = *(data + 2) - '0';
-    bool val = *(data + 3) - '0';
-    Serial.print("set ir sensor: ");
-    Serial.print(idx);
-    Serial.print(", ");
-    Serial.println(val);
-
-    supervisor.setHaveIRSensor(idx, val);
   }
 }
 
@@ -553,7 +554,6 @@ void processSetingsRequire()
   settings = supervisor.getSettings(sType);
 #else
   settings = balanceSupervisor.getSettings(sType);
-}
 #endif
   SendSettings(settings);
 }

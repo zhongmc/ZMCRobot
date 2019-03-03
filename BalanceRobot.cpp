@@ -4,11 +4,23 @@
 BalanceRobot::BalanceRobot()
 {
   //R, L, ticksr_l, ticksr_r, minRpm, maxRpm, GP2Y0A41);
-  init(0.065 / 2, 0.125, 330, 330, 0, 140, GP2Y0A41);
+  init(0.065 / 2, 0.125, 390, 390, 50, 190, GP2Y0A41);
 
   mPIDSettings.kp = 30;
   mPIDSettings.ki = 0.0;
   mPIDSettings.kd = 0.02;
+
+  irSensors[0] = new IRSensor(-0.045, 0.05, PI / 2, A1, GP2Y0A21);
+  irSensors[1] = new IRSensor(0.08, 0.04, PI / 4, A2, GP2Y0A21); //0.16,0.045, PI/6 0.075, 0.035
+  irSensors[2] = new IRSensor(0.162, 0.0, 0, A3, GP2Y0A41);
+  irSensors[3] = new IRSensor(0.08, -0.04, -PI / 4, A4, GP2Y0A21);
+  irSensors[4] = new IRSensor(-0.045, -0.05, -PI / 2, A5, GP2Y0A21);
+
+  haveIrSensor[0] = false;
+  haveIrSensor[1] = false;
+  haveIrSensor[2] = false;
+  haveIrSensor[3] = false;
+  haveIrSensor[4] = false;
   //  mSettings.kp = 5;
   //   mSettings.ki = 0.01;
   //   mSettings.kd = 0.05;
@@ -70,12 +82,17 @@ double BalanceRobot::vel_l_to_pwm(double vel)
 {
   //ax^2+bx+c
   double nvel = abs(vel);
-  if (nvel < min_vel)
-    nvel = min_vel;
-  else if (nvel > max_vel)
+  if (nvel < min_vel - 0.1)
+    return 0;
+
+  if (nvel > max_vel)
     nvel = max_vel;
 
-  double retVal = 9.6893 * nvel + 10.179; //6.393 * nvel + 13.952;
+  // double retVal = 0.5729 * nvel * nvel - 5.1735 * nvel + 86.516;
+  // double retVal = 9.1631 * nvel + 27.898; //6.393 * nvel + 13.952;
+  //y = 0.1086x2 + 3.4864x + 60.919
+
+  double retVal = 0.1086 * nvel * nvel + 3.4864 * nvel + 60.919;
 
   if (vel >= 0)
     return retVal;
@@ -88,12 +105,17 @@ double BalanceRobot::vel_r_to_pwm(double vel)
   //ax^2+bx+c
   double nvel = abs(vel);
 
-  if (nvel < min_vel)
-    nvel = min_vel;
-  else if (nvel > max_vel)
+  if (nvel < min_vel - 0.1)
+    return 0; //nvel = min_vel;
+
+  if (nvel > max_vel)
     nvel = max_vel;
 
-  double retVal = 9.5946 * nvel + 18.738; // 6.2798 * nvel + 18.787;
+  // double retVal = 0.5649 * nvel * nvel - 4.3156 * nvel + 80.706;
+  // double retVal = 9.1631 * nvel + 27.898; // 6.2798 * nvel + 18.787;
+  //  y = 0.5649x2 - 4.3156x + 80.706
+  //y = 0.1194x2 + 3.0069x + 63.031
+  double retVal = 0.1194 * nvel * nvel + 3.0069 * nvel + 63.031;
 
   if (vel >= 0)
     return retVal;

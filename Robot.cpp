@@ -51,23 +51,11 @@ void Robot::init(double R, double L, double ticksr_l, double ticksr_r, double mi
   // irSensors[3] = new IRSensor(0.160, -0.045, -50.0*PI /180.0, A4, sensorType);
   // irSensors[4] = new IRSensor(-0.045, -0.05, -PI / 2, A5, sensorType);
 
-  irSensors[0] = new IRSensor(-0.045, 0.05, PI / 2, A1, sensorType);
-  irSensors[1] = new IRSensor(0.10, 0.04, PI / 4, A2, sensorType); //0.16,0.045, PI/6 0.075, 0.035
-  irSensors[2] = new IRSensor(0.162, 0.0, 0, A3, sensorType);
-  irSensors[3] = new IRSensor(0.10, -0.04, 2 * PI - PI / 4, A4, sensorType);
-  irSensors[4] = new IRSensor(-0.045, -0.05, 2 * PI - PI / 2, A5, sensorType);
-
   // irSensors[0] = new IRSensor(-0.1, 0.055, PI / 2, A1, sensorType); //A1
   // irSensors[1] = new IRSensor(0.075, 0.06, PI / 4, A2, sensorType);
   // irSensors[2] = new IRSensor(0.085, 0., 0, A3, sensorType);
   // irSensors[3] = new IRSensor(0.075, -0.06, -PI / 4, A4, sensorType);
   // irSensors[4] = new IRSensor(-0.1, -0.055, -PI / 2, A5, sensorType);
-
-  haveIrSensor[0] = true;
-  haveIrSensor[1] = true;
-  haveIrSensor[2] = true;
-  haveIrSensor[3] = true;
-  haveIrSensor[4] = true;
 }
 
 void Robot::setIRSensorType(SENSOR_TYPE sensorType)
@@ -166,10 +154,19 @@ void Robot::readIRSensors()
     if (haveIrSensor[i])
       irSensors[i]->readPosition();
   }
-  if (haveIrSensor[2] && ultrasonicDistance < MAX_ULTRASONIC_DIS)
+
+  if (haveIrSensor[2] && irSensors[2]->distance >= irSensors[2]->getMaxDistance())
   {
     irSensors[2]->setDistance(ultrasonicDistance);
   }
+  else if (!haveIrSensor[2])
+  {
+    irSensors[2]->setDistance(ultrasonicDistance);
+  }
+  // if (irSensors[2]->distance >= irSensors[2]->getMaxDistance() && ultrasonicDistance < MAX_ULTRASONIC_DIS) //haveIrSensor[2] &&
+  // {
+  //   irSensors[2]->setDistance(ultrasonicDistance);
+  // }
   for (int i = 0; i < 5; i++)
     irSensors[i]->applyGeometry(x, y, sinTheta, cosTheta);
 }

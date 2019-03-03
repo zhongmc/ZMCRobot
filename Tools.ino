@@ -125,69 +125,10 @@ void processCommand(char *buffer, int bufferLen)
     balanceSupervisor.getRobotInfo();
 #endif
   }
-
-  else if (ch0 == 'o' && ch1 == 'd') //set obstacle distance
-  {
-    double ods[5];
-    getDoubleValues(buffer + 2, 5, ods);
-
-    // char *buf = buffer + 2;
-    // for (int i = 0; i < 5; i++)
-    // {
-    //   ods[i] = (float)atoi(buf) / 1000.0;
-    //   buf = strchr(buf, ',');
-    //   if (buf == NULL)
-    //     break;
-    //   buf++;
-    //   Serial.print(ods[i]);
-    //   Serial.print(',');
-    // }
-    // Serial.println(';');
-    supervisor.setObstacleDistance(ods);
-  }
-  // else if (ch0 == 'c' && ch1 == 'd') //close debug
-  // {
-  //   openDebug = false;
-  // }
-
-  // else if (ch0 == 'g' && ch1 == 'd')
-  // {
-  //   Serial.print("Distance of ultraSonic:");
-  //   if (echoTime > 0)
-  //   {
-  //     float dist = 0.017 * echoTime;
-  //     //     float dist = 17000/echoTime;
-  //     Serial.println(dist);
-  //   }
-  //   else
-  //   {
-  //     Serial.println("NA");
-  //   }
-  // }
-  else if (ch0 == 'g' && ch1 == 'o') //start go to goal
-  {
-    startGoToGoal();
-  }
-
   else if (ch0 == 's' && ch1 == 't') //stop
   {
     // Serial.println("Stop!");
     stopRobot();
-  }
-  else if (ch0 == 'r' && ch1 == 'p') //set robot position
-  {
-    double fvs[3];
-    getDoubleValues(buffer + 2, 3, fvs);
-    supervisor.setRobotPosition(fvs[0], fvs[1], fvs[2]);
-    //to do
-  }
-
-  else if (ch0 == 'g' && ch1 == 'g') //set goto goal goal
-  {
-
-    double fvs[3];
-    getDoubleValues(buffer + 2, 3, fvs);
-    setGoal(fvs[0], fvs[1], fvs[2]);
   }
 
   else if (ch0 == 'c' && ch1 == 'i') //count info
@@ -215,12 +156,6 @@ void processCommand(char *buffer, int bufferLen)
     motorSpeed(pwm);
     MoveMotor(0);
   }
-
-  else if (ch0 == 's' && ch1 == 'r') // step response
-  {
-    int pwm = atoi(buffer + 2);
-    stepResponseTest(pwm);
-  }
   else if (ch0 == 's' && ch1 == 'p') //speed test
   {
     int pwm0, pwm1, step = 0;
@@ -241,6 +176,46 @@ void processCommand(char *buffer, int bufferLen)
 
     speedTest(pwm0, pwm1, step);
   }
+
+  else if (ch0 == 'r' && ch0 == 's') //RESET
+  {
+    ResetRobot();
+  }
+
+#if CAR_TYPE == DRIVE_CAR
+  else if (ch0 == 'g' && ch1 == 'o') //start go to goal
+  {
+    startGoToGoal();
+  }
+
+  else if (ch0 == 'g' && ch1 == 'g') //set goto goal goal
+  {
+
+    double fvs[3];
+    getDoubleValues(buffer + 2, 3, fvs);
+    setGoal(fvs[0], fvs[1], fvs[2]);
+  }
+
+  else if (ch0 == 'o' && ch1 == 'd') //set obstacle distance
+  {
+    double ods[5];
+    getDoubleValues(buffer + 2, 5, ods);
+    supervisor.setObstacleDistance(ods);
+  }
+  else if (ch0 == 'r' && ch1 == 'p') //set robot position
+  {
+    double fvs[3];
+    getDoubleValues(buffer + 2, 3, fvs);
+    supervisor.setRobotPosition(fvs[0], fvs[1], fvs[2]);
+    //to do
+  }
+
+  else if (ch0 == 's' && ch1 == 'r') // step response
+  {
+    int pwm = atoi(buffer + 2);
+    stepResponseTest(pwm);
+  }
+
   else if (ch0 == 'p' && ch1 == 'i') //pid
   {
     setPID(buffer + 2);
@@ -287,144 +262,157 @@ void processCommand(char *buffer, int bufferLen)
     //   SetIgnoreObstacle(false);
   }
 
-  else if (ch0 == 'r' && ch0 == 's') //RESET
-  {
-    ResetRobot();
-  }
+#endif
 
 #if CAR_TYPE == BALANCE_CAR
 
+  else if (ch0 == 'g' && ch1 == 'o') //start balance
+  {
+    Serial.println("Start balance!");
+    startBalance();
+  }
   else if (ch0 == 's' && ch1 == 'b') //start balance
   {
     Serial.println("Start balance!");
     startBalance();
   }
 
-  else if (ch0 == 'b') //setting  balance values
+  else if (ch0 == 'c' && ch1 == 'm')
   {
-    double val;
-    if (ch1 == 'p')
+    CalibrateIMU();
+  }
+  //set PID of balance
+  else if (ch0 == 'p' && ch1 == 'b')
+  {
+    if (bufferLen < 4)
     {
-      buffer[bufferLen - 1] = 0;
-      val = atof(buffer + 2);
-      Serial.print("Set balance KP to:");
-      Serial.println(val);
-
-      balanceSupervisor.setBalanceCtrlParam(val, 0);
+      SETTINGS settings = balanceSupervisor.getSettings(2);
+      sendPID("PB", settings.kp, settings.ki, settings.kd, 1000);
     }
-    else if (ch1 == 'i')
+    else
     {
-      buffer[bufferLen - 1] = 0;
-      val = atof(buffer + 2);
-      Serial.print("Set balance KI to:");
-      Serial.println(val);
-      balanceSupervisor.setBalanceCtrlParam(val, 1);
+      Serial.println("Set PID of Balance:");
+      SETTINGS settings = getPID(buffer + 2);
+      settings.sType = 2;
+      balanceSupervisor.updateSettings(settings);
     }
-    else if (ch1 == 'd')
+  }
+  //set PID of speed
+  else if (ch0 == 'p' && ch1 == 's')
+  {
+    if (bufferLen < 4)
     {
-      buffer[bufferLen - 1] = 0;
-      val = atof(buffer + 2);
-      Serial.print("Set balance KD to:");
-      Serial.println(val);
-      balanceSupervisor.setBalanceCtrlParam(val, 2);
+      SETTINGS settings = balanceSupervisor.getSettings(3);
+      sendPID("PS", settings.kp, settings.ki, settings.kd, 1000);
+    }
+    else
+    {
+      Serial.println("Set PID of Speed:");
+      SETTINGS settings = getPID(buffer + 2);
+      settings.sType = 3;
+      balanceSupervisor.updateSettings(settings);
     }
   }
 
-  else if (ch0 == 'c' && ch1 == 'i')
-  {
-    //  CalibrateIMU();
-  }
-
-  else if (ch0 == 'v') //setting  speed values
-  {
-    double val;
-    if (ch1 == 'p')
-    {
-      buffer[bufferLen - 1] = 0;
-      val = atof(buffer + 2);
-      Serial.print("Set speed KP to:");
-      Serial.println(val);
-
-      balanceSupervisor.setSpeedCtrlParam(val, 0);
-    }
-    else if (ch1 == 'i')
-    {
-      buffer[bufferLen - 1] = 0;
-      val = atof(buffer + 2);
-      Serial.print("Set Speed KI to:");
-      Serial.println(val);
-      balanceSupervisor.setSpeedCtrlParam(val, 1);
-    }
-    else if (ch1 == 'd')
-    {
-      buffer[bufferLen - 1] = 0;
-      val = atof(buffer + 2);
-      Serial.print("Set Speed KD to:");
-      Serial.println(val);
-      balanceSupervisor.setSpeedCtrlParam(val, 2);
-    }
-  }
 #endif
 }
 
-/*
 #if CAR_TYPE == BALANCE_CAR
+
+SETTINGS getPID(char *buffer)
+{
+  double p, i, d;
+  p = atof((buffer));
+  char *buf = strchr(buffer, ',');
+  i = atof((buf + 1));
+  buf = strchr((buf + 1), ',');
+  d = atof(buf + 1);
+
+  Serial.print("PID:");
+  Serial.print(p);
+  Serial.print(",");
+  Serial.print(i);
+  Serial.print(",");
+  Serial.println(d);
+
+  SETTINGS settings;
+  settings.sType = 1;
+  settings.kp = p;
+  settings.ki = i;
+  settings.kd = d;
+  return settings;
+}
+
+void sendPID(char *pref, double kp, double ki, double kd, int scale)
+{
+  String retStr;
+
+  String pre = pref;
+  char tmp[10];
+  itoa((int)(scale * kp), tmp, 10);
+  String skp = tmp;
+  itoa((int)(scale * ki), tmp, 10);
+  String ski = tmp;
+  itoa((int)(scale * kd), tmp, 10);
+  String skd = tmp;
+
+  retStr = pre + skp + "," + ski + "," + skd;
+  Serial.println(retStr);
+}
+
 void CalibrateIMU()
 {
-    Serial.println("Internal sensor offsets BEFORE calibration( xAcc,yAcc,zAcc, xGyro, yGyro, zGyro ...");
-    Serial.print(CurieIMU.getAccelerometerOffset(X_AXIS));
-    Serial.print("\t"); // -76
-    Serial.print(CurieIMU.getAccelerometerOffset(Y_AXIS));
-    Serial.print("\t"); // -235
-    Serial.print(CurieIMU.getAccelerometerOffset(Z_AXIS));
-    Serial.print("\t"); // 168
-    Serial.print(CurieIMU.getGyroOffset(X_AXIS));
-    Serial.print("\t"); // 0
-    Serial.print(CurieIMU.getGyroOffset(Y_AXIS));
-    Serial.print("\t"); // 0
-    Serial.println(CurieIMU.getGyroOffset(Z_AXIS));
+  Serial.println("Internal sensor offsets BEFORE calibration( xAcc,yAcc,zAcc, xGyro, yGyro, zGyro ...");
+  Serial.print(CurieIMU.getAccelerometerOffset(X_AXIS));
+  Serial.print("\t"); // -76
+  Serial.print(CurieIMU.getAccelerometerOffset(Y_AXIS));
+  Serial.print("\t"); // -235
+  Serial.print(CurieIMU.getAccelerometerOffset(Z_AXIS));
+  Serial.print("\t"); // 168
+  Serial.print(CurieIMU.getGyroOffset(X_AXIS));
+  Serial.print("\t"); // 0
+  Serial.print(CurieIMU.getGyroOffset(Y_AXIS));
+  Serial.print("\t"); // 0
+  Serial.println(CurieIMU.getGyroOffset(Z_AXIS));
 
-    // To manually configure offset compensation values,
-    // use the following methods instead of the autoCalibrate...() methods below
-    //CurieIMU.setAccelerometerOffset(X_AXIS,495.3);
-    //CurieIMU.setAccelerometerOffset(Y_AXIS,-15.6);
-    //CurieIMU.setAccelerometerOffset(Z_AXIS,491.4);
-    //CurieIMU.setGyroOffset(X_AXIS,7.869);
-    //CurieIMU.setGyroOffset(Y_AXIS,-0.061);
-    //CurieIMU.setGyroOffset(Z_AXIS,15.494);
+  // To manually configure offset compensation values,
+  // use the following methods instead of the autoCalibrate...() methods below
+  //CurieIMU.setAccelerometerOffset(X_AXIS,495.3);
+  //CurieIMU.setAccelerometerOffset(Y_AXIS,-15.6);
+  //CurieIMU.setAccelerometerOffset(Z_AXIS,491.4);
+  //CurieIMU.setGyroOffset(X_AXIS,7.869);
+  //CurieIMU.setGyroOffset(Y_AXIS,-0.061);
+  //CurieIMU.setGyroOffset(Z_AXIS,15.494);
 
-    Serial.println("About to calibrate. Make sure your board is stable and upright");
-    delay(5000);
+  Serial.println("About to calibrate. Make sure your board is stable and upright");
+  delay(5000);
 
-    // The board must be resting in a horizontal position for
-    // the following calibration procedure to work correctly!
-    Serial.print("Starting Gyroscope calibration and enabling offset compensation...");
-    CurieIMU.autoCalibrateGyroOffset();
-    Serial.println(" Done");
+  // The board must be resting in a horizontal position for
+  // the following calibration procedure to work correctly!
+  Serial.print("Starting Gyroscope calibration and enabling offset compensation...");
+  CurieIMU.autoCalibrateGyroOffset();
+  Serial.println(" Done");
 
-    Serial.print("Starting Acceleration calibration and enabling offset compensation...");
-    CurieIMU.autoCalibrateAccelerometerOffset(X_AXIS, 0);
-    CurieIMU.autoCalibrateAccelerometerOffset(Y_AXIS, 0);
-    CurieIMU.autoCalibrateAccelerometerOffset(Z_AXIS, 1);
-    Serial.println(" Done");
+  Serial.print("Starting Acceleration calibration and enabling offset compensation...");
+  CurieIMU.autoCalibrateAccelerometerOffset(X_AXIS, 0);
+  CurieIMU.autoCalibrateAccelerometerOffset(Y_AXIS, 0);
+  CurieIMU.autoCalibrateAccelerometerOffset(Z_AXIS, 1);
+  Serial.println(" Done");
 
-    Serial.println("Internal sensor offsets AFTER calibration...");
-    Serial.print(CurieIMU.getAccelerometerOffset(X_AXIS));
-    Serial.print("\t"); // -76
-    Serial.print(CurieIMU.getAccelerometerOffset(Y_AXIS));
-    Serial.print("\t"); // -2359
-    Serial.print(CurieIMU.getAccelerometerOffset(Z_AXIS));
-    Serial.print("\t"); // 1688
-    Serial.print(CurieIMU.getGyroOffset(X_AXIS));
-    Serial.print("\t"); // 0
-    Serial.print(CurieIMU.getGyroOffset(Y_AXIS));
-    Serial.print("\t"); // 0
-    Serial.println(CurieIMU.getGyroOffset(Z_AXIS));
-
-  
+  Serial.println("Internal sensor offsets AFTER calibration...");
+  Serial.print(CurieIMU.getAccelerometerOffset(X_AXIS));
+  Serial.print("\t"); // -76
+  Serial.print(CurieIMU.getAccelerometerOffset(Y_AXIS));
+  Serial.print("\t"); // -2359
+  Serial.print(CurieIMU.getAccelerometerOffset(Z_AXIS));
+  Serial.print("\t"); // 1688
+  Serial.print(CurieIMU.getGyroOffset(X_AXIS));
+  Serial.print("\t"); // 0
+  Serial.print(CurieIMU.getGyroOffset(Y_AXIS));
+  Serial.print("\t"); // 0
+  Serial.println(CurieIMU.getGyroOffset(Z_AXIS));
 }
 #endif
-*/
 
 void printCountInfo()
 {
@@ -472,22 +460,6 @@ void motorSpeed(int pwm)
   Serial.print(c1);
   Serial.print(',');
   Serial.println(c2);
-}
-
-void stepResponseTest(int pwm)
-{
-  Serial.print("SR: ");
-  Serial.println(pwm);
-  printCountInfo();
-  printCountInfo();
-  int count = 100;
-  while (count > 0)
-  {
-    delay(20);
-    printCountInfo();
-  }
-  printCountInfo();
-  MoveMotor(0);
 }
 
 void turnAround(int pwm)
@@ -538,6 +510,8 @@ void getDoubleValues(char *buffer, int c, double *fvs)
   // Serial.println(';');
 }
 
+#if CAR_TYPE == DRIVE_CAR
+
 void setPID(char *buffer)
 {
   double p, i, d;
@@ -562,3 +536,20 @@ void setPID(char *buffer)
   supervisor.updateSettings(settings);
   driveSupervisor.updateSettings(settings);
 }
+
+void stepResponseTest(int pwm)
+{
+  Serial.print("SR: ");
+  Serial.println(pwm);
+  printCountInfo();
+  printCountInfo();
+  int count = 100;
+  while (count > 0)
+  {
+    delay(20);
+    printCountInfo();
+  }
+  printCountInfo();
+  MoveMotor(0);
+}
+#endif

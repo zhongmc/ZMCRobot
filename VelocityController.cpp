@@ -52,7 +52,7 @@ void VelocityController::execute(Robot *robot, Input *input, Output *output, dou
     // if (output->v == 0)
     //   e = mW - robot->w;
     // else
-      e = mW - robot->w;
+    e = mW - robot->w;
 
     e_I = lastErrorIntegration + e * dt;
     e_D = (e - lastError) / dt;

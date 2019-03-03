@@ -19,14 +19,15 @@
 
 #include <Wire.h>
 
-Kalman::Kalman() {
+Kalman::Kalman()
+{
     /* We will set the variables like so, these can also be tuned by the user */
     Q_angle = 0.001f;
     Q_bias = 0.003f;
     R_measure = 0.03f;
 
     angle = 0.0f; // Reset the angle
-    bias = 0.0f; // Reset bias
+    bias = 0.0f;  // Reset bias
 
     P[0][0] = 0.0f; // Since we assume that the bias is 0 and we know the starting angle (use setAngle), the error covariance matrix is set like so - see: http://en.wikipedia.org/wiki/Kalman_filter#Example_application.2C_technical
     P[0][1] = 0.0f;
@@ -35,7 +36,8 @@ Kalman::Kalman() {
 };
 
 // The angle should be in degrees and the rate should be in degrees per second and the delta time in seconds
-float Kalman::getAngle(float newAngle, float newRate, float dt) {
+float Kalman::getAngle(float newAngle, float newRate, float dt)
+{
     // KasBot V2  -  Kalman filter module - http://www.x-firm.com/?page_id=145
     // Modified by Kristian Lauszus
     // See my blog post for more information: http://blog.tkjelectronics.dk/2012/09/a-practical-approach-to-kalman-filter-and-how-to-implement-it
@@ -48,7 +50,7 @@ float Kalman::getAngle(float newAngle, float newRate, float dt) {
 
     // Update estimation error covariance - Project the error covariance ahead
     /* Step 2 */
-    P[0][0] += dt * (dt*P[1][1] - P[0][1] - P[1][0] + Q_angle);
+    P[0][0] += dt * (dt * P[1][1] - P[0][1] - P[1][0] + Q_angle);
     P[0][1] -= dt * P[1][1];
     P[1][0] -= dt * P[1][1];
     P[1][1] += Q_bias * dt;
@@ -79,17 +81,17 @@ float Kalman::getAngle(float newAngle, float newRate, float dt) {
     P[1][0] -= K[1] * P00_temp;
     P[1][1] -= K[1] * P01_temp;
 
-    Serial.print("fuck:");
-    Serial.print(newAngle);
-    Serial.print(",");
-    Serial.print(dt);
-    Serial.print(",");
-    Serial.println(angle);
+    // Serial.print("fuck:");
+    // Serial.print(newAngle);
+    // Serial.print(",");
+    // Serial.print(dt);
+    // Serial.print(",");
+    // Serial.println(angle);
     return angle;
 };
 
 void Kalman::setAngle(float angle) { this->angle = angle; }; // Used to set angle, this should be set as the starting angle
-float Kalman::getRate() { return this->rate; }; // Return the unbiased rate
+float Kalman::getRate() { return this->rate; };              // Return the unbiased rate
 
 /* These are used to tune the Kalman filter */
 void Kalman::setQangle(float Q_angle) { this->Q_angle = Q_angle; };
