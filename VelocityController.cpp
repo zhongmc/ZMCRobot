@@ -11,6 +11,8 @@ VelocityController::VelocityController()
   mTheta = 0;
   mW = 0;
   count = 0;
+  curW = 0;
+  keepTheta = false;
 }
 
 void VelocityController::reset()
@@ -18,8 +20,28 @@ void VelocityController::reset()
   lastError = 0;
   lastErrorIntegration = 0;
   mTheta = 0;
+  curW = 0;
 }
 
+void VelocityController::setGoal(double v, double w)
+{
+
+  if (w == 0 && curW != 0) //remain the current theta; 加速过程中会有晃动；保留初始角度？
+  {
+    keepTheta = true;
+    //    mTheta = robot.theta; //转弯结束，保留当前角度
+  }
+  curW = w;
+  mW = w;
+  if (mW == 0)
+  {
+    Serial.println("zero mw!");
+    lastErrorIntegration = 0;
+    lastError = 0;
+  }
+}
+
+//depricated
 void VelocityController::setGoal(double v, double theta, double curTheta)
 {
 
@@ -38,20 +60,10 @@ void VelocityController::execute(Robot *robot, Input *input, Output *output, dou
 {
   double e, e_I, e_D, w;
 
-  //   e = input->theta;
-  //   if( e == 0 )
-  //   {
-  // //      e = robot->theta - mTheta;
-  //       e = mTheta - robot->theta;
-  //   }
-
   if (mW != 0) //转弯，控制角速度？
   {
     output->v = input->v;
 
-    // if (output->v == 0)
-    //   e = mW - robot->w;
-    // else
     e = mW - robot->w;
 
     e_I = lastErrorIntegration + e * dt;
@@ -63,23 +75,27 @@ void VelocityController::execute(Robot *robot, Input *input, Output *output, dou
       lastErrorIntegration = 0;
 
     output->w = w;
-
-    // count++;
-    // if (count > 2)
-    // {
-    //   // Serial.print(input->v);
-    //   // Serial.print(", ");
-    //   Serial.print(e);
-    //   Serial.print(", ");
-    //   Serial.println(w);
-    //   count = 0;
-    // }
     return;
-    // e = mW;
-    // p = 10;
+  }
+
+  if (keepTheta)
+  {
+    e = 0;
+    lastErrorIntegration = 0;
+    keepTheta = false; //next circle to keep the theta??
+    okToKeep = true;
+    output->v = input->v;
+    output->w = 0;
+    return;
   }
   else
   {
+    if (okToKeep)
+    {
+      okToKeep = false;
+      mTheta = robot->theta; // keep current direction
+    }
+
     e = mTheta - robot->theta;
     e = atan2(sin(e), cos(e));
   }

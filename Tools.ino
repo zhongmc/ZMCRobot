@@ -5,7 +5,7 @@
 #include "Supervisor.h"
 #include "DriveSupervisor.h"
 #else
-#include "BalanceSupervisor.h"
+#include "PureBalanceSupervisor.h"
 //#include "Kalman.h"
 #endif
 
@@ -13,7 +13,7 @@
 extern Supervisor supervisor;
 extern DriveSupervisor driveSupervisor;
 #else
-extern BalanceSupervisor balanceSupervisor;
+extern PureBalanceSupervisor balanceSupervisor;
 #endif
 
 extern long trigTime, echoTime;
@@ -265,6 +265,29 @@ void processCommand(char *buffer, int bufferLen)
 #endif
 
 #if CAR_TYPE == BALANCE_CAR
+  else if (ch0 == 'c' && ch1 == 'l') //control loop
+  {
+    int val = *(buffer + 3) - '0';
+    bool bv = true;
+    if (val == 0)
+      bv = false;
+    if (*(buffer + 2) == '0') // speed
+    {
+      balanceSupervisor.setBeSpeedLoop(bv);
+    }
+    else
+    {
+      balanceSupervisor.setBeThetaLoop(bv);
+    }
+  }
+  else if (ch0 == 'i' && ch1 == 'u') //pring imu info
+  {
+    int val = *(buffer + 2) - '0';
+    bool bv = true;
+    if (val == 0)
+      bv = false;
+    balanceSupervisor.setBeSendIMUInfo(bv);
+  }
 
   else if (ch0 == 'g' && ch1 == 'o') //start balance
   {
@@ -276,41 +299,59 @@ void processCommand(char *buffer, int bufferLen)
     Serial.println("Start balance!");
     startBalance();
   }
+  else if (ch0 == 'b' && ch1 == 's') //start balance
+  {
+    Serial.println("stop balance!");
+    stopBalance();
+  }
 
   else if (ch0 == 'c' && ch1 == 'm')
   {
     CalibrateIMU();
   }
-  //set PID of balance
-  else if (ch0 == 'p' && ch1 == 'b')
+
+  else if (ch0 == 'p' && ch1 == 'i') //pid234;2 balance 3 speed 4 turning
   {
-    if (bufferLen < 4)
+
+    PIDParam pidParam;
+    if (bufferLen <= 5)
     {
-      SETTINGS settings = balanceSupervisor.getSettings(2);
-      sendPID("PB", settings.kp, settings.ki, settings.kd, 1000);
+
+      if (*(buffer + 3) == '2')
+      {
+        pidParam = balanceSupervisor.getBalancePIDParam();
+        sendPID("PID2", pidParam.kp, pidParam.ki, pidParam.kd, 1000);
+      }
+      else if (*(buffer + 3) == '3')
+      {
+        pidParam = balanceSupervisor.getSpeedPIDParam();
+        sendPID("PID3", pidParam.kp, pidParam.ki, pidParam.kd, 1000);
+      }
+      else if (*(buffer + 3) == '4')
+      {
+        pidParam = balanceSupervisor.getThetaPIDParam();
+        sendPID("PID4", pidParam.kp, pidParam.ki, pidParam.kd, 1000);
+      }
     }
     else
     {
-      Serial.println("Set PID of Balance:");
-      SETTINGS settings = getPID(buffer + 2);
-      settings.sType = 2;
-      balanceSupervisor.updateSettings(settings);
-    }
-  }
-  //set PID of speed
-  else if (ch0 == 'p' && ch1 == 's')
-  {
-    if (bufferLen < 4)
-    {
-      SETTINGS settings = balanceSupervisor.getSettings(3);
-      sendPID("PS", settings.kp, settings.ki, settings.kd, 1000);
-    }
-    else
-    {
-      Serial.println("Set PID of Speed:");
-      SETTINGS settings = getPID(buffer + 2);
-      settings.sType = 3;
-      balanceSupervisor.updateSettings(settings);
+      pidParam = getPID(buffer + 4);
+
+      if (*(buffer + 3) == '2')
+      {
+        balanceSupervisor.setBalancePIDParam(pidParam);
+        Serial.println("Set PID of Balance:");
+      }
+      else if (*(buffer + 3) == '3')
+      {
+        balanceSupervisor.setSpeedPIDParam(pidParam);
+        Serial.println("Set PID of speed:");
+      }
+      else if (*(buffer + 3) == '4')
+      {
+        balanceSupervisor.setThetaPIDParam(pidParam);
+        Serial.println("Set PID of turning:");
+      }
     }
   }
 
@@ -318,7 +359,7 @@ void processCommand(char *buffer, int bufferLen)
 }
 
 #if CAR_TYPE == BALANCE_CAR
-
+/*
 SETTINGS getPID(char *buffer)
 {
   double p, i, d;
@@ -337,6 +378,30 @@ SETTINGS getPID(char *buffer)
 
   SETTINGS settings;
   settings.sType = 1;
+  settings.kp = p;
+  settings.ki = i;
+  settings.kd = d;
+  return settings;
+}
+*/
+
+PIDParam getPID(char *buffer)
+{
+  double p, i, d;
+  p = atof((buffer));
+  char *buf = strchr(buffer, ',');
+  i = atof((buf + 1));
+  buf = strchr((buf + 1), ',');
+  d = atof(buf + 1);
+
+  Serial.print("PID:");
+  Serial.print(p);
+  Serial.print(",");
+  Serial.print(i);
+  Serial.print(",");
+  Serial.println(d);
+
+  PIDParam settings;
   settings.kp = p;
   settings.ki = i;
   settings.kd = d;

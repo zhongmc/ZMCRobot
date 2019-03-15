@@ -13,6 +13,8 @@ public:
   void execute(Robot *robot, Input *input, Output *output, double dt);
   void setGoal(double v, double theta, double curTheta);
 
+  void setGoal(double v, double w);
+
   void PrintInfo()
   {
     Serial.println(" ctrl info:");
@@ -32,8 +34,11 @@ public:
   }
 
 private:
-  double mTheta; //目标方向
-  double mW;     //转弯
+  double mTheta;  //目标方向
+  double mW;      //转弯
+  double curW;    //当前的转弯状态
+  bool keepTheta; //是否需要保存当前方向
+  bool okToKeep;
 
   int count;
 };

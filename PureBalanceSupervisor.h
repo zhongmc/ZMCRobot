@@ -1,6 +1,6 @@
 
-#ifndef _BALANCE_SUPERVISOR_H_
-#define _BALANCE_SUPERVISOR_H_
+#ifndef _PURE_BALANCE_SUPERVISOR_H_
+#define _PURE_BALANCE_SUPERVISOR_H_
 
 #include <Arduino.h>
 
@@ -8,14 +8,7 @@
 #include "Robot.h"
 #include "BalanceRobot.h"
 
-#include "BalanceController.h"
-#include "BalanceSpeedController.h"
-#include "VelocityController.h" //w controller
-
 #include <CurieIMU.h>
-
-#include <MadgwickAHRS.h>
-
 #include "kalmanFilter.h"
 
 //#include "MyMPU6050.h"
@@ -25,33 +18,35 @@
 
 #define GYRO_RATE 200
 
-class BalanceSupervisor
+class PureBalanceSupervisor
 {
 public:
-  BalanceSupervisor();
+  PureBalanceSupervisor();
   void execute(long left_ticks, long right_ticks, double dt);
   void reset(Vector goal, double v, double d_fw);
   void reset(long leftTicks, long rightTicks);
   void resetRobot();
-
   void resetKalman();
-
   void setGoal(double v, double w);
-  void stopDrive();
+  void setGotoGoal(double x, double y, double theta);
 
+  void startGotoGoal();
+
+  void stopDrive();
   void init();
+
+  void setSettings(SETTINGS settings);
+  SETTINGS getSettings();
+  PIDParam getBalancePIDParam();
+  PIDParam getSpeedPIDParam();
+  PIDParam getThetaPIDParam();
+
+  void setBalancePIDParam(PIDParam pid);
+  void setSpeedPIDParam(PIDParam pid);
+  void setThetaPIDParam(PIDParam pid);
+
   void updateSettings(SETTINGS settings);
   SETTINGS getSettings(byte settingsType);
-
-  void setBalanceCtrlParam(double val, int idx)
-  {
-    m_BalanceController.setCtrlParam(val, idx);
-  }
-
-  void setSpeedCtrlParam(double val, int idx)
-  {
-    // m_SpeedController.setCtrlParam(val, idx);
-  }
 
   void getRobotInfo()
   {
@@ -66,11 +61,13 @@ public:
     // Serial.print(", pwm_zero:");
     // Serial.println(pwm_zero);
 
-    Serial.print("pwmInfo(b,s,wl，wr):");
+    Serial.print("pwmInfo(b,s,t, wl，wr):");
     Serial.print(mBalancePWM);
     Serial.print(",");
-    // Serial.print(mSpeedPWM);
-    // Serial.print(",");
+    Serial.print(mSpeedPWM);
+    Serial.print(",");
+    Serial.print(mThetaPWM);
+    Serial.print(",");
     Serial.print(mwPWM_L);
     Serial.print(",");
     Serial.println(mwPWM_R);
@@ -81,17 +78,24 @@ public:
     Serial.println(m_input.theta);
 
     robot.getRobotInfo();
-    Serial.println("balance ");
-    m_BalanceController.PrintInfo();
-    // Serial.print("velocity ");
-    // m_SpeedController.PrintInfo();
-    Serial.println("Diff:");
-    m_thetaController.PrintInfo();
+    Serial.println("balance:");
+    Serial.print("KP:");
+    Serial.print(b_kp);
+    Serial.print(", kd: ");
+    Serial.println(b_kd);
+
+    Serial.println("Speed:");
+    Serial.print("KP:");
+    Serial.print(s_kp);
+    Serial.print(", ki: ");
+    Serial.println(s_ki);
+
+    Serial.println("theta:");
+    Serial.print("KP:");
+    Serial.println(t_kp);
   }
 
   //        void setGoal(double x, double y, int theta);
-  //the target to go!
-  Vector m_Goal;
 
   Position getRobotPosition();
   //will return the pitch/angle of the robot
@@ -101,26 +105,31 @@ public:
   double KG_ANG;
 
   PWM_OUT pwm;
-  double mBalancePWM, mSpeedPWM, mwPWM_L, mwPWM_R;
+  double mBalancePWM, mSpeedPWM, mThetaPWM, mwPWM_L, mwPWM_R;
   Vel mVel;
 
   int pwm_diff, pwm_zero, max_pwm;
-  double wheelSyncKP;
 
-  int angleType; //the angle used to control balance 0 sensor 1 kalman 2 es
-  void setAngleType(int val)
-  {
-    angleType = val;
-    Serial.print("Change angle type to:");
-    Serial.println(val);
-  }
+  // int angleType; //the angle used to control balance 0 sensor 1 kalman 2 es
+  // void setAngleType(int val)
+  // {
+  //   angleType = val;
+  //   Serial.print("Change angle type to:");
+  //   Serial.println(val);
+  // }
 
   bool mSimulateMode;
   bool mIgnoreObstacle;
+  bool mSendIMUInfo;
+
+  void setBeSpeedLoop(bool val);
+  void setBeThetaLoop(bool val);
+  void setBeSendIMUInfo(bool val);
 
 private:
-  void check_states();
+  bool mSpeedLoop, mThetaLoop;
 
+  void check_states();
   int m_state;
 
   //传感器角度（atan（ax/ay）, kalman, madgwick filter, Kalman1
@@ -142,9 +151,8 @@ private:
 
   bool layingDown, hangUp;
 
-  Madgwick filter; //, filter2;
   Kalman kalman;
-  KalmanFilter km;
+  // KalmanFilter km;
 
   bool progress_made;
   bool at_goal;
@@ -156,8 +164,21 @@ private:
   long prev_left_ticks, prev_right_ticks;
 
   double m_right_ticks, m_left_ticks;
-
   int speedCounter;
+
+private:
+  //balance control
+  double b_kp, b_kd;
+
+  //speed control
+  double s_kp, s_ki, sIntegral;
+
+  //theta control
+  double t_kp;
+
+  void balanceOut(double dt);
+  void speedOut(long leftTicks, long rightTicks, double dt);
+  void thetaOut(double dt);
 
 private:
   // Robot(double R, double L, double ticksr, double maxRpm double minRpm)
@@ -171,9 +192,14 @@ private:
 
   long execTime;
 
-  BalanceController m_BalanceController;
-  BalanceSpeedController m_SpeedController;
-  VelocityController m_thetaController;
+  //the target to go!
+  Vector m_Goal;
+
+  double mTheta;  //目标方向
+  double mW;      //转弯
+  double curW;    //当前的转弯状态
+  bool keepTheta; //是否需要保存当前方向
+  bool okToKeep;
 
   double d_fw; //distance to follow wall
   double d_stop;

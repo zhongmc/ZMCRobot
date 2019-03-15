@@ -7,7 +7,7 @@
 #include "Supervisor.h"
 #include "DriveSupervisor.h"
 #else
-#include "BalanceSupervisor.h"
+#include "PureBalanceSupervisor.h"
 //#include "Kalman.h"
 #endif
 
@@ -15,7 +15,7 @@
 extern Supervisor supervisor;
 extern DriveSupervisor driveSupervisor;
 #else
-extern BalanceSupervisor balanceSupervisor;
+extern PureBalanceSupervisor balanceSupervisor;
 #endif
 
 extern bool doCheckBattleVoltage; // = true;
@@ -114,7 +114,7 @@ void configCharacteristicWritten(BLECentral &central, BLECharacteristic &charact
 void driveCharacteristicWritten(BLECentral &central, BLECharacteristic &characteristic)
 {
   // central wrote new value to characteristic, update LED
-  Serial.print("drive Characteristic event,cmd:");
+  // Serial.print("drv,cmd:");
   //the first two chas as CMD
 
   unsigned char *data = (unsigned char *)characteristic.value();
@@ -123,7 +123,7 @@ void driveCharacteristicWritten(BLECentral &central, BLECharacteristic &characte
   cmd[2] = '\0';
   cmd[0] = toupper(data[0]);
   cmd[1] = toupper(data[1]);
-  Serial.println(cmd);
+  // Serial.println(cmd);
 
   if (cmd[0] == 'S' && cmd[1] == 'T') //stop
   {
@@ -248,18 +248,81 @@ void driveCharacteristicWritten(BLECentral &central, BLECharacteristic &characte
     setPID((char *)(data + 2));
   }
 #else
+  else if (cmd[0] == 'C' && cmd[1] == 'L') //control loop
+  {
+    bool val = false;
+    if (data[3] == 1)
+      val = true;
+
+    if (data[2] == 0)
+    {
+      if (val)
+        Serial.println("add speed loop!");
+      else
+      {
+        Serial.println("remove speed loop!");
+      }
+
+      balanceSupervisor.setBeSpeedLoop(val);
+    }
+    else
+    {
+      if (val)
+        Serial.println("add theta loop!");
+      else
+      {
+        Serial.println("remove theta loop!");
+      }
+
+      balanceSupervisor.setBeThetaLoop(val);
+    }
+  }
   else if (cmd[0] == 'G' && cmd[1] == 'B') //start Balance mode
   {
     startBalance();
   }
   else if (cmd[0] == 'B' && cmd[1] == 'S') //stop balance drive or goto goal
   {
-    balanceSupervisor.stopDrive();
+    stopBalance();
+    // balanceSupervisor.stopDrive();
   }
-  else if (cmd[0] == 'A' && cmd[1] == 'S') //angle select 0 sensor 1 kalman 2 es
+  else if (cmd[0] == 'G' && cmd[1] == 'O') // action...
   {
-    balanceSupervisor.setAngleType(data[2]);
+    startGoToGoal();
   }
+
+  else if (cmd[0] == 'G' && cmd[1] == 'G') // Go To Goal: x, y, theta
+  {
+    double x, y;
+    int theta;
+    x = byteToFloat((byte *)(data + 2), 100);
+    y = byteToFloat((byte *)(data + 4), 100);
+    theta = byteToInt((byte *)(data + 6));
+
+    setGoal(x, y, theta);
+
+    Serial.print("Go to Goal:");
+    Serial.print(x);
+    Serial.print(",");
+    Serial.print(y);
+    Serial.print(",");
+    Serial.println(theta);
+  }
+
+  else if (cmd[0] == 'M' && cmd[1] == 'G') //go to goal
+  {
+    float d = atof((char *)(data + 2));
+    Serial.print("m gtg:");
+    Serial.println(d);
+
+    count1 = 0;
+    count2 = 0;
+    balanceSupervisor.reset(0, 0);
+
+    setGoal(d, 0.0, 0);
+    startGoToGoal();
+  }
+
 #endif
 
   else if (cmd[0] == 'S' && cmd[1] == 'D') //set drive Goal
@@ -280,7 +343,7 @@ void setConfigValue(const unsigned char *cfgArray)
   SETTINGS settings;
   settings.sType = settingsType;
 
-  if (settingsType == 1 || settingsType == 2 || settingsType == 3)
+  if (settingsType == 1 || settingsType == 2 || settingsType == 3 || settingsType == 4)
   {
     settings.kp = byteToFloat((byte *)(cfgArray + 1), 100);
     settings.ki = byteToFloat((byte *)(cfgArray + 3), 1000);
@@ -294,7 +357,7 @@ void setConfigValue(const unsigned char *cfgArray)
   }
 
 #if CAR_TYPE == DRIVE_CAR
-  else if (settingsType == 4)
+  else if (settingsType == 5)
   {
 
     settings.atObstacle = byteToFloat((byte *)(cfgArray + 1), 100);
@@ -341,7 +404,7 @@ void setConfigValue(const unsigned char *cfgArray)
 
 #else
 
-  else if (settingsType == 5)
+  else if (settingsType == 6)
   {
 
     settings.atObstacle = byteToFloat((byte *)(cfgArray + 1), 100);
@@ -350,7 +413,11 @@ void setConfigValue(const unsigned char *cfgArray)
     settings.pwm_zero = (int)cfgArray[7];
     settings.pwm_diff = (int)cfgArray[8];
     settings.angleOff = byteToFloat((byte *)(cfgArray + 9), 100);
-    settings.wheelSyncKp = byteToFloat((byte *)(cfgArray + 11), 100);
+
+    settings.radius = byteToFloat((byte *)(cfgArray + 11), 1000);
+    settings.length = byteToFloat((byte *)(cfgArray + 13), 1000);
+
+    settings.velocity = byteToFloat((byte *)(cfgArray + 15), 100);
 
     Serial.print(" atObstacle:");
     Serial.print(settings.atObstacle);
@@ -365,8 +432,10 @@ void setConfigValue(const unsigned char *cfgArray)
     Serial.print(settings.pwm_diff);
     Serial.print(" angle_off:");
     Serial.print(settings.angleOff);
-    Serial.print(" wheelSyncKP:");
-    Serial.println(settings.wheelSyncKp);
+    Serial.print(" radius:");
+    Serial.println(settings.radius);
+    Serial.print(" wheel distance:");
+    Serial.println(settings.length);
   }
 #endif
 
@@ -377,7 +446,7 @@ void setConfigValue(const unsigned char *cfgArray)
     driveSupervisor.updateSettings(settings);
   }
 #else
-  if (settingsType == 2 || settingsType == 3 || settingsType == 5)
+  if (settingsType == 2 || settingsType == 3 || settingsType == 4 || settingsType == 6)
   {
     balanceSupervisor.updateSettings(settings);
   }
@@ -548,7 +617,7 @@ void processSetingsRequire()
 
   SETTINGS settings;
   settings.sType = sType;
-  // // 1: pid for 3 wheel; 2: pid for balance;  3: pid for speed; 4: settings for robot; 5: settings for balance robot;
+  // // 1: pid for 3 wheel; 2: pid for balance;  3: pid for speed; 4: PID theta  5: settings for robot; 6: settings for balance robot;
 
 #if CAR_TYPE == DRIVE_CAR
   settings = supervisor.getSettings(sType);
@@ -568,7 +637,7 @@ void SendSettings(SETTINGS settings)
   byte settingsArray[18];
   settingsArray[0] = (byte)settingsType;
   int len = 7;
-  if (settingsType == 1 || settingsType == 2 || settingsType == 3)
+  if (settingsType == 1 || settingsType == 2 || settingsType == 3 || settingsType == 4)
   {
 
     floatToByte(settingsArray + 1, settings.kp, 100);
@@ -577,7 +646,7 @@ void SendSettings(SETTINGS settings)
   }
 #if CAR_TYPE == DRIVE_CAR
 
-  else if (settingsType == 4)
+  else if (settingsType == 5)
   {
     floatToByte(settingsArray + 1, settings.atObstacle, 100);
     floatToByte(settingsArray + 3, settings.unsafe, 100);
@@ -599,7 +668,7 @@ void SendSettings(SETTINGS settings)
 
 #else
 
-  else if (settingsType == 5)
+  else if (settingsType == 6)
   {
     floatToByte(settingsArray + 1, settings.atObstacle, 100);
     floatToByte(settingsArray + 3, settings.unsafe, 100);
@@ -607,9 +676,14 @@ void SendSettings(SETTINGS settings)
     settingsArray[7] = (byte)settings.pwm_zero;
     settingsArray[8] = (byte)settings.pwm_diff;
 
-    floatToByte(settingsArray + 9, settings.angleOff, 100);
-    floatToByte(settingsArray + 11, settings.wheelSyncKp, 100);
-    len = 13;
+    floatToByte(settingsArray + 9, settings.angleOff, 1000);
+
+    floatToByte(settingsArray + 11, settings.radius, 1000);
+    floatToByte(settingsArray + 13, settings.length, 1000);
+
+    floatToByte(settingsArray + 15, settings.velocity, 100);
+
+    len = 17;
   }
 #endif
   zmcRobotSettingsChar.setValue(settingsArray, 18);

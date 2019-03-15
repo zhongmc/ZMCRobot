@@ -73,8 +73,6 @@ private:
   int m_state;
   double m_right_ticks, m_left_ticks;
 
-  double mTheta, curTheta; //转弯结束时的方向，当前的转弯角度
-
 private:
   VelocityController m_Controller;
   //   Robot robot;

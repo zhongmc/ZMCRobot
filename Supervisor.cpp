@@ -41,7 +41,7 @@ void Supervisor::setHaveIRSensor(int idx, bool val)
 
 void Supervisor::updateSettings(SETTINGS settings)
 {
-  if (settings.sType == 0 || settings.sType == 4)
+  if (settings.sType == 0 || settings.sType == 5)
   {
     d_at_obs = settings.atObstacle;
     d_unsafe = settings.unsafe;

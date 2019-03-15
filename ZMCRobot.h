@@ -8,7 +8,6 @@
 
 #define CAR_TYPE BALANCE_CAR // BALANCE_CAR DRIVE_CAR
 
-
 // TT 单相测速， dual A/B相测速， CHANGE A/B相，以改变中断计数，上升沿、下降沿都计数，精度加倍
 #define MOTOR DUAL_MOTOR //TT_MOTOR DUAL_MOTOR CHANGE_MOTOR
 
@@ -27,6 +26,11 @@ typedef struct
 {
   double x, y, theta;
 } Position;
+
+typedef struct
+{
+  double kp, ki, kd;
+} PIDParam;
 
 long readLeftEncoder();
 long readRightEncoder();
@@ -61,5 +65,5 @@ void MoveMotor(int pwm);
 
 void turnAround(int pwm);
 void setPID(char *buffer);
-
+void stopBalance();
 #endif

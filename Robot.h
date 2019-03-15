@@ -116,6 +116,8 @@ public:
   double angle;
   double gyro;
 
+  int ticks_per_rev_l, ticks_per_rev_r;
+
 protected:
   void init(double R, double L, double ticksr_l, double ticksr_r, double minRpm, double maxRpm, SENSOR_TYPE sensorType);
 
@@ -124,7 +126,6 @@ protected:
   IRSensor *irSensors[5];
 
 private:
-  int ticks_per_rev_l, ticks_per_rev_r;
   double m_per_tick_l, m_per_tick_r;
   long prev_left_ticks, prev_right_ticks;
 };

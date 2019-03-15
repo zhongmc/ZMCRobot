@@ -25,9 +25,6 @@ DriveSupervisor::DriveSupervisor()
   mSimulateMode = false;
   mIgnoreObstacle = false;
 
-  mTheta = 0;
-  curTheta = 0;
-
   danger = false;
 }
 
@@ -53,28 +50,12 @@ void DriveSupervisor::init()
   m_Controller.updateSettings(settings);
 }
 
-void DriveSupervisor::setGoal(double v, double theta)
+// drive the robot velocity and turning w
+void DriveSupervisor::setGoal(double v, double w)
 {
   m_input.v = v;
-  m_input.theta = theta;
-
-  if (theta == 0 && curTheta != 0) //remain the current theta; 加速过程中会有晃动；保留初始角度？
-  {
-    mTheta = robot.theta; //转弯结束，保留当前角度
-  }
-
-  curTheta = theta;
-  m_Controller.setGoal(v, theta, mTheta);
-
-  Serial.print("SG:");
-  Serial.print(v);
-  Serial.print(",");
-  Serial.print(theta);
-  Serial.print("; ");
-  Serial.print(curTheta);
-  Serial.print(",");
-  Serial.println(mTheta);
-
+  m_input.theta = w;
+  m_Controller.setGoal(v, w);
 }
 
 void DriveSupervisor::resetRobot()
@@ -84,14 +65,10 @@ void DriveSupervisor::resetRobot()
   robot.theta = 0;
   m_Controller.setGoal(m_input.v, 0, 0);
   m_Controller.reset();
-  mTheta = 0;
-  curTheta = 0;
 }
 
 void DriveSupervisor::reset(long leftTicks, long rightTicks)
 {
-  // mTheta = 0;
-  // curTheta = 0;
 
   m_Controller.reset();
   danger = false;

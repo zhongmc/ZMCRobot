@@ -12,8 +12,8 @@
 #else
 #include "MyMPU6050.h"
 #include <CurieIMU.h>
-#include <MadgwickAHRS.h>
-#include "BalanceSupervisor.h"
+// #include <MadgwickAHRS.h>
+#include "PureBalanceSupervisor.h"
 //#include "Kalman.h"
 #endif
 
@@ -52,7 +52,7 @@ byte currentState = STATE_IDLE;
 Supervisor supervisor;
 DriveSupervisor driveSupervisor;
 #else
-BalanceSupervisor balanceSupervisor;
+PureBalanceSupervisor balanceSupervisor;
 #endif
 
 Position pos;
@@ -341,6 +341,8 @@ void loop()
       {
         if (doCheckBattleVoltage)
         {
+          if (currentState != STATE_IDLE)
+            Serial.println("Bat lower...");
           stopAndReset();
           currentState = STATE_IDLE;
           stopRobot();
@@ -442,7 +444,27 @@ void SetIgnoreObstacle(bool igm)
   driveSupervisor.mIgnoreObstacle = igm;
 }
 
+void stopRobot()
+{
+  blinkLed.normalBlink();
+  currentState = STATE_IDLE;
+  CurieTimerOne.kill();
+  stopAndReset();
+}
+
 #else
+void setGoal(double x, double y, int theta)
+{
+  balanceSupervisor.setGotoGoal(x, y, theta);
+}
+
+void startGoToGoal()
+{
+  if (currentState == STATE_BALANCE)
+  {
+    balanceSupervisor.startGotoGoal();
+  }
+}
 
 void startBalance()
 {
@@ -494,15 +516,22 @@ void ResetRobot()
   pos.theta = 0;
 }
 
-#endif
-
+//为了共用，banlance时 stop 表示stop goto goal 或 drive
 void stopRobot()
 {
+  balanceSupervisor.stopDrive();
+}
+
+void stopBalance()
+{
+  Serial.println("Stop balance.");
   blinkLed.normalBlink();
   currentState = STATE_IDLE;
   CurieTimerOne.kill();
   stopAndReset();
 }
+
+#endif
 
 void setDriveGoal(double v, double w)
 {
