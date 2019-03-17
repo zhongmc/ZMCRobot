@@ -299,7 +299,7 @@ void processCommand(char *buffer, int bufferLen)
     Serial.println("Start balance!");
     startBalance();
   }
-  else if (ch0 == 'b' && ch1 == 's') //start balance
+  else if (ch0 == 'b' && ch1 == 's') //stop balance
   {
     Serial.println("stop balance!");
     stopBalance();

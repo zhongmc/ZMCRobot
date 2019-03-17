@@ -38,8 +38,8 @@ PureBalanceSupervisor::PureBalanceSupervisor()
   speedCounter = 5;
   mVel.vel_l = 0;
   mVel.vel_r = 0;
-  pwm_diff = 10; //35
-  pwm_zero = 50; //60
+  pwm_diff = 0; //10; //35
+  pwm_zero = 55; //60
   //  mSyncPWM = 0;
   max_pwm = 240;
 
@@ -49,8 +49,8 @@ PureBalanceSupervisor::PureBalanceSupervisor()
   b_kp = 38;
   b_kd = 0.58;
 
-  s_kp = 5;
-  s_ki = 0.01;
+  s_kp = 20;
+  s_ki = 1.0;
   sIntegral = 0;
 
   t_kp = 5;
@@ -197,7 +197,12 @@ void PureBalanceSupervisor::updateSettings(SETTINGS settings)
     // m_thetaController.updateSettings(settings);
   }
 
-  if (settings.sType == 5 || settings.sType == 0)
+  if( settings.sType == 4)
+  {
+      t_kp = settings.kp;
+  }
+
+  if (settings.sType == 6 || settings.sType == 0)
   {
     settings.max_rpm = 140;
     settings.min_rpm = 0;
@@ -288,7 +293,7 @@ void PureBalanceSupervisor::setGoal(double v, double w)
     Serial.println("zero mw!");
   }
 
-  Serial.print("Set balance car goal to: ");
+  Serial.print("Set drv: ");
   Serial.print(v);
   Serial.print(",");
   Serial.println(w);
@@ -399,12 +404,28 @@ void PureBalanceSupervisor::setBeSendIMUInfo(bool val)
 
 void PureBalanceSupervisor::setBeSpeedLoop(bool val)
 {
+  if( val )
+    Serial.println("add speed loop.");
+  else
+  {
+    Serial.println("remove speed loop.");
+   
+  }
+  
   mSpeedPWM = 0;
   mSpeedLoop = val;
 }
 
 void PureBalanceSupervisor::setBeThetaLoop(bool val)
 {
+  if( val )
+    Serial.println("add turn loop.");
+  else
+  {
+    Serial.println("remove turn loop.");
+   
+  }
+
   mThetaPWM = 0;
   mThetaLoop = val;
 }
@@ -415,6 +436,8 @@ void PureBalanceSupervisor::balanceOut(double dt)
   /* Update PID values */
   e_k = m_input.targetAngle - robot.angle - robot.angleOff; //roll;  // pitch;
   mBalancePWM = b_kp * e_k - b_kd * robot.gyro;
+  // if( abs( e_k) < 0.2 )
+  //   mBalancePWM = 0;
 }
 
 void PureBalanceSupervisor::speedOut(long leftTicks, long rightTicks, double dt)
@@ -453,7 +476,7 @@ void PureBalanceSupervisor::thetaOut(double dt)
     okToKeep = false;
     m_input.theta = robot.theta;
   }
-  double e = m_input.theta - robot.theta;
+  double e = robot.theta - m_input.theta;
   mThetaPWM = t_kp * e;
 }
 
@@ -476,9 +499,16 @@ void PureBalanceSupervisor::execute(long leftTicks, long rightTicks, double dt)
     stopAndReset();    //stop motor
     return;
   }
-  else if (layingDown && (m_kalman_angle > -5 && m_kalman_angle < 5))
+
+  if( layingDown )
   {
-    layingDown = false; // It's no longer laying down
+    if( m_kalman_angle > -5 && m_kalman_angle < 5 )
+      layingDown = false; // It's no longer laying down
+    else
+    {
+        return;
+    }
+   
   }
 
   if (!hangUp)
@@ -522,7 +552,6 @@ void PureBalanceSupervisor::execute(long leftTicks, long rightTicks, double dt)
       thetaOut(dt * speedCounter);
       speedCounter = 0;
     }
-  }
 
   double pwm_l, pwm_r;
 
@@ -545,12 +574,12 @@ void PureBalanceSupervisor::execute(long leftTicks, long rightTicks, double dt)
 
   if (pwm_l > 0)
     pwm.pwm_l = pwm_l + pwm_zero;
-  else
+  else if( pwm_l < 0)
     pwm.pwm_l = pwm_l - pwm_zero;
 
   if (pwm_r > 0)
     pwm.pwm_r = pwm_r + pwm_zero; //+pwm_diff
-  else
+  else if( pwm_r < 0 )
     pwm.pwm_r = pwm_r - pwm_zero; //-pwm_diff
 
   pwm_l = normalize(pwm_l, max_pwm);
@@ -587,6 +616,7 @@ void PureBalanceSupervisor::execute(long leftTicks, long rightTicks, double dt)
   long ect = micros() - startTime;
   if (ect > execTime)
     execTime = ect;
+  }
 
   //  check_states();
 }

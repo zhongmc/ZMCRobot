@@ -4,7 +4,7 @@
 BalanceRobot::BalanceRobot()
 {
   //R, L, ticksr_l, ticksr_r, minRpm, maxRpm, GP2Y0A41);
-  init(0.065 / 2, 0.155, 360, 330, 50, 190, GP2Y0A41);
+  init(0.065 / 2, 0.155, 390, 390, 50, 190, GP2Y0A41);
 
   mPIDSettings.kp = 30;
   mPIDSettings.ki = 0.0;

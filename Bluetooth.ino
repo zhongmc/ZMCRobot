@@ -114,7 +114,7 @@ void configCharacteristicWritten(BLECentral &central, BLECharacteristic &charact
 void driveCharacteristicWritten(BLECentral &central, BLECharacteristic &characteristic)
 {
   // central wrote new value to characteristic, update LED
-  // Serial.print("drv,cmd:");
+  Serial.print("drv,cmd:");
   //the first two chas as CMD
 
   unsigned char *data = (unsigned char *)characteristic.value();
@@ -123,7 +123,7 @@ void driveCharacteristicWritten(BLECentral &central, BLECharacteristic &characte
   cmd[2] = '\0';
   cmd[0] = toupper(data[0]);
   cmd[1] = toupper(data[1]);
-  // Serial.println(cmd);
+  Serial.println(cmd);
 
   if (cmd[0] == 'S' && cmd[1] == 'T') //stop
   {
@@ -672,7 +672,7 @@ void SendSettings(SETTINGS settings)
   {
     floatToByte(settingsArray + 1, settings.atObstacle, 100);
     floatToByte(settingsArray + 3, settings.unsafe, 100);
-    intToByte(settingsArray + 5, settings.max_rpm);
+    intToByte(settingsArray + 5, settings.max_pwm);
     settingsArray[7] = (byte)settings.pwm_zero;
     settingsArray[8] = (byte)settings.pwm_diff;
 
