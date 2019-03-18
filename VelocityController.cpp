@@ -29,6 +29,7 @@ void VelocityController::setGoal(double v, double w)
   if (w == 0 && curW != 0) //remain the current theta; 加速过程中会有晃动；保留初始角度？
   {
     keepTheta = true;
+    thetaPrevMillis = millis();
     //    mTheta = robot.theta; //转弯结束，保留当前角度
   }
   curW = w;
@@ -80,25 +81,29 @@ void VelocityController::execute(Robot *robot, Input *input, Output *output, dou
 
   if (keepTheta)
   {
-    e = 0;
-    lastErrorIntegration = 0;
-    keepTheta = false; //next circle to keep the theta??
-    okToKeep = true;
-    output->v = input->v;
-    output->w = 0;
-    return;
-  }
-  else
-  {
-    if (okToKeep)
+    if (millis() - thetaPrevMillis > 120) //
     {
-      okToKeep = false;
-      mTheta = robot->theta; // keep current direction
+      keepTheta = false; //next circle to keep the theta??
+      okToKeep = true;
     }
-
-    e = mTheta - robot->theta;
-    e = atan2(sin(e), cos(e));
+    else
+    {
+      e = 0;
+      lastErrorIntegration = 0;
+      output->v = input->v;
+      output->w = 0;
+      return;
+    }
   }
+
+  if (okToKeep)
+  {
+    okToKeep = false;
+    mTheta = robot->theta; // keep current direction
+  }
+
+  e = mTheta - robot->theta;
+  e = atan2(sin(e), cos(e));
 
   e_I = lastErrorIntegration + e * dt;
   e_D = (e - lastError) / dt;

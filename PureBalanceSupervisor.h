@@ -201,6 +201,8 @@ private:
   bool keepTheta; //是否需要保存当前方向
   bool okToKeep;
 
+  long thetaPrevMillis;
+
   double d_fw; //distance to follow wall
   double d_stop;
   double d_at_obs;

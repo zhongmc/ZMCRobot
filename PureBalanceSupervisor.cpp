@@ -279,6 +279,8 @@ void PureBalanceSupervisor::setGoal(double v, double w)
   if (w == 0 && curW != 0) //remain the current theta; 加速过程中会有晃动；保留初始角度？
   {
     keepTheta = true;
+    thetaPrevMillis = millis();
+
     //    mTheta = robot.theta; //转弯结束，保留当前角度
   }
   curW = w;
@@ -443,9 +445,16 @@ void PureBalanceSupervisor::thetaOut(double dt)
 
   if (keepTheta == true)
   {
-    keepTheta = false;
-    okToKeep = true;
-    mThetaPWM = 0;
+    if (millis() - thetaPrevMillis > 120)
+    {
+      keepTheta = false;
+      okToKeep = true;
+    }
+    else
+    {
+      mThetaPWM = 0;
+      return;
+    }
   }
 
   if (okToKeep)
