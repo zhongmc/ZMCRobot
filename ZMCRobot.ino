@@ -148,6 +148,9 @@ void setup()
 
   //  Serial.println(sizeof(long));
 
+  initLEDMatrix();
+  showLED();
+
   comDataCount = 0;
   count1 = 0;
   count2 = 0;
@@ -239,6 +242,8 @@ void loop()
 
   //ultrasonic process
   processUltrasonic();
+
+  blink();
 
   unsigned long millisNow = millis();
   if (millisNow - millisPrev >= 40)

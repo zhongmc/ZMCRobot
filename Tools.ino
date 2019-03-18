@@ -1,12 +1,20 @@
 #include "ZMCRobot.h"
 #include <CurieBle.h>
 
+#define ARDUINO 300
+
 #if CAR_TYPE == DRIVE_CAR
 #include "Supervisor.h"
 #include "DriveSupervisor.h"
 #else
 #include "PureBalanceSupervisor.h"
 //#include "Kalman.h"
+
+#include "Adafruit_LEDBackpack.h"
+#include "Adafruit_GFX.h"
+
+Adafruit_BicolorMatrix matrix = Adafruit_BicolorMatrix();
+
 #endif
 
 #if CAR_TYPE == DRIVE_CAR
@@ -617,4 +625,111 @@ void stepResponseTest(int pwm)
   printCountInfo();
   MoveMotor(0);
 }
+#endif
+
+#if CAR_TYPE == BALANCE_CAR
+
+static const uint8_t smile_bmp[] =
+    {
+        B01100110,
+        B01100110,
+        B01111110,
+        B10000001,
+        B10000001,
+        B10000001,
+        B01000010,
+        B00100100},
+
+                     s_bmp[] =
+                         {
+                             B00000000,
+                             B00000000,
+                             B00000000,
+                             B00000000,
+                             B00000000,
+                             B00000000,
+                             B00011000,
+                             B00000000},
+
+                     neutral_bmp[] =
+                         {
+                             B00000000,
+                             B00000000,
+                             B00000000,
+                             B00000000,
+                             B00100100,
+                             B00000000,
+                             B00000000,
+                             B00000000},
+                     neutral_bmp1[] =
+                         {
+                             B00000000,
+                             B00000000,
+                             B00000000,
+                             B00000000,
+                             B00011000,
+                             B00000000,
+                             B00000000,
+                             B00000000};
+
+bool normal;
+long prevMillis;
+
+void initLEDMatrix()
+{
+  matrix.begin(0x70); // pass in the address
+}
+
+void showLED()
+{
+
+  matrix.setRotation(1);                             //设置矩阵
+  matrix.drawBitmap(0, 0, smile_bmp, 8, 8, LED_RED); //描绘形状与设置颜色，（行起始，列起始；矩阵设置；行数，列数；颜色）
+  matrix.writeDisplay();                             //渲染上点阵
+                                                     //时间间隔
+
+  matrix.setRotation(1);
+  matrix.drawBitmap(0, 0, s_bmp, 8, 8, LED_YELLOW);
+  matrix.writeDisplay();
+
+  matrix.setRotation(1);
+  matrix.drawBitmap(0, 0, neutral_bmp, 8, 8, LED_GREEN);
+  matrix.writeDisplay();
+
+  prevMillis = millis();
+}
+
+void blink()
+{
+
+  if (millis() - prevMillis < 600)
+    return;
+
+  prevMillis = millis();
+
+  normal = !normal;
+
+  matrix.clear();
+  matrix.setRotation(1);                             //设置矩阵
+  matrix.drawBitmap(0, 0, smile_bmp, 8, 8, LED_RED); //描绘形状与设置颜色，（行起始，列起始；矩阵设置；行数，列数；颜色）
+  matrix.writeDisplay();                             //渲染上点阵
+                                                     //时间间隔
+  matrix.setRotation(1);
+  matrix.drawBitmap(0, 0, s_bmp, 8, 8, LED_YELLOW);
+  matrix.writeDisplay();
+
+  if (normal == true)
+  {
+    matrix.setRotation(1);
+    matrix.drawBitmap(0, 0, neutral_bmp, 8, 8, LED_GREEN);
+    matrix.writeDisplay();
+  }
+  else
+  {
+    matrix.setRotation(1);
+    matrix.drawBitmap(0, 0, neutral_bmp1, 8, 8, LED_GREEN);
+    matrix.writeDisplay();
+  }
+}
+
 #endif
