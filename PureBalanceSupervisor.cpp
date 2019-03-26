@@ -2,6 +2,8 @@
 
 #include "ZMCRobot.h"
 
+int doubleToStr(double val, int scale, char *buf, char append);
+
 PureBalanceSupervisor::PureBalanceSupervisor()
 {
 
@@ -32,13 +34,13 @@ PureBalanceSupervisor::PureBalanceSupervisor()
   mSendIMUInfo = false;
 
   // angleType = 0; //use sensor angle
-  KG_ANG = 0.03; //0.2
+  KG_ANG = 0.02; //0.2
   layingDown = false;
   //  m_vController.setGoal(0, 0, 0);
   speedCounter = 5;
   mVel.vel_l = 0;
   mVel.vel_r = 0;
-  pwm_diff = 0; //10; //35
+  pwm_diff = 0;  //10; //35
   pwm_zero = 55; //60
   //  mSyncPWM = 0;
   max_pwm = 240;
@@ -49,11 +51,11 @@ PureBalanceSupervisor::PureBalanceSupervisor()
   b_kp = 38;
   b_kd = 0.58;
 
-  s_kp = 20;
-  s_ki = 1.0;
+  s_kp = 200;
+  s_ki = 9;
   sIntegral = 0;
 
-  t_kp = 5;
+  t_kp = 2;
 
   KG = 0.05;
   m_x_angle = 0;
@@ -75,15 +77,15 @@ void PureBalanceSupervisor::init()
   //家 com5
   //35.10	-27.30	42.90	0.85	-0.12	-0.55
 
-  //  com3
+  //  com3 公司版
   // CurieIMU.setAccelerometerOffset(X_AXIS, 144.3);
   // CurieIMU.setAccelerometerOffset(Y_AXIS, 19.5);
-  // CurieIMU.setAccelerometerOffset(Z_AXIS, -89.7);
-  // CurieIMU.setGyroOffset(X_AXIS, -0.79);
+  // CurieIMU.setAccelerometerOffset(Z_AXIS, -85.8);
+  // CurieIMU.setGyroOffset(X_AXIS, -0.73);
   // CurieIMU.setGyroOffset(Y_AXIS, 1.04);
-  // CurieIMU.setGyroOffset(Z_AXIS, -0.12);
+  // CurieIMU.setGyroOffset(Z_AXIS, -0.06);
 
-  //  com5
+  //  com5 家版
   CurieIMU.setAccelerometerOffset(X_AXIS, 35.10);
   CurieIMU.setAccelerometerOffset(Y_AXIS, -27.3);
   CurieIMU.setAccelerometerOffset(Z_AXIS, 42.9);
@@ -133,7 +135,7 @@ SETTINGS PureBalanceSupervisor::getSettings()
 
   settings.pwm_diff = pwm_diff;
   settings.pwm_zero = pwm_zero;
-  settings.angleOff = robot.angleOff;
+  // settings.angleOff = robot.angleOff;
   settings.max_pwm = max_pwm;
   return settings;
 }
@@ -161,8 +163,8 @@ PIDParam PureBalanceSupervisor::getThetaPIDParam()
 {
   PIDParam pid;
   pid.kp = t_kp;
-  pid.ki = 0;
-  pid.kd = 0;
+  pid.ki = KG_ANG;   //0;
+  pid.kd = pwm_zero; //0;
   return pid;
 }
 
@@ -180,6 +182,8 @@ void PureBalanceSupervisor::setSpeedPIDParam(PIDParam pid)
 void PureBalanceSupervisor::setThetaPIDParam(PIDParam pid)
 {
   t_kp = pid.kp;
+  pwm_zero = pid.kd;
+  KG_ANG = pid.ki;
 }
 
 void PureBalanceSupervisor::updateSettings(SETTINGS settings)
@@ -197,9 +201,9 @@ void PureBalanceSupervisor::updateSettings(SETTINGS settings)
     // m_thetaController.updateSettings(settings);
   }
 
-  if( settings.sType == 4)
+  if (settings.sType == 4)
   {
-      t_kp = settings.kp;
+    t_kp = settings.kp;
   }
 
   if (settings.sType == 6 || settings.sType == 0)
@@ -231,7 +235,7 @@ SETTINGS PureBalanceSupervisor::getSettings(byte settingsType)
 
   settings.pwm_diff = pwm_diff;
   settings.pwm_zero = pwm_zero;
-  settings.angleOff = robot.angleOff;
+  // settings.angleOff = robot.angleOff;
   settings.max_pwm = max_pwm;
   settings.length = robot.wheel_base_length;
   settings.radius = robot.wheel_radius;
@@ -281,6 +285,11 @@ void PureBalanceSupervisor::setGoal(double v, double w)
   m_input.theta = w;
   m_input.targetAngle = 0; // 5 * v;
 
+  if (v == 0) //stop drive
+  {
+    sIntegral = 0;
+  }
+
   if (w == 0 && curW != 0) //remain the current theta; 加速过程中会有晃动；保留初始角度？
   {
     keepTheta = true;
@@ -314,6 +323,7 @@ void PureBalanceSupervisor::stopDrive()
   m_state = 0;
   curW = 0;
   mW = 0;
+  sIntegral = 0;
 }
 
 void PureBalanceSupervisor::resetRobot()
@@ -328,6 +338,7 @@ void PureBalanceSupervisor::resetRobot()
   keepTheta = false;
   curW = 0;
   mW = 0;
+  sIntegral = 0;
 }
 
 void PureBalanceSupervisor::reset(long leftTicks, long rightTicks)
@@ -406,26 +417,24 @@ void PureBalanceSupervisor::setBeSendIMUInfo(bool val)
 
 void PureBalanceSupervisor::setBeSpeedLoop(bool val)
 {
-  if( val )
+  if (val)
     Serial.println("add speed loop.");
   else
   {
     Serial.println("remove speed loop.");
-   
   }
-  
+
   mSpeedPWM = 0;
   mSpeedLoop = val;
 }
 
 void PureBalanceSupervisor::setBeThetaLoop(bool val)
 {
-  if( val )
+  if (val)
     Serial.println("add turn loop.");
   else
   {
     Serial.println("remove turn loop.");
-   
   }
 
   mThetaPWM = 0;
@@ -436,7 +445,7 @@ void PureBalanceSupervisor::balanceOut(double dt)
 {
   float e_k;
   /* Update PID values */
-  e_k = m_input.targetAngle - robot.angle - robot.angleOff; //roll;  // pitch;
+  e_k = m_input.targetAngle - robot.angle; // - robot.angleOff; //roll;  // pitch;
   mBalancePWM = b_kp * e_k - b_kd * robot.gyro;
   // if( abs( e_k) < 0.2 )
   //   mBalancePWM = 0;
@@ -454,6 +463,11 @@ void PureBalanceSupervisor::speedOut(long leftTicks, long rightTicks, double dt)
   // double speed = (lt / robot.ticks_per_rev_l + rt / robot.ticks_per_rev_r) / 2.0;
   double e = m_input.v - robot.velocity;
   sIntegral = sIntegral + s_ki * e;
+  if (sIntegral > 200)
+    sIntegral = 0;
+  if (sIntegral < -200)
+    sIntegral = -200;
+
   mSpeedPWM = s_kp * e + sIntegral;
 }
 
@@ -497,33 +511,39 @@ void PureBalanceSupervisor::execute(long leftTicks, long rightTicks, double dt)
   readIMU(dt);
 
   if (mSendIMUInfo)
-    sendIMUInfo();
+    sendCtrlInfo();
+  // sendIMUInfo();
 
   robot.angle = m_kalman_angle; //m_sensor_angle; // m_estima_angle m_sensor_angle
   robot.gyro = m_gyro;
 
   if (!layingDown && (m_kalman_angle < -25 || m_kalman_angle > 25))
   {
+    balanceUnnormal();
     layingDown = true; // The robot is in a unsolvable position, so turn off both motors and wait until it's vertical again
     stopAndReset();    //stop motor
     return;
   }
 
-  if( layingDown )
+  if (layingDown)
   {
-    if( m_kalman_angle > -5 && m_kalman_angle < 5 )
+    if (m_kalman_angle > -5 && m_kalman_angle < 5)
+    {
+      balanceRecovered();
       layingDown = false; // It's no longer laying down
+    }
     else
     {
-        return;
+      return;
     }
-   
   }
 
   if (!hangUp)
   {
     if (abs(m_x_angle) > 10)
     {
+      balanceUnnormal();
+
       hangUp = true;
       stopAndReset();
       Serial.print(m_x_angle);
@@ -535,6 +555,7 @@ void PureBalanceSupervisor::execute(long leftTicks, long rightTicks, double dt)
   {
     if (abs(m_x_angle) < 5)
     {
+      balanceRecovered();
       hangUp = false;
       Serial.print(m_x_angle);
       Serial.println(", recover from hang up ! ");
@@ -547,7 +568,7 @@ void PureBalanceSupervisor::execute(long leftTicks, long rightTicks, double dt)
     balanceOut(dt);
 
     speedCounter++;
-    if (speedCounter >= 10)
+    if (speedCounter >= 8)
     {
       if (mSimulateMode)
       {
@@ -562,72 +583,114 @@ void PureBalanceSupervisor::execute(long leftTicks, long rightTicks, double dt)
       speedCounter = 0;
     }
 
-  double pwm_l, pwm_r;
+    // double pwm_l, pwm_r;
 
-  // mBalancePWM = normalize(mBalancePWM, max_pwm);
+    // mBalancePWM = normalize(mBalancePWM, max_pwm);
 
-  pwm_l = mBalancePWM;
-  pwm_r = mBalancePWM;
+    pwm_l = mBalancePWM;
+    pwm_r = mBalancePWM;
 
-  if (mSpeedLoop)
-  {
-    pwm_l = pwm_l + mSpeedPWM;
-    pwm_r = pwm_r + mSpeedPWM;
-  }
+    if (mSpeedLoop)
+    {
+      pwm_l = pwm_l - mSpeedPWM;
+      pwm_r = pwm_r - mSpeedPWM;
+    }
 
-  if (mThetaLoop)
-  {
-    pwm_l = pwm_l + mThetaPWM;
-    pwm_r = pwm_r - mThetaPWM;
-  }
+    if (mThetaLoop)
+    {
+      pwm_l = pwm_l - mThetaPWM;
+      pwm_r = pwm_r + mThetaPWM;
+    }
 
-  if (pwm_l > 0)
-    pwm.pwm_l = pwm_l + pwm_zero;
-  else if( pwm_l < 0)
-    pwm.pwm_l = pwm_l - pwm_zero;
+    if (pwm_l > 0)
+      pwm_l = pwm_l + pwm_zero;
+    else if (pwm_l < 0)
+      pwm_l = pwm_l - pwm_zero;
 
-  if (pwm_r > 0)
-    pwm.pwm_r = pwm_r + pwm_zero; //+pwm_diff
-  else if( pwm_r < 0 )
-    pwm.pwm_r = pwm_r - pwm_zero; //-pwm_diff
+    if (pwm_r > 0)
+      pwm_r = pwm_r + pwm_zero; //+pwm_diff
+    else if (pwm_r < 0)
+      pwm_r = pwm_r - pwm_zero; //-pwm_diff
 
-  pwm_l = normalize(pwm_l, max_pwm);
-  pwm_r = normalize(pwm_r, max_pwm);
+    pwm_l = normalize(pwm_l, max_pwm);
+    pwm_r = normalize(pwm_r, max_pwm);
 
-  if (mSimulateMode)
-  {
-    m_left_ticks = m_left_ticks + robot.pwm_to_ticks_l(pwm.pwm_l, dt);
-    m_right_ticks = m_right_ticks + robot.pwm_to_ticks_r(pwm.pwm_r, dt);
-  }
-  else
-  {
-    MoveLeftMotor(pwm.pwm_l);
-    MoveRightMotor(pwm.pwm_r);
-  }
+    pwm.pwm_l = pwm_l;
+    pwm.pwm_r = pwm_r;
+
+    if (mSimulateMode)
+    {
+      m_left_ticks = m_left_ticks + robot.pwm_to_ticks_l(pwm.pwm_l, dt);
+      m_right_ticks = m_right_ticks + robot.pwm_to_ticks_r(pwm.pwm_r, dt);
+    }
+    else
+    {
+      MoveLeftMotor(pwm.pwm_l);
+      MoveRightMotor(pwm.pwm_r);
+    }
 
 #ifdef _DEBUG_
-  Serial.print(v);
-  Serial.print(",");
-  Serial.print(w);
+    Serial.print(v);
+    Serial.print(",");
+    Serial.print(w);
 
-  Serial.print(",");
-  Serial.print(vel.vel_l);
-  Serial.print(",");
-  Serial.print(vel.vel_r);
+    Serial.print(",");
+    Serial.print(vel.vel_l);
+    Serial.print(",");
+    Serial.print(vel.vel_r);
 
-  Serial.print(",");
-  Serial.print(pwm.pwm_l);
-  Serial.print(",");
-  Serial.println(pwm.pwm_r);
+    Serial.print(",");
+    Serial.print(pwm.pwm_l);
+    Serial.print(",");
+    Serial.println(pwm.pwm_r);
 
 #endif
 
-  long ect = micros() - startTime;
-  if (ect > execTime)
-    execTime = ect;
+    long ect = micros() - startTime;
+    if (ect > execTime)
+      execTime = ect;
   }
 
   //  check_states();
+}
+
+void PureBalanceSupervisor::sendCtrlInfo()
+{
+  char buf[200];
+  int len = 0, off = 0;
+  buf[0] = 'M';
+  buf[1] = 'U';
+  off = 2;
+
+  // len = doubleToStr(m_sensor_angle, 10000, buf + off, ',');
+  // off = off+len;
+  len = doubleToStr(m_gyro, 10000, buf + off, ',');
+  off = off + len;
+  len = doubleToStr(m_kalman_angle, 10000, buf + off, ',');
+  off = off + len;
+  len = doubleToStr(mBalancePWM, 10000, buf + off, ',');
+  off = off + len;
+  len = doubleToStr(mSpeedPWM, 10000, buf + off, ',');
+  off = off + len;
+  len = doubleToStr(pwm_l, 10000, buf + off, 0);
+  off = off + len;
+  Serial.write(buf);
+  Serial.write('\r');
+  Serial.write('\n');
+}
+
+int doubleToStr(double val, int scale, char *buf, char append)
+{
+  itoa((int)(val * scale), buf, 10);
+  int len = strlen(buf);
+  if (append != 0)
+  {
+    *(buf + len) = append;
+    *(buf + len + 1) = 0;
+    return len + 1;
+  }
+  else
+    return len;
 }
 
 void PureBalanceSupervisor::sendIMUInfo()
@@ -643,15 +706,14 @@ void PureBalanceSupervisor::sendIMUInfo()
 
   itoa((int)(10000 * m_kalman_angle), tmp, 10);
   String ka = tmp;
-
   // itoa((int)(10000 * m_kalman_gyro), tmp, 10);
   // String kg = tmp;
   // itoa((int)(10000 * m_x_angle), tmp, 10);
   // String ma = tmp;
-  // itoa((int)(10000 * m_km_angle), tmp, 10);
-  // String kma = tmp;
+  itoa((int)(10000 * m_km_angle), tmp, 10);
+  String kma = tmp;
 
-  retStr = "MU" + sa + "," + sg + "," + ka; //  + "," + kg + "," + kma;
+  retStr = "MU" + sa + "," + sg + "," + ka + "," + kma; //  + "," + kg + "," + kma;
   Serial.println(retStr);
   // Serial.print("MU");
   // Serial.print((int)(10000 * m_sensor_angle));
@@ -753,8 +815,9 @@ void PureBalanceSupervisor::readIMU(double dt)
   //    pitch = filter.getPitch();
   //    heading = filter.getYaw();
 
-  double Angle_accY = atan(ay / sqrt(ax * ax + az * az)) * 180 / 3.14; //offset
-
+  // double Angle_accY = atan(ay / sqrt(ax * ax + az * az)) * 180 / 3.14; //offset
+  // double m_sensor_angle = atan2((double)ay, (double)az) * RAD_TO_DEG;
+  double Angle_accY = atan2((double)ay, (double)az) * RAD_TO_DEG;
   m_sensor_angle = Angle_accY; //filter.getRoll();
 
   // if ((Angle_accY < -90 && m_estima_angle > 90) || (Angle_accY > 90 && m_estima_angle < -90))
@@ -772,7 +835,8 @@ void PureBalanceSupervisor::readIMU(double dt)
   // m_km_angle = km.getAngle(Angle_accY, gx, dt);
 
   double angle_accX = atan2((double)ax, (double)az) * RAD_TO_DEG;
-  m_x_angle = estima_cal(m_x_angle, angle_accX, gy, dt, 0.05);
+  m_x_angle = estima_cal(m_x_angle, angle_accX, gy, dt, 0.02);
+  m_km_angle = estima_cal(m_km_angle, m_sensor_angle, gx, dt, KG_ANG);
 }
 
 double PureBalanceSupervisor::convertRawAcceleration(int aRaw)
@@ -785,6 +849,7 @@ double PureBalanceSupervisor::convertRawAcceleration(int aRaw)
   return a;
 }
 
+//度每秒
 double PureBalanceSupervisor::convertRawGyro(int gRaw)
 {
   // since we are using 250 degrees/seconds range
@@ -795,6 +860,7 @@ double PureBalanceSupervisor::convertRawGyro(int gRaw)
   return g;
 }
 
+//angle = (0.98)*(angle + gyro * dt) + (0.02)*(x_acc);
 //一阶融合滤波, angle 当前角度，g_angle重力加速度计角度，gyro 陀螺仪角速度
 // angle = KG * g_angle + (1-KG)*(angle + gyro * dt)
 double PureBalanceSupervisor::estima_cal(double angle, double g_angle, double gyro, double dt, double KG)

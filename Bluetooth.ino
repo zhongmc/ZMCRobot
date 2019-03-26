@@ -412,7 +412,7 @@ void setConfigValue(const unsigned char *cfgArray)
     settings.max_pwm = byteToInt((byte *)(cfgArray + 5));
     settings.pwm_zero = (int)cfgArray[7];
     settings.pwm_diff = (int)cfgArray[8];
-    settings.angleOff = byteToFloat((byte *)(cfgArray + 9), 100);
+    // settings.angleOff = byteToFloat((byte *)(cfgArray + 9), 100);
 
     settings.radius = byteToFloat((byte *)(cfgArray + 11), 1000);
     settings.length = byteToFloat((byte *)(cfgArray + 13), 1000);
@@ -431,7 +431,7 @@ void setConfigValue(const unsigned char *cfgArray)
     Serial.print(" pwm_diff:");
     Serial.print(settings.pwm_diff);
     Serial.print(" angle_off:");
-    Serial.print(settings.angleOff);
+    // Serial.print(settings.angleOff);
     Serial.print(" radius:");
     Serial.println(settings.radius);
     Serial.print(" wheel distance:");
@@ -676,7 +676,7 @@ void SendSettings(SETTINGS settings)
     settingsArray[7] = (byte)settings.pwm_zero;
     settingsArray[8] = (byte)settings.pwm_diff;
 
-    floatToByte(settingsArray + 9, settings.angleOff, 1000);
+    floatToByte(settingsArray + 9, 0, 1000); //settings.angleOff, 1000);
 
     floatToByte(settingsArray + 11, settings.radius, 1000);
     floatToByte(settingsArray + 13, settings.length, 1000);

@@ -110,6 +110,8 @@ public:
 
   int pwm_diff, pwm_zero, max_pwm;
 
+  double pwm_l, pwm_r;
+
   // int angleType; //the angle used to control balance 0 sensor 1 kalman 2 es
   // void setAngleType(int val)
   // {
@@ -189,6 +191,8 @@ private:
   double normalize(double in, double limit);
 
   void sendIMUInfo();
+
+  void sendCtrlInfo();
 
   long execTime;
 

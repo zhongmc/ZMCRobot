@@ -9,15 +9,17 @@
 #if CAR_TYPE == DRIVE_CAR
 #include "Supervisor.h"
 #include "DriveSupervisor.h"
+#include "BlinkLed.h"
 #else
 #include "MyMPU6050.h"
 #include <CurieIMU.h>
 // #include <MadgwickAHRS.h>
 #include "PureBalanceSupervisor.h"
+
+#include "BlinkMatrixLed.h"
+#include "IRReceiver.h"
 //#include "Kalman.h"
 #endif
-
-#include "BlinkLed.h"
 
 //#include "MyKey.h"
 //#include "MyMenu.h"
@@ -51,12 +53,17 @@ byte currentState = STATE_IDLE;
 #if CAR_TYPE == DRIVE_CAR
 Supervisor supervisor;
 DriveSupervisor driveSupervisor;
+BlinkLed blinkLed;
+
 #else
 PureBalanceSupervisor balanceSupervisor;
+BlinkMatrixLed blinkLed;
+IRReceiver irRecv(7);
+
+IRCode ircode;
 #endif
 
 Position pos;
-BlinkLed blinkLed;
 
 long trigTime, echoTime;
 double ultrasonicDistance;
@@ -116,6 +123,7 @@ void setup()
   myKey.addKey(LEFT_KEY, LEFT_KEY_PIN);
   myKey.addKey(START_KEY, START_KEY_PIN);
 
+
   myKey.initKey();
 */
   // // start the IMU and filter
@@ -148,8 +156,7 @@ void setup()
 
   //  Serial.println(sizeof(long));
 
-  initLEDMatrix();
-  showLED();
+  pinMode(13, OUTPUT);
 
   comDataCount = 0;
   count1 = 0;
@@ -204,14 +211,12 @@ void setup()
 
   mSettings.pwm_zero = 0;
   mSettings.pwm_diff = 0;
-  mSettings.angleOff = 0.8;
 
   mSettings.atObstacle = 0.25; //0.15
   mSettings.unsafe = 0.8;      //0.8
   mSettings.dfw = 0.30;        //0.25
   mSettings.velocity = 0.4;    //0.3
 
-  mSettings.wheelSyncKp = 0;
   // balanceSupervisor.updateSettings(mSettings);
 
   //
@@ -227,6 +232,8 @@ void setup()
   mSettings.kd = 0.0;
   // balanceSupervisor.updateSettings(mSettings);
   balanceSupervisor.init();
+
+  blinkLed.init();
 #endif
 
   millisPrevKey = millis();
@@ -243,10 +250,11 @@ void loop()
   //ultrasonic process
   processUltrasonic();
 
-  blink();
+  // irRecv.readIRCode(ircode);
+  // blink();
 
   unsigned long millisNow = millis();
-  if (millisNow - millisPrev >= 40)
+  if (millisNow - millisPrev >= 50)
   {
 
     millisPrev = millisNow;
@@ -355,7 +363,10 @@ void loop()
         }
       }
       else
-        blinkLed.normalBlink();
+      {
+        if (currentState == STATE_IDLE)
+          blinkLed.normalBlink();
+      }
     }
   }
 }
@@ -468,6 +479,7 @@ void startGoToGoal()
   if (currentState == STATE_BALANCE)
   {
     balanceSupervisor.startGotoGoal();
+    blinkLed.runingBlink();
   }
 }
 
@@ -476,7 +488,7 @@ void startBalance()
   if (currentState >= 2)
     return;
 
-  blinkLed.fastBlink();
+  blinkLed.balanceBlink();
 
   currentState = STATE_BALANCE;
 
@@ -489,6 +501,16 @@ void startBalance()
 void balanceIsr()
 {
   balanceSupervisor.execute(readLeftEncoder(), readRightEncoder(), 0.005); // 1.0 / (double)GYRO_RATE);
+}
+
+void balanceRecovered()
+{
+  blinkLed.balanceBlink();
+}
+
+void balanceUnnormal()
+{
+  blinkLed.laydownBlink();
 }
 
 void SetIgnoreObstacle(bool igm)
@@ -525,11 +547,13 @@ void ResetRobot()
 void stopRobot()
 {
   balanceSupervisor.stopDrive();
+  blinkLed.balanceBlink();
 }
 
 void stopBalance()
 {
   Serial.println("Stop balance.");
+
   blinkLed.normalBlink();
   currentState = STATE_IDLE;
   CurieTimerOne.kill();
@@ -558,6 +582,14 @@ void setDriveGoal(double v, double w)
   if (currentState == STATE_BALANCE)
   {
     balanceSupervisor.setGoal(v, w);
+    if (v != 0 || w != 0)
+    {
+      blinkLed.runingBlink();
+    }
+    else
+    {
+      blinkLed.balanceBlink();
+    }
   }
 #endif
 }

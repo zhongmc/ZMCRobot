@@ -42,7 +42,7 @@ typedef struct
 
   int pwm_diff;
   int max_pwm, pwm_zero;
-  double angleOff, wheelSyncKp;
+  // double angleOff, wheelSyncKp;
 } SETTINGS;
 
 class Robot
@@ -105,7 +105,7 @@ public:
 
   int pwm_diff;
 
-  double angleOff;
+  // double angleOff;
 
   double max_vel, min_vel;
   double max_v, min_v;

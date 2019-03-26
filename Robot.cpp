@@ -43,7 +43,7 @@ void Robot::init(double R, double L, double ticksr_l, double ticksr_r, double mi
   min_w = (wheel_radius / wheel_base_length) * (min_vel);
 
   pwm_diff = 0;
-  angleOff = 0;
+  // angleOff = 0;
 
   // irSensors[0] = new IRSensor(-0.045, 0.05, PI / 2, A1, sensorType);
   // irSensors[1] = new IRSensor(0.160, 0.045, PI / 6, A2, sensorType);
@@ -92,7 +92,7 @@ void Robot::updateSettings(SETTINGS settings)
   // max_w = (wheel_radius / wheel_base_length) * (max_vel - min_vel);
   // min_w = (wheel_radius / wheel_base_length) * (2 * min_vel);
   pwm_diff = settings.pwm_diff;
-  angleOff = settings.angleOff;
+  // angleOff = settings.angleOff;
 }
 
 void Robot::reset(long left_ticks, long right_ticks)

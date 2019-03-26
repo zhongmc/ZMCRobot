@@ -50,7 +50,6 @@ void SetIgnoreObstacle(bool igm);
 void setDriveGoal(double v, double w);
 void startDrive();
 void stopAndReset();
-void startBalance();
 
 void initMotor();
 void initBluetooth();
@@ -65,5 +64,9 @@ void MoveMotor(int pwm);
 
 void turnAround(int pwm);
 void setPID(char *buffer);
+
+void startBalance();
 void stopBalance();
+void balanceUnnormal();
+void balanceRecovered();
 #endif
