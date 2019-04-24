@@ -69,4 +69,5 @@ void startBalance();
 void stopBalance();
 void balanceUnnormal();
 void balanceRecovered();
+void irRemoteProcess(int code);
 #endif

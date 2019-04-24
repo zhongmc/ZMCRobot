@@ -4,7 +4,7 @@
 BalanceRobot::BalanceRobot()
 {
   //R, L, ticksr_l, ticksr_r, minRpm, maxRpm, GP2Y0A41);
-  init(0.065 / 2, 0.155, 390, 390, 50, 190, GP2Y0A41);
+  init(0.0334, 0.155, 390, 390, 50, 190, GP2Y0A41);
 
   mPIDSettings.kp = 30;
   mPIDSettings.ki = 0.0;
@@ -123,27 +123,38 @@ double BalanceRobot::vel_r_to_pwm(double vel)
     return -retVal;
 }
 
-double BalanceRobot::pwm_to_ticks_r(double pwm, double dt)
+double BalanceRobot::pwm_to_ticks_l(double pwm, double dt)
 {
-
   double npwm = abs(pwm);
-  if (npwm < 20)
+  if (npwm < 60) //14
     return 0;
 
-  double ticks = dt * (0.5084 * npwm - 9.7666);
+  // double ticks = dt * (-0.024 * npwm * npwm + 12.097 * npwm - 426.23);
+  //y = -0.0264x2 + 16.836x - 882.53
+  double ticks = dt * (-0.0264 * npwm * npwm + 16.836 * npwm - 882.53);
+
+  //5.7132x - 180.16
+  //  double ticks = dt * (5.7132 * npwm - 180.16);
   if (pwm > 0)
     return ticks;
   else
     return -ticks;
 }
 
-double BalanceRobot::pwm_to_ticks_l(double pwm, double dt)
+double BalanceRobot::pwm_to_ticks_r(double pwm, double dt)
 {
+
   double npwm = abs(pwm);
-  if (npwm < 14) //14
+  if (npwm < 60)
     return 0;
 
-  double ticks = dt * (0.4975 * npwm - 6.9066);
+  // double ticks = dt * (-0.0218 * npwm * npwm + 11.634 * npwm - 358.83);
+  //5.7049x - 131.73
+  //  double ticks = dt * (5.7049 * npwm - 131.73);
+  //y = -0.0312x2 + 18.344x - 974.3
+
+  double ticks = dt * (-0.0312 * npwm * npwm + 18.344 * npwm - 974.3);
+
   if (pwm > 0)
     return ticks;
   else

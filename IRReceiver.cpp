@@ -2,109 +2,162 @@
 
 IRReceiver::IRReceiver()
 {
-    irpin = 7;
-    pinMode(irpin,INPUT);
-    ir_code=0x00;// 清零  
-    adrL_code=0x00;// 清零  
-    adrH_code=0x00;// 清零   
-
+    irpin = 12;
+    pinMode(irpin, INPUT);
+    ir_addr = 0x00;   // 清零
+    ir_code_h = 0x00; // 清零
+    ir_code_l = 0x00; // 清零
 }
 
-IRReceiver::IRReceiver(byte pin)
+IRReceiver::IRReceiver(int pin)
 {
     irpin = pin;
-    pinMode(irpin,INPUT);
-    ir_code=0x00;// 清零  
-    adrL_code=0x00;// 清零  
-    adrH_code=0x00;// 清零   
+    pinMode(irpin, INPUT);
+    ir_addr = 0x00;   // 清零
+    ir_code_h = 0x00; // 清零
+    ir_code_l = 0x00; // 清零
 }
-
 
 int IRReceiver::readIRCode(IRCode &code)
 {
-    code.addr = 0;
-    code.code = 0;
-
     int in = digitalRead(irpin);
-    { 
-          digitalWrite( 13, !in);
+    int count = 0;
+    // if (in == 0)
+    //     Serial.println("IR.");
+    // return 0;
 
-        if( in == 1 )
-            return -1;
-        else
-        {
-            prevMillis = millis();
-            while( !digitalRead(irpin));
-            curMillis = millis();
-            pulse_width_l = curMillis - prevMillis;
-            prevMillis = curMillis;
-            while( !digitalRead(irpin));
-            curMillis = millis();
-            pulse_width_h = curMillis - prevMillis;
-            prevMillis = curMillis;
-            if( pulse_width_l > 8000 && pulse_width_h < 2500 ) //start pulse
-            {
-                readCode();
-            }
-            else
-                return -1;
-        }
+    if (in == 1)
+    {
+        digitalWrite(13, !in);
+        return -1;
+    }
+    prevMicros = micros();
+    digitalWrite(13, !in);
+    // code.addr = 0;
+    // code.code = 0;
+
+    ir_addr = 0x00;   // 清零
+    ir_code_h = 0x00; // 清零
+    ir_code_l = 0x00; // 清零
+
+    while (!digitalRead(irpin))
+    {
+        count++;
+        if (count > 20000)
+            break;
     }
 
-    code.addr = ir_code;
-    code.code = adrL_code;
-    Serial.print("ir rec:");
-    Serial.print(ir_code);
-    Serial.print(", ");
-    Serial.println(adrL_code);
-    return 0;
-}
+    curMicros = micros();
+    pulse_width_l = curMicros - prevMicros;
+    prevMicros = curMicros;
+    count = 0;
+    while (digitalRead(irpin))
+    {
+        count++;
+        if (count > 20000)
+            break;
+    }
+    curMicros = micros();
+    pulse_width_h = curMicros - prevMicros;
+    prevMicros = curMicros;
 
+    if (pulse_width_l > 8000 && pulse_width_h > 2500 && pulse_width_h < 5000) //start pulse 9ms 4.5ms
+    {
+        readCode();
+        code.addr = ir_addr;
+        code.code_l = ir_code_l;
+        code.code_h = ir_code_h;
+        Serial.print("ir rec:");
+        Serial.print(ir_addr);
+        Serial.print(", ");
+        Serial.print(ir_code_l);
+        Serial.print(", ");
+        Serial.println(ir_code_h);
+        return 0;
+    }
+    else //9ms 2.25ms 560us repeat
+    {
+        count = 0;
+        while (!digitalRead(irpin))
+        {
+            count++;
+            if (count > 20000)
+                break;
+        }
+        curMicros = micros();
+
+        // Serial.print(pulse_width_l);
+        // Serial.print(",");
+        // Serial.print(pulse_width_h);
+        // Serial.print(",");
+        // Serial.println(curMicros - prevMicros);
+        return -1;
+    }
+}
 
 void IRReceiver::readCode()
 {
 
-    int i;  
-    int j;  
-    //解析遥控器编码中的用户编码值    
-    for(i = 0 ; i < 16; i++)  
-    {    
-        if(logicValue() == 1) //是1        
-            ir_code |= (1<<i);//保存键值  
-    }  
-    //解析遥控器编码中的命令码  
-    for(i = 0 ; i < 8; i++)  
-    {    
-        if(logicValue() == 1) //是1      
-        adrL_code |= (1<<i);//保存键值  
-    }  
-    //解析遥控器编码中的命令码反码   
-    for(j = 0 ; j < 8; j++)  
-    {    
-        if(logicValue() == 1) //是1        
-            adrH_code |= (1<<j);//保存键值  
+    int i;
+    int j;
+    //解析遥控器编码中的用户编码值
+    for (i = 0; i < 16; i++)
+    {
+        if (logicValue() == 1)   //是1
+            ir_addr |= (1 << i); //保存键值
+    }
+    //解析遥控器编码中的命令码
+    for (i = 0; i < 8; i++)
+    {
+        if (logicValue() == 1)     //是1
+            ir_code_l |= (1 << i); //保存键值
+    }
+    //解析遥控器编码中的命令码反码
+    for (j = 0; j < 8; j++)
+    {
+        if (logicValue() == 1)     //是1
+            ir_code_h |= (1 << j); //保存键值
     }
 }
 
 int IRReceiver::logicValue()
 {
- 
-      while( !digitalRead(irpin));
-        curMillis = millis();
-            pulse_width_l = curMillis - prevMillis;
-            prevMillis = curMillis;
+    int count = 0;
+    while (!digitalRead(irpin))
+    {
+        count++;
+        if (count > 20000)
+            break;
+    }
+    curMicros = micros();
+    pulse_width_l = curMicros - prevMicros;
+    prevMicros = curMicros;
+    count = 0;
+    while (digitalRead(irpin))
+    {
+        count++;
+        if (count > 20000)
+            break;
+    }
+    curMicros = micros();
+    pulse_width_h = curMicros - prevMicros;
+    prevMicros = curMicros;
 
-            while( !digitalRead(irpin));
-            curMillis = millis();
-            pulse_width_h = curMillis - prevMillis;
-            prevMillis = curMillis;
+    // Serial.print(pulse_width_l);
+    // Serial.print("_");
+    // Serial.println(pulse_width_h);
 
-            if( pulse_width_l < 600 && pulse_width_h < 600 ) //start pulse
-            {
-                return 0;
-            }
-            else if( pulse_width_l < 600 && pulse_width_h > 1000 )
-                return 1;
-            else
-                return -1; 
+    if (pulse_width_l < 700 && pulse_width_h < 700) //560us, 1.2ms
+    {
+        return 0;
+    }
+    else if (pulse_width_l < 700 && pulse_width_h > 900) //560us 2.25ms
+        return 1;
+    else
+    {
+        Serial.print(pulse_width_l);
+        Serial.print("_");
+        Serial.println(pulse_width_h);
+        return -1;
+    }
 }

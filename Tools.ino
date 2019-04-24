@@ -194,6 +194,16 @@ void processCommand(char *buffer, int bufferLen)
 
     setDriveGoal(v, w);
   }
+  else if (ch0 == 's' && ch1 == 'm') //simulate mode
+  {
+    int val = atoi(buffer + 2);
+    SetSimulateMode(val);
+
+    //     if (val == 1)
+    //         SetSimulateMode(true);
+    // else
+    //   SetSimulateMode(false);
+  }
 
 #if CAR_TYPE == DRIVE_CAR
   else if (ch0 == 'g' && ch1 == 'o') //start go to goal
@@ -254,16 +264,6 @@ void processCommand(char *buffer, int bufferLen)
     startGoToGoal();
   }
 
-  else if (ch0 == 's' && ch1 == 'm') //simulate mode
-  {
-    int val = atoi(buffer + 2);
-    SetSimulateMode(val);
-
-    //     if (val == 1)
-    //         SetSimulateMode(true);
-    // else
-    //   SetSimulateMode(false);
-  }
   else if (ch0 == 'i' && ch1 == 'o') //ignore atObstacle
   {
     int val = atoi(buffer + 2);

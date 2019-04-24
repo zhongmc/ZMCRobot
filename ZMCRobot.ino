@@ -58,9 +58,10 @@ BlinkLed blinkLed;
 #else
 PureBalanceSupervisor balanceSupervisor;
 BlinkMatrixLed blinkLed;
-IRReceiver irRecv(7);
-
+IRReceiver irRecv(12);
 IRCode ircode;
+
+double drive_v, drive_w;
 #endif
 
 Position pos;
@@ -101,10 +102,17 @@ IRSensor irSensor(GP2Y0A41);
 static double batteryVoltage;  // Measured battery level
 static uint8_t batteryCounter; // Counter used to check if it should check the battery level
 
+int m_p = 0;
+int bCount = 0;
+double irDistance[5];
+
 void setup()
 {
 
 #if CAR_TYPE == BALANCE_CAR
+
+  drive_v = 0;
+  drive_w = 0;
 
 #endif
 
@@ -232,9 +240,14 @@ void setup()
   mSettings.kd = 0.0;
   // balanceSupervisor.updateSettings(mSettings);
   balanceSupervisor.init();
-
   blinkLed.init();
+//  blinkLed.normalBlink();
 #endif
+
+  bCount = 0;
+
+  const int oneSecInUsec = 1000000;                           // A second in mirco second unit.
+  CurieTimerOne.start(oneSecInUsec / GYRO_RATE, &balanceIsr); // set timer and callback
 
   millisPrevKey = millis();
   millisPrev = millisPrevKey; //millis();
@@ -242,23 +255,35 @@ void setup()
 
 void loop()
 {
+  m_p = 0;
   checkSerialData();
+  m_p = 1;
   blinkLed.beSureToBlink();
   //ble cmd process
+  m_p = 2;
   processSetingsRequire();
-
+  m_p = 3;
   //ultrasonic process
   processUltrasonic();
 
-  // irRecv.readIRCode(ircode);
-  // blink();
+#if CAR_TYPE == BALANCE_CAR
+
+  m_p = 4;
+  if (irRecv.readIRCode(ircode) == 0)
+  {
+    m_p = 5;
+    if (ircode.code_h + ircode.code_l == 255)
+      irRemoteProcess(ircode.code_l);
+    m_p = 6;
+  }
+
+#endif
 
   unsigned long millisNow = millis();
   if (millisNow - millisPrev >= 50)
   {
 
     millisPrev = millisNow;
-    double irDistance[5];
 
 #if CAR_TYPE == DRIVE_CAR
     if (currentState == STATE_GOTOGOAL)
@@ -280,11 +305,16 @@ void loop()
       sendRobotStateValue(1, pos, irDistance, batteryVoltage);
     }
 #else
+
     if (currentState == STATE_BALANCE)
     {
-      balanceSupervisor.getIRDistances(irDistance);
+      m_p = 6;
+      balanceSupervisor.getBalanceInfo(irDistance);
+      m_p = 7;
       pos = balanceSupervisor.getRobotPosition();
+      m_p = 8;
       sendBalanceRobotStateValue(pos, irDistance, batteryVoltage);
+      m_p = 9;
       /*
               Serial.print(balanceSupervisor.pwm.pwm_l);
               Serial.print(",");
@@ -308,8 +338,12 @@ void loop()
     }
     else
     {
-      // balanceSupervisor.getIRDistances(irDistance);
-      // sendBalanceRobotStateValue(pos, irDistance, batteryVoltage);
+      m_p = 10;
+      balanceSupervisor.getBalanceInfo(irDistance);
+      // balanceSupervisor.getIMUInfo(irDistance, 0.05);
+      m_p = 11;
+      sendBalanceRobotStateValue(pos, irDistance, batteryVoltage);
+      m_p = 12;
     }
 
 #endif
@@ -330,45 +364,50 @@ void loop()
     batteryCounter++;
     if (batteryCounter >= 10)
     { // Measure battery every 1s
-
-      if (currentState != STATE_MENU)
-      {
-        //          lcd.clear();
-        //          lcd.setCursor(0, 0);
-        //          lcd.print(PIDVAL);
-        //
-        //          showMainTips();
-        //
-        //          lcd.setCursor(0, 1);
-        //          lcd.print( roll );
-        //          lcd.print(" ");
-        //          lcd.print(batteryVoltage);
-      }
-
+      m_p = 13;
       batteryCounter = 0;
-      batteryVoltage = (double)analogRead(VOLT_IN_PIN) * 0.0352771 + 0.2; /// 65.7424242f; 0.2 二极管压降
-      // v = D * 3.3*(R1+R2)/(R2*1023);  R1 = 46.5 R2 = 4.68 V = d* 0.0352771;
-      // VBAT is connected to analog input 5 which is not broken out. This is then connected to a 56k-15k voltage divider - 1023.0/(3.3/(15.0/(15.0+56.0))) = 63.050847458
-
-      if ((batteryVoltage < 9 && batteryVoltage < 7.2) || (batteryVoltage > 9 && batteryVoltage < 11.5)) // && batteryVoltage > 5) // Equal to 3.4V per cell - don't turn on if it's below 5V, this means that no battery is connected
+      if (isBatteryLow())
       {
-        if (doCheckBattleVoltage)
+        if (doCheckBattleVoltage && isBatteryLow()) //read again
         {
           if (currentState != STATE_IDLE)
+          {
             Serial.println("Bat lower...");
-          stopAndReset();
-          currentState = STATE_IDLE;
-          stopRobot();
+            stopAndReset();
+            currentState = STATE_IDLE;
+            stopBalance();
+          }
           blinkLed.slowBlink();
         }
       }
-      else
-      {
-        if (currentState == STATE_IDLE)
-          blinkLed.normalBlink();
-      }
+      // batteryVoltage = (double)analogRead(VOLT_IN_PIN) * 0.0352771 + 0.2; /// 65.7424242f; 0.2 二极管压降
+      // // v = D * 3.3*(R1+R2)/(R2*1023);  R1 = 46.5 R2 = 4.68 V = d* 0.0352771;
+      // // VBAT is connected to analog input 5 which is not broken out. This is then connected to a 56k-15k voltage divider - 1023.0/(3.3/(15.0/(15.0+56.0))) = 63.050847458
+
+      // if ((batteryVoltage < 9 && batteryVoltage < 7.2) || (batteryVoltage > 9 && batteryVoltage < 11.5)) // && batteryVoltage > 5) // Equal to 3.4V per cell - don't turn on if it's below 5V, this means that no battery is connected
+      // {
+      //   m_p = 14;
+      //   if (doCheckBattleVoltage)
+      //   {
+      //     if (currentState != STATE_IDLE)
+      //       Serial.println("Bat lower...");
+      //     stopAndReset();
+      //     currentState = STATE_IDLE;
+      //     stopBalance();
+      //     // stopRobot();
+      //     blinkLed.slowBlink();
+      //   }
+      // }
+      // else
+      // {
+      //   if (currentState == STATE_IDLE)
+      //     blinkLed.normalBlink();
+      // }
     }
+    m_p = 15;
   }
+
+  m_p = 0;
 }
 
 #if CAR_TYPE == DRIVE_CAR
@@ -469,6 +508,101 @@ void stopRobot()
 }
 
 #else
+
+void irRemoteProcess(int code)
+{
+  if (code == 28) //OK key
+  {
+    if (currentState == STATE_BALANCE)
+    {
+      if (drive_w != 0)
+      {
+        drive_w = 0;
+        balanceSupervisor.setGoal(drive_v, drive_w);
+      }
+      else if (drive_v != 0)
+      {
+        drive_v = 0;
+        balanceSupervisor.setGoal(drive_v, drive_w);
+      }
+      else
+      {
+        stopBalance();
+        blinkLed.normalBlink();
+        return;
+      }
+
+      if (drive_v == 0 && drive_w == 0)
+      {
+        balanceSupervisor.stopDrive();
+        blinkLed.balanceBlink();
+      }
+    }
+    else
+    {
+      startBalance();
+    }
+    return;
+  }
+
+  if (code == 22) //*
+  {
+    balanceSupervisor.setBeSpeedLoop(true);
+    Serial.println("speed loop.");
+    return;
+  }
+
+  if (code == 13) //#
+  {
+    balanceSupervisor.setBeThetaLoop(true);
+    Serial.println("turn loop.");
+    return;
+  }
+
+  if (currentState != STATE_BALANCE) //ignore speed ctrl
+    return;
+
+  bool drv = false;
+
+  if (code == 24) //up
+  {
+    if (drive_v <= 0)
+    {
+      drive_v = 0.2;
+      drv = true;
+    }
+  }
+  else if (code == 82) //down
+  {
+    if (drive_v >= 0)
+    {
+      drive_v = -0.2;
+      drv = true;
+    }
+  }
+  else if (code == 8) //LEFT
+  {
+    if (drive_w <= 0)
+    {
+      drive_w = 10;
+      drv = true;
+    }
+  }
+  else if (code == 90)
+  {
+    if (drive_w >= 0)
+    {
+      drive_w = -10;
+      drv = true;
+    }
+  }
+  if (drv == true)
+  {
+    balanceSupervisor.setGoal(drive_v, drive_w);
+    blinkLed.runingBlink();
+  }
+}
+
 void setGoal(double x, double y, int theta)
 {
   balanceSupervisor.setGotoGoal(x, y, theta);
@@ -494,13 +628,18 @@ void startBalance()
 
   Serial.print("Start balance!");
   balanceSupervisor.reset(readLeftEncoder(), readRightEncoder());
-  const int oneSecInUsec = 1000000;                           // A second in mirco second unit.
-  CurieTimerOne.start(oneSecInUsec / GYRO_RATE, &balanceIsr); // set timer and callback
+  // const int oneSecInUsec = 1000000;                           // A second in mirco second unit.
+  // CurieTimerOne.start(oneSecInUsec / GYRO_RATE, &balanceIsr); // set timer and callback
 }
 
 void balanceIsr()
 {
-  balanceSupervisor.execute(readLeftEncoder(), readRightEncoder(), 0.005); // 1.0 / (double)GYRO_RATE);
+  bCount++;
+  if (currentState == STATE_BALANCE)
+    balanceSupervisor.execute(readLeftEncoder(), readRightEncoder(), 0.005); // 1.0 / (double)GYRO_RATE);
+  else
+    balanceSupervisor.readIMU(0.005);
+  bCount--;
 }
 
 void balanceRecovered()
@@ -556,7 +695,8 @@ void stopBalance()
 
   blinkLed.normalBlink();
   currentState = STATE_IDLE;
-  CurieTimerOne.kill();
+  balanceSupervisor.reset(readLeftEncoder(), readRightEncoder());
+  // CurieTimerOne.kill();
   stopAndReset();
 }
 
@@ -581,6 +721,9 @@ void setDriveGoal(double v, double w)
 #else
   if (currentState == STATE_BALANCE)
   {
+    drive_v = v;
+    drive_w = w;
+
     balanceSupervisor.setGoal(v, w);
     if (v != 0 || w != 0)
     {
@@ -592,6 +735,15 @@ void setDriveGoal(double v, double w)
     }
   }
 #endif
+}
+
+bool isBatteryLow()
+{
+  batteryVoltage = (double)analogRead(VOLT_IN_PIN) * 0.0352771 + 0.2;
+  if ((batteryVoltage < 9 && batteryVoltage < 7.2) || (batteryVoltage > 9 && batteryVoltage < 11.5)) // && batteryVoltage > 5) // Equal to 3.4V per cell - don't turn on if it's below 5V, this means that no battery is connected
+    return true;
+  else
+    return false;
 }
 
 bool waitForEcho = false;

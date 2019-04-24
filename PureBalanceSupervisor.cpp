@@ -2,6 +2,8 @@
 
 #include "ZMCRobot.h"
 
+#define SPEED_LOOP_COUNT 10
+
 int doubleToStr(double val, int scale, char *buf, char append);
 
 PureBalanceSupervisor::PureBalanceSupervisor()
@@ -33,6 +35,8 @@ PureBalanceSupervisor::PureBalanceSupervisor()
   mThetaLoop = false;
   mSendIMUInfo = false;
 
+  //2019-04-05 可以走起来 54, 0.59; 280, 14; 2.9; 20 (pwm_0)
+  //2019-04-06 42, 0.38; 210, 8; 3
   // angleType = 0; //use sensor angle
   KG_ANG = 0.02; //0.2
   layingDown = false;
@@ -41,21 +45,22 @@ PureBalanceSupervisor::PureBalanceSupervisor()
   mVel.vel_l = 0;
   mVel.vel_r = 0;
   pwm_diff = 0;  //10; //35
-  pwm_zero = 55; //60
+  pwm_zero = 20; //60
   //  mSyncPWM = 0;
   max_pwm = 240;
 
   mwPWM_L = 0;
   mwPWM_R = 0;
 
-  b_kp = 38;
-  b_kd = 0.58;
+  b_kp = 42;   //38;
+  b_kd = 0.38; //0.58;
 
-  s_kp = 200;
-  s_ki = 9;
+  s_kp = 210; //200;
+  s_ki = 8;   //9;
   sIntegral = 0;
 
-  t_kp = 2;
+  t_kp = 26; //2;
+  t_ki = 0.14;
 
   KG = 0.05;
   m_x_angle = 0;
@@ -204,6 +209,7 @@ void PureBalanceSupervisor::updateSettings(SETTINGS settings)
   if (settings.sType == 4)
   {
     t_kp = settings.kp;
+    t_ki = settings.ki;
   }
 
   if (settings.sType == 6 || settings.sType == 0)
@@ -256,7 +262,7 @@ SETTINGS PureBalanceSupervisor::getSettings(byte settingsType)
   else if (settingsType == 4)
   {
     settings.kp = t_kp;
-    settings.ki = 0;
+    settings.ki = t_ki;
     settings.kd = 0;
   }
 
@@ -285,10 +291,10 @@ void PureBalanceSupervisor::setGoal(double v, double w)
   m_input.theta = w;
   m_input.targetAngle = 0; // 5 * v;
 
-  if (v == 0) //stop drive
-  {
-    sIntegral = 0;
-  }
+  // if (v == 0) //stop drive
+  // {
+  //   sIntegral = 0;
+  // }
 
   if (w == 0 && curW != 0) //remain the current theta; 加速过程中会有晃动；保留初始角度？
   {
@@ -335,10 +341,10 @@ void PureBalanceSupervisor::resetRobot()
   mwPWM_L = 0;
   mwPWM_R = 0;
   sIntegral = 0;
+  tIntegral = 0;
   keepTheta = false;
   curW = 0;
   mW = 0;
-  sIntegral = 0;
 }
 
 void PureBalanceSupervisor::reset(long leftTicks, long rightTicks)
@@ -357,8 +363,11 @@ void PureBalanceSupervisor::reset(long leftTicks, long rightTicks)
   hangUp = false;
 
   speedCounter = 0;
+  mBalancePWM = 0;
   mSpeedPWM = 0;
+  mSpeedDelta = 0;
   mThetaPWM = 0;
+  mThetaDelta = 0;
 
   pwm.pwm_l = 0;
   pwm.pwm_r = 0;
@@ -374,7 +383,7 @@ void PureBalanceSupervisor::reset(long leftTicks, long rightTicks)
   // m_estima_angle = 0;
   m_gyro = 0; //mBalancePWM;
   sIntegral = 0;
-
+  tIntegral = 0;
   keepTheta = false;
 
   curW = 0;
@@ -392,18 +401,29 @@ Position PureBalanceSupervisor::getRobotPosition()
   return pos;
 }
 
-void PureBalanceSupervisor::getIRDistances(double dis[5])
+void PureBalanceSupervisor::getBalanceInfo(double *buf)
 {
-  IRSensor **irSensors = robot.getIRSensors();
-  for (int i = 0; i < 5; i++)
-  {
-    dis[i] = irSensors[i]->distance;
-  }
-  dis[0] = m_sensor_angle; // m_sensor_angle;
-  dis[1] = m_kalman_angle; //m_estima_angle;
-  dis[2] = m_gyro;         //g_fGravityAngle;
-  dis[3] = mBalancePWM;    //mBalancePWM;
-  dis[4] = mSpeedPWM;
+  buf[0] = m_sensor_angle; // m_sensor_angle;
+  buf[1] = m_kalman_angle; //m_estima_angle;
+  buf[2] = m_gyro;         //g_fGravityAngle;
+  buf[3] = mBalancePWM;    //mBalancePWM;
+  buf[4] = mSpeedPWM;
+  if (mSendIMUInfo)
+    sendCtrlInfo();
+}
+
+extern int m_p;
+
+void PureBalanceSupervisor::getIMUInfo(double *buf, double dt)
+{
+  m_p = 20;
+  readIMU(dt);
+  m_p = 21;
+  buf[0] = m_sensor_angle; // m_sensor_angle;
+  buf[1] = m_kalman_angle; //m_estima_angle;
+  buf[2] = m_gyro;         //g_fGravityAngle;
+  buf[3] = mBalancePWM;    //mBalancePWM;
+  buf[4] = m_x_angle;
 }
 
 // void balanceOut(double dt);
@@ -425,6 +445,7 @@ void PureBalanceSupervisor::setBeSpeedLoop(bool val)
   }
 
   mSpeedPWM = 0;
+  mSpeedDelta = 0;
   mSpeedLoop = val;
 }
 
@@ -438,6 +459,7 @@ void PureBalanceSupervisor::setBeThetaLoop(bool val)
   }
 
   mThetaPWM = 0;
+  mThetaDelta = 0;
   mThetaLoop = val;
 }
 
@@ -463,12 +485,8 @@ void PureBalanceSupervisor::speedOut(long leftTicks, long rightTicks, double dt)
   // double speed = (lt / robot.ticks_per_rev_l + rt / robot.ticks_per_rev_r) / 2.0;
   double e = m_input.v - robot.velocity;
   sIntegral = sIntegral + s_ki * e;
-  if (sIntegral > 200)
-    sIntegral = 0;
-  if (sIntegral < -200)
-    sIntegral = -200;
-
-  mSpeedPWM = s_kp * e + sIntegral;
+  sIntegral = normalize(sIntegral, 200);
+  mSpeedDelta = (s_kp * e + sIntegral - mSpeedPWM) / SPEED_LOOP_COUNT;
 }
 
 void PureBalanceSupervisor::thetaOut(double dt)
@@ -477,6 +495,7 @@ void PureBalanceSupervisor::thetaOut(double dt)
   if (mW != 0) //turning
   {
     mThetaPWM = t_kp * mW;
+    mThetaDelta = 0;
     return;
   }
 
@@ -490,6 +509,7 @@ void PureBalanceSupervisor::thetaOut(double dt)
     else
     {
       mThetaPWM = 0;
+      mThetaDelta = 0;
       return;
     }
   }
@@ -500,7 +520,10 @@ void PureBalanceSupervisor::thetaOut(double dt)
     m_input.theta = robot.theta;
   }
   double e = robot.theta - m_input.theta;
-  mThetaPWM = t_kp * e;
+
+  e = atan2(sin(e), cos(e));
+  tIntegral = tIntegral + e * dt;
+  mThetaDelta = (t_kp * e + t_ki * tIntegral - mThetaPWM) / SPEED_LOOP_COUNT;
 }
 
 void PureBalanceSupervisor::execute(long leftTicks, long rightTicks, double dt)
@@ -509,10 +532,6 @@ void PureBalanceSupervisor::execute(long leftTicks, long rightTicks, double dt)
   long startTime = micros();
 
   readIMU(dt);
-
-  if (mSendIMUInfo)
-    sendCtrlInfo();
-  // sendIMUInfo();
 
   robot.angle = m_kalman_angle; //m_sensor_angle; // m_estima_angle m_sensor_angle
   robot.gyro = m_gyro;
@@ -568,7 +587,7 @@ void PureBalanceSupervisor::execute(long leftTicks, long rightTicks, double dt)
     balanceOut(dt);
 
     speedCounter++;
-    if (speedCounter >= 8)
+    if (speedCounter >= SPEED_LOOP_COUNT) //10
     {
       if (mSimulateMode)
       {
@@ -583,6 +602,8 @@ void PureBalanceSupervisor::execute(long leftTicks, long rightTicks, double dt)
       speedCounter = 0;
     }
 
+    mSpeedPWM += mSpeedDelta;
+    mThetaPWM += mThetaDelta;
     // double pwm_l, pwm_r;
 
     // mBalancePWM = normalize(mBalancePWM, max_pwm);
@@ -598,8 +619,8 @@ void PureBalanceSupervisor::execute(long leftTicks, long rightTicks, double dt)
 
     if (mThetaLoop)
     {
-      pwm_l = pwm_l - mThetaPWM;
-      pwm_r = pwm_r + mThetaPWM;
+      pwm_l = pwm_l + mThetaPWM;
+      pwm_r = pwm_r - mThetaPWM;
     }
 
     if (pwm_l > 0)
@@ -664,15 +685,17 @@ void PureBalanceSupervisor::sendCtrlInfo()
 
   // len = doubleToStr(m_sensor_angle, 10000, buf + off, ',');
   // off = off+len;
-  len = doubleToStr(m_gyro, 10000, buf + off, ',');
+  // len = doubleToStr(m_gyro, 100, buf + off, ',');
+  // off = off + len;
+  len = doubleToStr(m_kalman_angle, 100, buf + off, ',');
   off = off + len;
-  len = doubleToStr(m_kalman_angle, 10000, buf + off, ',');
+  len = doubleToStr(mBalancePWM, 100, buf + off, ',');
   off = off + len;
-  len = doubleToStr(mBalancePWM, 10000, buf + off, ',');
+  len = doubleToStr(mSpeedPWM, 100, buf + off, ',');
   off = off + len;
-  len = doubleToStr(mSpeedPWM, 10000, buf + off, ',');
+  len = doubleToStr(pwm_r, 100, buf + off, ',');
   off = off + len;
-  len = doubleToStr(pwm_l, 10000, buf + off, 0);
+  len = doubleToStr(pwm_l, 100, buf + off, 0);
   off = off + len;
   Serial.write(buf);
   Serial.write('\r');
@@ -695,38 +718,29 @@ int doubleToStr(double val, int scale, char *buf, char append)
 
 void PureBalanceSupervisor::sendIMUInfo()
 {
-  String retStr;
+  char buf[200];
+  int len = 0, off = 0;
+  buf[0] = 'M';
+  buf[1] = 'U';
+  off = 2;
 
-  char tmp[10];
-  itoa((int)(10000 * m_sensor_angle), tmp, 10);
-  String sa = tmp;
-
-  itoa((int)(10000 * m_gyro), tmp, 10);
-  String sg = tmp;
-
-  itoa((int)(10000 * m_kalman_angle), tmp, 10);
-  String ka = tmp;
-  // itoa((int)(10000 * m_kalman_gyro), tmp, 10);
-  // String kg = tmp;
-  // itoa((int)(10000 * m_x_angle), tmp, 10);
-  // String ma = tmp;
-  itoa((int)(10000 * m_km_angle), tmp, 10);
-  String kma = tmp;
-
-  retStr = "MU" + sa + "," + sg + "," + ka + "," + kma; //  + "," + kg + "," + kma;
-  Serial.println(retStr);
-  // Serial.print("MU");
-  // Serial.print((int)(10000 * m_sensor_angle));
-  // Serial.print(",");
-  // Serial.print((int)(10000 * m_gyro));
-  // Serial.print(",");
-  // Serial.print((int)(10000 * m_kalman_angle));
-  // Serial.print(",");
-  // Serial.print((int)(10000 * m_kalman_gyro));
-  // Serial.print(",");
-  // Serial.println((int)(10000 * m_madgwick_angle));
-  // Serial.print(",");
-  // Serial.println((int)(10000 * m_km_angle));
+  len = doubleToStr(m_sensor_angle, 100, buf + off, ',');
+  off = off + len;
+  len = doubleToStr(m_gyro, 100, buf + off, ',');
+  off = off + len;
+  len = doubleToStr(m_kalman_angle, 100, buf + off, ',');
+  off = off + len;
+  len = doubleToStr(m_km_angle, 100, buf + off, 0);
+  off = off + len;
+  // len = doubleToStr(mSpeedPWM, 100, buf + off, ',');
+  // off = off + len;
+  // len = doubleToStr(robot.velocity * 100, 100, buf + off, ',');
+  // off = off + len;
+  // len = doubleToStr(pwm_l, 100, buf + off, 0);
+  // off = off + len;
+  Serial.write(buf);
+  Serial.write('\r');
+  Serial.write('\n');
 }
 
 double PureBalanceSupervisor::normalize(double in, double limit)
@@ -796,7 +810,9 @@ void PureBalanceSupervisor::readIMU(double dt)
   double ax, ay, az;
   double gx, gy, gz;
 
+  m_p = 40;
   CurieIMU.readMotionSensor(aix, aiy, aiz, gix, giy, giz);
+  m_p = 41;
   // convert from raw data to gravity and degrees/second units
   ax = convertRawAcceleration(aix);
   ay = convertRawAcceleration(aiy);
@@ -818,9 +834,11 @@ void PureBalanceSupervisor::readIMU(double dt)
   // double Angle_accY = atan(ay / sqrt(ax * ax + az * az)) * 180 / 3.14; //offset
   // double m_sensor_angle = atan2((double)ay, (double)az) * RAD_TO_DEG;
   double Angle_accY = atan2((double)ay, (double)az) * RAD_TO_DEG;
+
+  m_p = 42;
   m_sensor_angle = Angle_accY; //filter.getRoll();
 
-  // if ((Angle_accY < -90 && m_estima_angle > 90) || (Angle_accY > 90 && m_estima_angle < -90))
+  // if ((Angle_accY < -90 && m_kalman_angle > 90) || (Angle_accY > 90 && m_kalman_angle < -90))
   // {
   //   kalman.setAngle(Angle_accY);
   //   m_kalman_angle = Angle_accY;
@@ -828,15 +846,22 @@ void PureBalanceSupervisor::readIMU(double dt)
   // }
   // else
   {
-    m_kalman_angle = kalman.getAngle(m_sensor_angle, gx, dt); // Calculate the angle using a Kalman filter
-    m_kalman_gyro = kalman.getRate();
+    m_kalman_angle = kalman.getAngle(Angle_accY, gx, dt); // Calculate the angle using a Kalman filter
   }
+
+  m_p = 43;
+
   // double Angle_accY = atan2((double)ay, (double)az) * RAD_TO_DEG;
   // m_km_angle = km.getAngle(Angle_accY, gx, dt);
 
   double angle_accX = atan2((double)ax, (double)az) * RAD_TO_DEG;
+  m_p = 44;
+
   m_x_angle = estima_cal(m_x_angle, angle_accX, gy, dt, 0.02);
+
+  m_p = 45;
   m_km_angle = estima_cal(m_km_angle, m_sensor_angle, gx, dt, KG_ANG);
+  m_p = 46;
 }
 
 double PureBalanceSupervisor::convertRawAcceleration(int aRaw)

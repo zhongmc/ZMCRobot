@@ -88,24 +88,33 @@ public:
     Serial.print("KP:");
     Serial.print(s_kp);
     Serial.print(", ki: ");
-    Serial.println(s_ki);
+    Serial.print(s_ki);
+    Serial.print(", si: ");
+    Serial.println(sIntegral);
 
     Serial.println("theta:");
     Serial.print("KP:");
-    Serial.println(t_kp);
+    Serial.print(t_kp);
+    Serial.print(", KI:");
+    Serial.print(t_ki);
+    Serial.print(", si: ");
+    Serial.println(tIntegral);
   }
 
   //        void setGoal(double x, double y, int theta);
 
   Position getRobotPosition();
   //will return the pitch/angle of the robot
-  void getIRDistances(double dis[5]);
+  // void getIRDistances(double dis[5]);
+
+  void getBalanceInfo(double *buf);
+  void getIMUInfo(double *buf, double dt);
 
   //filter paramaters
   double KG_ANG;
 
   PWM_OUT pwm;
-  double mBalancePWM, mSpeedPWM, mThetaPWM, mwPWM_L, mwPWM_R;
+  double mBalancePWM, mSpeedPWM, mSpeedDelta, mThetaPWM, mThetaDelta, mwPWM_L, mwPWM_R;
   Vel mVel;
 
   int pwm_diff, pwm_zero, max_pwm;
@@ -124,25 +133,24 @@ public:
   bool mIgnoreObstacle;
   bool mSendIMUInfo;
 
+  bool mSpeedLoop, mThetaLoop;
+
   void setBeSpeedLoop(bool val);
   void setBeThetaLoop(bool val);
   void setBeSendIMUInfo(bool val);
+  void readIMU(double dt);
 
 private:
-  bool mSpeedLoop, mThetaLoop;
-
   void check_states();
   int m_state;
 
   //传感器角度（atan（ax/ay）, kalman, madgwick filter, Kalman1
   double m_sensor_angle, m_kalman_angle, m_km_angle; //m_madgwick_angle
-  double m_gyro, m_kalman_gyro;
+  double m_gyro;
 
   double KG, m_x_angle; // m_x_angle 通过融合滤波得到，用于判断小车被提起
   //     MPU6050 accelgyro;
   //        MyMPU6050 mpu6050;
-
-  void readIMU(double dt);
 
   double convertRawAcceleration(int aRaw);
   double convertRawGyro(int gRaw);
@@ -162,9 +170,8 @@ private:
   bool unsafe;
 
   //used to count the robot velocity
-  double m_per_tick;
+  // double m_per_tick;
   long prev_left_ticks, prev_right_ticks;
-
   double m_right_ticks, m_left_ticks;
   int speedCounter;
 
@@ -176,7 +183,7 @@ private:
   double s_kp, s_ki, sIntegral;
 
   //theta control
-  double t_kp;
+  double t_kp, t_ki, tIntegral;
 
   void balanceOut(double dt);
   void speedOut(long leftTicks, long rightTicks, double dt);

@@ -4,32 +4,30 @@
 #include <Arduino.h>
 #include "ZMCRobot.h"
 
-
-typedef struct {
-    int addr;
-    int code;
+typedef struct
+{
+  int addr;
+  int code_h;
+  int code_l;
 } IRCode;
-
 
 class IRReceiver
 {
 public:
   IRReceiver();
-  IRReceiver(byte irpin);
+  IRReceiver(int irpin);
 
-    int readIRCode(IRCode &code);
-
+  int readIRCode(IRCode &code);
 
 private:
-    long prevMillis, curMillis;
-    int pulse_width_l, pulse_width_h;
+  long prevMicros, curMicros;
+  int pulse_width_l, pulse_width_h;
 
-    byte irpin;
-    int ir_code, adrL_code, adrH_code;   
+  int irpin;
+  int ir_addr, ir_code_h, ir_code_l; //ir_code, adrL_code, adrH_code;
 
-
-    void readCode();
-    int logicValue();
+  void readCode();
+  int logicValue();
 };
 
 #endif /* _IRRECEIVER_H_ */

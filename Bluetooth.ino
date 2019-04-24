@@ -23,23 +23,25 @@ extern bool openDebug;            // = false;
 extern byte settingsReqQueue[8];
 extern short queueLen; // = 0;
 
+extern int m_p, bCount;
 extern long count1, count2;
 
 BLEPeripheral blePeripheral;
 // BLE Peripheral Device (the board you're programming)
-BLEService zmcRobotService("3A37"); // BLE Heart Rate Service
+
+BLEService zmcRobotService("3a37"); // BLE Heart Rate Service
 
 // BLE Heart Rate Measurement Characteristic"
 
-BLECharacteristic zmcRobotSettingsChar("3A38",
+BLECharacteristic zmcRobotSettingsChar("3a38",
                                        // standard 16-bit characteristic UUID
-                                       BLERead | BLEWrite | BLENotify, 18); //KP KI KD atObstacle unsafe velocity
+                                       BLERead | BLEWrite | BLENotify, 19); //KP KI KD atObstacle unsafe velocity
 
-BLECharacteristic zmcRobotDriveChar("3A39",
+BLECharacteristic zmcRobotDriveChar("3a39",
                                     // standard 16-bit characteristic UUID
-                                    BLERead | BLEWrite, 16); //CMD:2, datas;    speed tl tr | BLENotify
+                                    BLERead | BLEWrite, 19); //CMD:2, datas;    speed tl tr | BLENotify
 
-BLECharacteristic zmcRobotStateChar("3A3A",
+BLECharacteristic zmcRobotStateChar("3a3a",
                                     // standard 16-bit characteristic UUID
                                     BLERead | BLENotify, 19); // x,y,theta,irdis 0-4, volt of bat | BLENotify
 
@@ -56,6 +58,7 @@ void initBluetooth()
   bleConnected = false;
   /*The name can be changed but maybe be truncated based on space left in advertisement packet */
   blePeripheral.setLocalName("ZMC Robot");
+
   blePeripheral.setAdvertisedServiceUuid(zmcRobotService.uuid());
   // add the service UUID
   blePeripheral.addAttribute(zmcRobotService);
@@ -90,7 +93,7 @@ void blePeripheralConnectHandler(BLECentral &central)
   Serial.println(central.address());
 
   Serial.print("UUID:");
-  Serial.print(zmcRobotService.uuid());
+  Serial.println(zmcRobotService.uuid());
 
   //  sendRobotConfigValue();
 }
@@ -116,7 +119,9 @@ void driveCharacteristicWritten(BLECentral &central, BLECharacteristic &characte
   // central wrote new value to characteristic, update LED
   Serial.print("drv,cmd:");
   //the first two chas as CMD
-
+  Serial.print(m_p);
+  Serial.print(", ");
+  Serial.println(bCount);
   unsigned char *data = (unsigned char *)characteristic.value();
 
   char cmd[3];
@@ -578,9 +583,10 @@ void sendRobotStateValue(byte stateType, Position pos, double irDistance[5], dou
 //type angle1,2,3,voltage
 void sendBalanceRobotStateValue(Position pos, double irDistance[5], double voltage)
 {
-  if (!bleConnected)
-    return;
   byte buf[19];
+
+  m_p = 30;
+
   memset(buf, 0, 19);
   buf[0] = 2;
 
@@ -597,10 +603,20 @@ void sendBalanceRobotStateValue(Position pos, double irDistance[5], double volta
     floatToByte(buf + 7 + 2 * i, irDistance[i], scale);
   }
   floatToByte(buf + 17, voltage, scale);
+
+  m_p = 31;
+  if (!bleConnected)
+    return;
+
+  m_p = 32;
+
+  // zmcRobotStateChar.canw
   bool ret = zmcRobotStateChar.setValue(buf, 19);
+
+  m_p = 33;
   if (!ret)
   {
-    Serial.println("Failed to write balance state character!");
+    Serial.println("BLE err!");
   }
 }
 
@@ -676,14 +692,19 @@ void SendSettings(SETTINGS settings)
     settingsArray[7] = (byte)settings.pwm_zero;
     settingsArray[8] = (byte)settings.pwm_diff;
 
-    floatToByte(settingsArray + 9, 0, 1000); //settings.angleOff, 1000);
+    // speedLoop, thetaLoop
+    settingsArray[9] = (byte)balanceSupervisor.mSpeedLoop;
+    settingsArray[10] = (byte)balanceSupervisor.mThetaLoop;
+
+    //    floatToByte(settingsArray + 9, 0, 1000); //settings.angleOff, 1000);
 
     floatToByte(settingsArray + 11, settings.radius, 1000);
     floatToByte(settingsArray + 13, settings.length, 1000);
 
     floatToByte(settingsArray + 15, settings.velocity, 100);
 
-    len = 17;
+    settingsArray[17] = (byte)balanceSupervisor.mSimulateMode;
+    len = 18;
   }
 #endif
   zmcRobotSettingsChar.setValue(settingsArray, 18);

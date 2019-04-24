@@ -14,7 +14,7 @@ void BlinkMatrixLed::init()
 
   prevMillis = millis();
   showBackgroud();
-  curState = -1;
+  curState = 0; //-1;
 }
 void BlinkMatrixLed::beSureToBlink()
 {

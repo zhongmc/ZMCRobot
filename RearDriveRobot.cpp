@@ -12,7 +12,7 @@ RearDriveRobot::RearDriveRobot()
   //GP2Y0A21 (10-80) GP2Y0A41 (4-30)
   irSensors[0] = new IRSensor(-0.045, 0.05, PI / 2, A1, GP2Y0A21);
   irSensors[1] = new IRSensor(0.08, 0.04, PI / 4, A2, GP2Y0A21); //0.16,0.045, PI/6 0.075, 0.035
-  irSensors[2] = new IRSensor(0.162, 0.0, 0, A3, GP2Y0A41);
+  irSensors[2] = new IRSensor(0.162, 0.0, 0, A3, GP2Y0A21);
   irSensors[3] = new IRSensor(0.08, -0.04, -PI / 4, A4, GP2Y0A21);
   irSensors[4] = new IRSensor(-0.045, -0.05, -PI / 2, A5, GP2Y0A21);
 
