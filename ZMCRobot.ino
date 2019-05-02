@@ -102,8 +102,9 @@ IRSensor irSensor(GP2Y0A41);
 static double batteryVoltage;  // Measured battery level
 static uint8_t batteryCounter; // Counter used to check if it should check the battery level
 
-int m_p = 0;
-int bCount = 0;
+// int m_p = 0;
+// int bCount = 0;
+
 double irDistance[5];
 
 void setup()
@@ -244,7 +245,7 @@ void setup()
 //  blinkLed.normalBlink();
 #endif
 
-  bCount = 0;
+  // bCount = 0;
 
   const int oneSecInUsec = 1000000;                           // A second in mirco second unit.
   CurieTimerOne.start(oneSecInUsec / GYRO_RATE, &balanceIsr); // set timer and callback
@@ -255,26 +256,19 @@ void setup()
 
 void loop()
 {
-  m_p = 0;
   checkSerialData();
-  m_p = 1;
   blinkLed.beSureToBlink();
   //ble cmd process
-  m_p = 2;
   processSetingsRequire();
-  m_p = 3;
   //ultrasonic process
   processUltrasonic();
 
 #if CAR_TYPE == BALANCE_CAR
 
-  m_p = 4;
   if (irRecv.readIRCode(ircode) == 0)
   {
-    m_p = 5;
     if (ircode.code_h + ircode.code_l == 255)
       irRemoteProcess(ircode.code_l);
-    m_p = 6;
   }
 
 #endif
@@ -308,13 +302,9 @@ void loop()
 
     if (currentState == STATE_BALANCE)
     {
-      m_p = 6;
       balanceSupervisor.getBalanceInfo(irDistance);
-      m_p = 7;
       pos = balanceSupervisor.getRobotPosition();
-      m_p = 8;
       sendBalanceRobotStateValue(pos, irDistance, batteryVoltage);
-      m_p = 9;
       /*
               Serial.print(balanceSupervisor.pwm.pwm_l);
               Serial.print(",");
@@ -338,12 +328,9 @@ void loop()
     }
     else
     {
-      m_p = 10;
       balanceSupervisor.getBalanceInfo(irDistance);
       // balanceSupervisor.getIMUInfo(irDistance, 0.05);
-      m_p = 11;
       sendBalanceRobotStateValue(pos, irDistance, batteryVoltage);
-      m_p = 12;
     }
 
 #endif
@@ -364,7 +351,6 @@ void loop()
     batteryCounter++;
     if (batteryCounter >= 10)
     { // Measure battery every 1s
-      m_p = 13;
       batteryCounter = 0;
       if (isBatteryLow())
       {
@@ -386,7 +372,6 @@ void loop()
 
       // if ((batteryVoltage < 9 && batteryVoltage < 7.2) || (batteryVoltage > 9 && batteryVoltage < 11.5)) // && batteryVoltage > 5) // Equal to 3.4V per cell - don't turn on if it's below 5V, this means that no battery is connected
       // {
-      //   m_p = 14;
       //   if (doCheckBattleVoltage)
       //   {
       //     if (currentState != STATE_IDLE)
@@ -404,10 +389,7 @@ void loop()
       //     blinkLed.normalBlink();
       // }
     }
-    m_p = 15;
   }
-
-  m_p = 0;
 }
 
 #if CAR_TYPE == DRIVE_CAR
@@ -467,7 +449,7 @@ void startDrive()
 
   const int oneSecInUsec = 1000000; // A second in mirco second unit.
   // time = oneSecInUsec / 100; // time is used to toggle the LED is divided by i
-  CurieTimerOne.start(oneSecInUsec / 50, &driveIsr); // set timer and callback
+  CurieTimerOne.start(oneSecInUsec / 20, &driveIsr); // set timer and callback
 }
 
 void driveIsr()
@@ -634,12 +616,10 @@ void startBalance()
 
 void balanceIsr()
 {
-  bCount++;
   if (currentState == STATE_BALANCE)
     balanceSupervisor.execute(readLeftEncoder(), readRightEncoder(), 0.005); // 1.0 / (double)GYRO_RATE);
   else
     balanceSupervisor.readIMU(0.005);
-  bCount--;
 }
 
 void balanceRecovered()

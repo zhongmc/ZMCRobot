@@ -52,15 +52,15 @@ PureBalanceSupervisor::PureBalanceSupervisor()
   mwPWM_L = 0;
   mwPWM_R = 0;
 
-  b_kp = 42;   //38;
-  b_kd = 0.38; //0.58;
+  b_kp = 35;  // 42;   //38; //
+  b_kd = 0.3; // 0.38; //0.58;
 
   s_kp = 210; //200;
-  s_ki = 8;   //9;
+  s_ki = 5;   //8;   //9;
   sIntegral = 0;
 
-  t_kp = 26; //2;
-  t_ki = 0.14;
+  t_kp = 230; //200; //2;
+  t_ki = 5;   // 8;   //0.14;
 
   KG = 0.05;
   m_x_angle = 0;
@@ -288,23 +288,14 @@ void PureBalanceSupervisor::setGotoGoal(double x, double y, double theta)
 void PureBalanceSupervisor::setGoal(double v, double w)
 {
   m_input.v = v;
-  m_input.theta = w;
-  m_input.targetAngle = 0; // 5 * v;
-
-  // if (v == 0) //stop drive
-  // {
-  //   sIntegral = 0;
-  // }
-
   if (w == 0 && curW != 0) //remain the current theta; 加速过程中会有晃动；保留初始角度？
   {
     keepTheta = true;
+    keepThetaTimer = (1 + 2 * abs(curW)) * 30;
     thetaPrevMillis = millis();
-
-    //    mTheta = robot.theta; //转弯结束，保留当前角度
   }
-  curW = w;
-  mW = w;
+  curW = -w;
+  mW = -w;
   if (mW == 0)
   {
     Serial.println("zero mw!");
@@ -412,13 +403,9 @@ void PureBalanceSupervisor::getBalanceInfo(double *buf)
     sendCtrlInfo();
 }
 
-extern int m_p;
-
 void PureBalanceSupervisor::getIMUInfo(double *buf, double dt)
 {
-  m_p = 20;
   readIMU(dt);
-  m_p = 21;
   buf[0] = m_sensor_angle; // m_sensor_angle;
   buf[1] = m_kalman_angle; //m_estima_angle;
   buf[2] = m_gyro;         //g_fGravityAngle;
@@ -494,17 +481,18 @@ void PureBalanceSupervisor::thetaOut(double dt)
 
   if (mW != 0) //turning
   {
-    mThetaPWM = t_kp * mW;
+    mThetaPWM = 30 * mW; //t_kp
     mThetaDelta = 0;
     return;
   }
 
   if (keepTheta == true)
   {
-    if (millis() - thetaPrevMillis > 120)
+    if (millis() - thetaPrevMillis > keepThetaTimer)
     {
       keepTheta = false;
-      okToKeep = true;
+      tIntegral = 0;
+      m_input.theta = robot.theta;
     }
     else
     {
@@ -514,11 +502,6 @@ void PureBalanceSupervisor::thetaOut(double dt)
     }
   }
 
-  if (okToKeep)
-  {
-    okToKeep = false;
-    m_input.theta = robot.theta;
-  }
   double e = robot.theta - m_input.theta;
 
   e = atan2(sin(e), cos(e));
@@ -621,6 +604,29 @@ void PureBalanceSupervisor::execute(long leftTicks, long rightTicks, double dt)
     {
       pwm_l = pwm_l + mThetaPWM;
       pwm_r = pwm_r - mThetaPWM;
+      // if (m_input.v > 0)
+      // {
+      //   pwm_l = pwm_l - mThetaPWM;
+      //   pwm_r = pwm_r + mThetaPWM;
+      // }
+      // else if (m_input.v < 0)
+      // {
+      //   pwm_l = pwm_l + mThetaPWM;
+      //   pwm_r = pwm_r - mThetaPWM;
+      // }
+      // else
+      // {
+      //   if (mBalancePWM >= 0)
+      //   {
+      //     pwm_l = pwm_l - mThetaPWM;
+      //     pwm_r = pwm_r + mThetaPWM;
+      //   }
+      //   else
+      //   {
+      //     pwm_l = pwm_l + mThetaPWM;
+      //     pwm_r = pwm_r - mThetaPWM;
+      //   }
+      // }
     }
 
     if (pwm_l > 0)
@@ -810,9 +816,7 @@ void PureBalanceSupervisor::readIMU(double dt)
   double ax, ay, az;
   double gx, gy, gz;
 
-  m_p = 40;
   CurieIMU.readMotionSensor(aix, aiy, aiz, gix, giy, giz);
-  m_p = 41;
   // convert from raw data to gravity and degrees/second units
   ax = convertRawAcceleration(aix);
   ay = convertRawAcceleration(aiy);
@@ -834,8 +838,6 @@ void PureBalanceSupervisor::readIMU(double dt)
   // double Angle_accY = atan(ay / sqrt(ax * ax + az * az)) * 180 / 3.14; //offset
   // double m_sensor_angle = atan2((double)ay, (double)az) * RAD_TO_DEG;
   double Angle_accY = atan2((double)ay, (double)az) * RAD_TO_DEG;
-
-  m_p = 42;
   m_sensor_angle = Angle_accY; //filter.getRoll();
 
   // if ((Angle_accY < -90 && m_kalman_angle > 90) || (Angle_accY > 90 && m_kalman_angle < -90))
@@ -848,20 +850,12 @@ void PureBalanceSupervisor::readIMU(double dt)
   {
     m_kalman_angle = kalman.getAngle(Angle_accY, gx, dt); // Calculate the angle using a Kalman filter
   }
-
-  m_p = 43;
-
   // double Angle_accY = atan2((double)ay, (double)az) * RAD_TO_DEG;
   // m_km_angle = km.getAngle(Angle_accY, gx, dt);
 
   double angle_accX = atan2((double)ax, (double)az) * RAD_TO_DEG;
-  m_p = 44;
-
   m_x_angle = estima_cal(m_x_angle, angle_accX, gy, dt, 0.02);
-
-  m_p = 45;
   m_km_angle = estima_cal(m_km_angle, m_sensor_angle, gx, dt, KG_ANG);
-  m_p = 46;
 }
 
 double PureBalanceSupervisor::convertRawAcceleration(int aRaw)

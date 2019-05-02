@@ -23,7 +23,6 @@ extern bool openDebug;            // = false;
 extern byte settingsReqQueue[8];
 extern short queueLen; // = 0;
 
-extern int m_p, bCount;
 extern long count1, count2;
 
 BLEPeripheral blePeripheral;
@@ -119,9 +118,6 @@ void driveCharacteristicWritten(BLECentral &central, BLECharacteristic &characte
   // central wrote new value to characteristic, update LED
   Serial.print("drv,cmd:");
   //the first two chas as CMD
-  Serial.print(m_p);
-  Serial.print(", ");
-  Serial.println(bCount);
   unsigned char *data = (unsigned char *)characteristic.value();
 
   char cmd[3];
@@ -585,8 +581,6 @@ void sendBalanceRobotStateValue(Position pos, double irDistance[5], double volta
 {
   byte buf[19];
 
-  m_p = 30;
-
   memset(buf, 0, 19);
   buf[0] = 2;
 
@@ -603,17 +597,10 @@ void sendBalanceRobotStateValue(Position pos, double irDistance[5], double volta
     floatToByte(buf + 7 + 2 * i, irDistance[i], scale);
   }
   floatToByte(buf + 17, voltage, scale);
-
-  m_p = 31;
   if (!bleConnected)
     return;
-
-  m_p = 32;
-
   // zmcRobotStateChar.canw
   bool ret = zmcRobotStateChar.setValue(buf, 19);
-
-  m_p = 33;
   if (!ret)
   {
     Serial.println("BLE err!");
