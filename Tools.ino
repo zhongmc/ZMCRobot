@@ -205,6 +205,27 @@ void processCommand(char *buffer, int bufferLen)
     //   SetSimulateMode(false);
   }
 
+  else if (ch0 == 't' && ch1 == 'l') //turn around left/ right(-pwm) test
+  {
+    int pwm = atoi(buffer + 2);
+    turnAround(pwm);
+  }
+  else if (ch0 == 'm' && ch1 == 'g') //go to goal
+  {
+    // count1 = 0;
+    // count2 = 0;
+    // supervisor.reset(0, 0);
+    // supervisor.resetRobot();
+    // float x = atof(buffer + 2);
+    // float y = 0;
+    // char *buf = strchr(buffer, ',');
+    // if (buf != NULL)
+    //   y = atof(buf + 1);
+    // setGoal(x, y, 0);
+    // startGoToGoal();
+    manuaGoal();
+  }
+
 #if CAR_TYPE == DRIVE_CAR
   else if (ch0 == 'g' && ch1 == 'o') //start go to goal
   {
@@ -233,11 +254,11 @@ void processCommand(char *buffer, int bufferLen)
     //to do
   }
 
-  else if (ch0 == 's' && ch1 == 'r') // step response
-  {
-    int pwm = atoi(buffer + 2);
-    stepResponseTest(pwm);
-  }
+  // else if (ch0 == 's' && ch1 == 'r') // step response
+  // {
+  //   int pwm = atoi(buffer + 2);
+  //   stepResponseTest(pwm);
+  // }
 
   else if (ch0 == 'p' && ch1 == 'i') //pid
   {
@@ -249,21 +270,6 @@ void processCommand(char *buffer, int bufferLen)
     int pwm = atoi(buffer + 2);
     turnAround(pwm);
   }
-  else if (ch0 == 'm' && ch1 == 'g') //go to goal
-  {
-    count1 = 0;
-    count2 = 0;
-    supervisor.reset(0, 0);
-    supervisor.resetRobot();
-    float x = atof(buffer + 2);
-    float y = 0;
-    char *buf = strchr(buffer, ',');
-    if (buf != NULL)
-      y = atof(buf + 1);
-    setGoal(x, y, 0);
-    startGoToGoal();
-  }
-
   else if (ch0 == 'i' && ch1 == 'o') //ignore atObstacle
   {
     int val = atoi(buffer + 2);
@@ -544,6 +550,10 @@ void turnAround(int pwm)
 {
   Serial.print("TR:");
   Serial.println(pwm);
+  Serial.print(count1);
+  Serial.print(',');
+  Serial.println(count2);
+
   if (pwm > 0)
   {
     count1 = 0;
@@ -558,8 +568,9 @@ void turnAround(int pwm)
   while (true)
   {
     if ((pwm > 0 && count1 > 1700) || (pwm < 0 && count2 > 1700))
+    // if (count1 > 1700 || count2 > 1700)
     {
-      stopRobot();
+      StopMotor();
       break;
     }
     delay(50);
@@ -567,6 +578,19 @@ void turnAround(int pwm)
 
   delay(100);
 
+  Serial.print(count1);
+  Serial.print(',');
+  Serial.println(count2);
+}
+
+void manuaGoal()
+{
+  count1 = 0;
+  count2 = 0;
+  MoveMotor(90);
+  delay(3000);
+  StopMotor();
+  delay(500);
   Serial.print(count1);
   Serial.print(',');
   Serial.println(count2);
@@ -615,19 +639,19 @@ void setPID(char *buffer)
   driveSupervisor.updateSettings(settings);
 }
 
-void stepResponseTest(int pwm)
-{
-  Serial.print("SR: ");
-  Serial.println(pwm);
-  printCountInfo();
-  printCountInfo();
-  int count = 100;
-  while (count > 0)
-  {
-    delay(20);
-    printCountInfo();
-  }
-  printCountInfo();
-  MoveMotor(0);
-}
+// void stepResponseTest(int pwm)
+// {
+//   Serial.print("SR: ");
+//   Serial.println(pwm);
+//   printCountInfo();
+//   printCountInfo();
+//   int count = 100;
+//   while (count > 0)
+//   {
+//     delay(20);
+//     printCountInfo();
+//   }
+//   printCountInfo();
+//   MoveMotor(0);
+// }
 #endif

@@ -7,17 +7,24 @@
 
 class GoToGoal : public Controller
 {
-  public:
-    GoToGoal();
-    void reset();
-    void execute(Robot *robot, Input *input, Output *output, double dt);
-    //    private:
-    //        double fuckEk_l;
-    //        double E_k;
-    //        double Kp, Ki, Kd;
+public:
+  GoToGoal();
+  void reset();
+  void execute(Robot *robot, Input *input, Output *output, double dt);
 
-  private:
-    double lastVE, lastVEI;
+  void setPID(int type, double kp, double ki, double kd);
+  //    private:
+  //        double fuckEk_l;
+  //        double E_k;
+  //        double Kp, Ki, Kd;
+
+private:
+  double lastVE, lastVEI;
+  double lastTE, lastTEI;
+
+  double pkp, pki, pkd;
+  double tkp, tki, tkd;
+  int state;
 };
 
 #endif /* _GOTOGOAL_H_ */

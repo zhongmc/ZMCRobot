@@ -31,7 +31,7 @@ typedef struct
 
 typedef struct
 {
-  int sType; // 1: pid for 3 wheel; 2: pid for balance;  3: pid for speed; 4: settings for robot; 5: settings for balance robot;
+  int sType; // 1: pid for 3 wheel; 2: pid for balance;  3: pid for speed; 4：PID for balance theta； 5: settings for robot; 6: settings for balance robot;
   double kp, ki, kd;
   double atObstacle, unsafe;
   double dfw;

@@ -109,7 +109,7 @@ void blePeripheralDisconnectHandler(BLECentral &central)
 void configCharacteristicWritten(BLECentral &central, BLECharacteristic &characteristic)
 {
   // central wrote new value to characteristic, update LED
-  Serial.println("config Characteristic event, written: ");
+  Serial.println("cc w: ");
   setConfigValue(characteristic.value());
 }
 
@@ -132,13 +132,13 @@ void driveCharacteristicWritten(BLECentral &central, BLECharacteristic &characte
   }
   else if (cmd[0] == 'R' && cmd[1] == 'P') //Required for settings
   {
-    Serial.println("Required for settings Of:");
+    Serial.println("Req sof:");
     Serial.println(data[2]);
 
     if (queueLen < 7)
       settingsReqQueue[queueLen++] = data[2];
     else
-      Serial.println("Queue out of bound!");
+      Serial.println("Q ob");
 
     //    requireForSettings = true;
     //    requiredSettingsType = data[2];
@@ -441,7 +441,7 @@ void setConfigValue(const unsigned char *cfgArray)
 #endif
 
 #if CAR_TYPE == DRIVE_CAR
-  if (settingsType == 1 || settingsType == 4)
+  if (settingsType == 1 || settingsType == 5 || settingsType == 2 || settingsType == 3 || settingsType == 4)
   {
     supervisor.updateSettings(settings);
     driveSupervisor.updateSettings(settings);

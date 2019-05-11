@@ -59,8 +59,8 @@ PureBalanceSupervisor::PureBalanceSupervisor()
   s_ki = 5;   //8;   //9;
   sIntegral = 0;
 
-  t_kp = 230; //200; //2;
-  t_ki = 5;   // 8;   //0.14;
+  t_kp = 200; //200; //2;
+  t_ki = 10;  // 8;   //0.14;
 
   KG = 0.05;
   m_x_angle = 0;
@@ -287,11 +287,12 @@ void PureBalanceSupervisor::setGotoGoal(double x, double y, double theta)
 //drive the robot
 void PureBalanceSupervisor::setGoal(double v, double w)
 {
+  m_state = 1; //set to manual drive mode
   m_input.v = v;
   if (w == 0 && curW != 0) //remain the current theta; 加速过程中会有晃动；保留初始角度？
   {
     keepTheta = true;
-    keepThetaTimer = (1 + 2 * abs(curW)) * 30;
+    keepThetaTimer = (1 + 2 * abs(curW)) * 40;
     thetaPrevMillis = millis();
   }
   curW = -w;
@@ -503,10 +504,16 @@ void PureBalanceSupervisor::thetaOut(double dt)
   }
 
   double e = robot.theta - m_input.theta;
-
   e = atan2(sin(e), cos(e));
+
+  double kp = t_kp;
+  if (abs(e) > 2)
+    kp = kp / 3;
+  else if (abs(e) > 1)
+    kp = kp / 2;
+
   tIntegral = tIntegral + e * dt;
-  mThetaDelta = (t_kp * e + t_ki * tIntegral - mThetaPWM) / SPEED_LOOP_COUNT;
+  mThetaDelta = (kp * e + t_ki * tIntegral - mThetaPWM) / SPEED_LOOP_COUNT;
 }
 
 void PureBalanceSupervisor::execute(long leftTicks, long rightTicks, double dt)
@@ -572,6 +579,33 @@ void PureBalanceSupervisor::execute(long leftTicks, long rightTicks, double dt)
     speedCounter++;
     if (speedCounter >= SPEED_LOOP_COUNT) //10
     {
+
+      if (m_state == 2) //go to goal m_state
+      {
+        check_states();
+        if (at_goal == true)
+        {
+          m_input.v = 0; // stop
+          m_input.theta = robot.theta;
+          tIntegral = 0;
+          m_state = 0;
+          Serial.println("At goal!");
+        }
+        else
+        {
+          double u_x = m_input.x_g - robot.x;
+          double u_y = m_input.y_g - robot.y;
+          m_input.theta = atan2(u_y, u_x);
+
+          double d = sqrt(sq(u_x) + sq(u_y));
+
+          if (d > 0.2)
+            m_input.v = 0.24;
+          else
+            m_input.v = (1 + d) * 0.15;
+        }
+      }
+
       if (mSimulateMode)
       {
         robot.updateState((long)m_left_ticks, (long)m_right_ticks, dt * speedCounter);
@@ -762,10 +796,10 @@ double PureBalanceSupervisor::normalize(double in, double limit)
 void PureBalanceSupervisor::check_states()
 {
   double d = sqrt(sq(robot.x - m_Goal.x) + sq(robot.y - m_Goal.y));
-  if (d < d_prog - 0.1)
-    progress_made = true;
-  else
-    progress_made = false;
+  // if (d < d_prog - 0.1)
+  //   progress_made = true;
+  // else
+  //   progress_made = false;
 
   if (d < d_stop)
     at_goal = true;
@@ -775,14 +809,14 @@ void PureBalanceSupervisor::check_states()
   at_obstacle = false;
   unsafe = false;
 
-  IRSensor **irSensors = robot.getIRSensors();
-  for (int i = 0; i < 5; i++)
-  {
-    if (irSensors[i]->distance < d_at_obs)
-      at_obstacle = true;
-    if (irSensors[i]->distance < d_unsafe)
-      unsafe = true;
-  }
+  // IRSensor **irSensors = robot.getIRSensors();
+  // for (int i = 0; i < 5; i++)
+  // {
+  //   if (irSensors[i]->distance < d_at_obs)
+  //     at_obstacle = true;
+  //   if (irSensors[i]->distance < d_unsafe)
+  //     unsafe = true;
+  // }
 }
 
 void PureBalanceSupervisor::resetKalman()

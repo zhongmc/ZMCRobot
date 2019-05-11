@@ -30,14 +30,14 @@ DriveSupervisor::DriveSupervisor()
 
 void DriveSupervisor::updateSettings(SETTINGS settings)
 {
-  if (settings.sType == 0 || settings.sType == 4)
+  if (settings.sType == 0 || settings.sType == 5)
   {
     d_unsafe = settings.unsafe;
     m_input.v = settings.velocity;
     robot.updateSettings(settings);
   }
 
-  if (settings.sType == 0 || settings.sType == 1)
+  if (settings.sType == 0 || settings.sType == 1 || settings.sType == 2)
   {
     robot.updatePID(settings);
     m_Controller.updateSettings(settings);
@@ -81,19 +81,6 @@ void DriveSupervisor::reset(long leftTicks, long rightTicks)
   }
   else
     robot.reset(leftTicks, rightTicks);
-}
-
-//用于阶跃响应测试
-void DriveSupervisor::updateRobot(long left_ticks, long right_ticks, int pwm, double dt)
-{
-  if (mSimulateMode)
-  {
-    robot.updateState((long)m_left_ticks, (long)m_right_ticks, dt);
-    m_left_ticks = m_left_ticks + robot.pwm_to_ticks_l(pwm, dt);
-    m_right_ticks = m_right_ticks + robot.pwm_to_ticks_r(pwm, dt);
-  }
-  else
-    robot.updateState(left_ticks, right_ticks, dt);
 }
 
 void DriveSupervisor::execute(long left_ticks, long right_ticks, double dt)

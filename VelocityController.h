@@ -38,6 +38,7 @@ private:
   double mW;      //转弯
   double curW;    //当前的转弯状态
   bool keepTheta; //是否需要保存当前方向
+  int keepThetaTimer;
 
   long thetaPrevMillis;
 

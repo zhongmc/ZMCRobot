@@ -144,6 +144,11 @@ private:
 
   Input m_input;
   Output m_output;
+
+  // double m_dkp, m_dki, m_dkd; // direction
+  double m_pkp, m_pki, m_pkd; // position
+  double m_tkp, m_tki, m_tkd; // theta
+
   Vel mVel;
 };
 

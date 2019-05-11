@@ -242,13 +242,14 @@ void setup()
   // balanceSupervisor.updateSettings(mSettings);
   balanceSupervisor.init();
   blinkLed.init();
-//  blinkLed.normalBlink();
-#endif
-
-  // bCount = 0;
+  //  blinkLed.normalBlink();
 
   const int oneSecInUsec = 1000000;                           // A second in mirco second unit.
   CurieTimerOne.start(oneSecInUsec / GYRO_RATE, &balanceIsr); // set timer and callback
+
+#endif
+
+  // bCount = 0;
 
   millisPrevKey = millis();
   millisPrev = millisPrevKey; //millis();
@@ -361,7 +362,11 @@ void loop()
             Serial.println("Bat lower...");
             stopAndReset();
             currentState = STATE_IDLE;
+
+#if CAR_TYPE == BALANCE_CAR
+
             stopBalance();
+#endif
           }
           blinkLed.slowBlink();
         }

@@ -14,7 +14,7 @@ Supervisor::Supervisor()
 
   m_input.x_g = 1;
   m_input.y_g = 0;
-  m_input.v = 0.2;
+  m_input.v = 0.3;
   m_FollowWall.d_fw = 0.20;
   m_FollowWall.dir = 0;
 
@@ -27,6 +27,10 @@ Supervisor::Supervisor()
   // robot.setHaveIrSensor(2, false);
   // robot.setHaveIrSensor(3, true);
   // robot.setHaveIrSensor(4, true);
+
+  // m_dkp = 10, m_dki = 0.20, m_dkd = 0.1; // direction
+  m_pkp = 5, m_pki = 0.5, m_pkd = 0.1; // position
+  m_tkp = 5, m_tki = 10, m_tkd = 0.1;  // theta
 
   mSimulateMode = false;
   mIgnoreObstacle = false;
@@ -51,12 +55,30 @@ void Supervisor::updateSettings(SETTINGS settings)
     m_FollowWall.d_fw = settings.dfw;
   }
 
-  if (settings.sType == 0 || settings.sType == 1)
+  if (settings.sType == 0 || settings.sType == 1 || settings.sType == 2)
   {
     robot.updatePID(settings);
     m_GoToGoal.updateSettings(settings);
     m_AvoidObstacle.updateSettings(settings);
     m_FollowWall.updateSettings(settings);
+
+    // m_dkp = settings.kp;
+    // m_dki = settings.ki;
+    // m_dkd = settings.kd;
+  }
+  else if (settings.sType == 3)
+  {
+    m_pkp = settings.kp;
+    m_pki = settings.ki;
+    m_pkd = settings.kd;
+    m_GoToGoal.setPID(3, m_pkp, m_pki, m_pkd); // updateSettings(settings);
+  }
+  else if (settings.sType == 4)
+  {
+    m_tkp = settings.kp;
+    m_tki = settings.ki;
+    m_tkd = settings.kd;
+    m_GoToGoal.setPID(4, m_tkp, m_tki, m_tkd);
   }
 }
 
@@ -64,22 +86,40 @@ SETTINGS Supervisor::getSettings(byte settingsType)
 {
   SETTINGS settings;
 
-  settings.sType = settingsType;
+  if (settingsType == 0 || settingsType == 5 || settingsType == 1 || settingsType == 2)
+  {
+    settings.sType = settingsType;
 
-  settings.atObstacle = d_at_obs;
-  settings.unsafe = d_unsafe;
-  settings.dfw = d_fw;
-  settings.velocity = m_input.v;
-  settings.max_rpm = robot.max_rpm;
-  settings.min_rpm = robot.min_rpm;
+    settings.atObstacle = d_at_obs;
+    settings.unsafe = d_unsafe;
+    settings.dfw = d_fw;
+    settings.velocity = m_input.v;
+    settings.max_rpm = robot.max_rpm;
+    settings.min_rpm = robot.min_rpm;
 
-  settings.radius = robot.wheel_radius;
-  settings.length = robot.wheel_base_length;
+    settings.radius = robot.wheel_radius;
+    settings.length = robot.wheel_base_length;
+    SETTINGS pidSettings = robot.getPIDParams();
+    settings.kp = pidSettings.kp;
+    settings.ki = pidSettings.ki;
+    settings.kd = pidSettings.kd;
+  }
 
-  SETTINGS pidSettings = robot.getPIDParams();
-  settings.kp = pidSettings.kp;
-  settings.ki = pidSettings.ki;
-  settings.kd = pidSettings.kd;
+  else if (settingsType == 3) //position control pid
+  {
+    settings.sType = 3;
+    settings.kp = m_pkp;
+    settings.ki = m_pki;
+    settings.kd = m_pkd;
+  }
+  else if (settingsType == 4) //theta control pid
+  {
+    settings.sType = 4;
+    settings.kp = m_tkp;
+    settings.ki = m_tki;
+    settings.kd = m_tkd;
+  }
+
   // m_GoToGoal.getSettings(&settings);
 
   return settings;
@@ -88,9 +128,13 @@ SETTINGS Supervisor::getSettings(byte settingsType)
 void Supervisor::init()
 {
   SETTINGS settings = robot.getPIDParams();
+  settings.sType = 1;
   m_GoToGoal.updateSettings(settings);
   m_AvoidObstacle.updateSettings(settings);
   m_FollowWall.updateSettings(settings);
+
+  m_GoToGoal.setPID(3, m_pkp, m_pki, m_pkd);
+  m_GoToGoal.setPID(4, m_tkp, m_tki, m_tkd);
 }
 
 void Supervisor::setGoal(double x, double y, int theta)
@@ -99,6 +143,8 @@ void Supervisor::setGoal(double x, double y, int theta)
   m_Goal.y = y;
   m_input.x_g = x;
   m_input.y_g = y;
+  m_input.theta = theta;
+
   //  robot.theta = 2*PI*theta/360;
 }
 
@@ -695,12 +741,12 @@ void Supervisor::set_progress_point()
 {
   double d = sqrt(sq(robot.x - m_Goal.x) + sq(robot.y - m_Goal.y));
   d_prog = d;
-  Serial.print("PP:");
-  Serial.print(robot.x);
-  Serial.print(",");
-  Serial.print(robot.y);
-  Serial.print("; d:");
-  Serial.println(d_prog);
+  // Serial.print("PP:");
+  // Serial.print(robot.x);
+  // Serial.print(",");
+  // Serial.print(robot.y);
+  // Serial.print("; d:");
+  // Serial.println(d_prog);
 }
 
 void Supervisor::check_states()
