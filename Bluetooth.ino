@@ -25,6 +25,13 @@ extern short queueLen; // = 0;
 
 extern long count1, count2;
 
+#if CAR_TYPE == DRIVE_CAR
+
+bool blTL = false;
+int blTLPWM = 80;
+
+#endif
+
 BLEPeripheral blePeripheral;
 // BLE Peripheral Device (the board you're programming)
 
@@ -198,7 +205,7 @@ void driveCharacteristicWritten(BLECentral &central, BLECharacteristic &characte
 
     setGoal(x, y, theta);
 
-    Serial.print("Go to Goal:");
+    Serial.print("GTG:");
     Serial.print(x);
     Serial.print(",");
     Serial.print(y);
@@ -226,17 +233,19 @@ void driveCharacteristicWritten(BLECentral &central, BLECharacteristic &characte
   // }
   else if (cmd[0] == 'T' && cmd[1] == 'L') //turn around
   {
-    turnAround(100);
-  }
-  else if (cmd[0] == 'T' && cmd[1] == 'R') //turn around
-  {
-    turnAround(-100);
+    if (!blTL)
+    {
+      int pwm = atoi((char *)(data + 2));
+      blTL = true;
+      blTLPWM = pwm;
+    }
+    // turnAround(pwm);
   }
   else if (cmd[0] == 'I' && cmd[1] == 'R')
   {
     short idx = *(data + 2) - '0';
     bool val = *(data + 3) - '0';
-    Serial.print("set ir sensor: ");
+    Serial.print("set IR:");
     Serial.print(idx);
     Serial.print(", ");
     Serial.println(val);
@@ -331,6 +340,7 @@ void driveCharacteristicWritten(BLECentral &central, BLECharacteristic &characte
     double v, w;
     v = byteToFloat((byte *)(data + 2), 100);
     w = byteToFloat((byte *)(data + 4), 100);
+    Serial.println(w);
     setDriveGoal(v, w);
   }
 }
@@ -338,7 +348,7 @@ void driveCharacteristicWritten(BLECentral &central, BLECharacteristic &characte
 void setConfigValue(const unsigned char *cfgArray)
 {
   int settingsType = (int)cfgArray[0];
-  Serial.print("config the robot via ble:");
+  Serial.print("cfg v BT:");
   Serial.println(settingsType);
 
   SETTINGS settings;
@@ -349,12 +359,16 @@ void setConfigValue(const unsigned char *cfgArray)
     settings.kp = byteToFloat((byte *)(cfgArray + 1), 100);
     settings.ki = byteToFloat((byte *)(cfgArray + 3), 1000);
     settings.kd = byteToFloat((byte *)(cfgArray + 5), 1000);
-    Serial.print("KP:");
-    Serial.print(settings.kp);
-    Serial.print(" KI:");
-    Serial.print(settings.ki);
-    Serial.print(" KD:");
-    Serial.println(settings.kd);
+
+    log("KP:%s, KI:%s, KD:%s\n",
+        floatToStr(0, settings.kp),
+        floatToStr(1, settings.ki), floatToStr(2, settings.kd));
+    // Serial.print("KP:");
+    // Serial.print(settings.kp);
+    // Serial.print(" KI:");
+    // Serial.print(settings.ki);
+    // Serial.print(" KD:");
+    // Serial.println(settings.kd);
   }
 
 #if CAR_TYPE == DRIVE_CAR
@@ -376,31 +390,35 @@ void setConfigValue(const unsigned char *cfgArray)
     // settings.pwm_zero = (int)cfgArray[14];
     // settings.angleOff = byteToFloat((byte *)(cfgArray + 15), 100);
 
-    Serial.print(" atObstacle:");
-    Serial.print(settings.atObstacle);
+    log("atObs:%s, unsafe:%s, dfw:%s, v:%s, max_rmp:%d, min_rpm:%d, R:%s, L:%s\n",
+        floatToStr(0, settings.atObstacle),
+        floatToStr(1, settings.unsafe),
+        floatToStr(2, settings.dfw),
+        floatToStr(3, settings.velocity),
+        settings.max_rpm,
+        settings.min_rpm,
+        floatToStr(4, settings.radius),
+        floatToStr(5, settings.length)
 
-    Serial.print(" unsafe:");
-    Serial.print(settings.unsafe);
-    Serial.print(" dfw:");
-    Serial.print(settings.dfw);
+    );
+    // Serial.print(" atObstacle:");
+    // Serial.print(settings.atObstacle);
 
-    Serial.print(" v:");
-    Serial.print(settings.velocity);
-    Serial.print(" max_rpm:");
-    Serial.print(settings.max_rpm);
-    Serial.print(" min_rpm:");
-    Serial.print(settings.min_rpm);
-    Serial.print(" radius:");
-    Serial.print(settings.radius);
-    Serial.print(" length:");
-    Serial.println(settings.length);
+    // Serial.print(" unsafe:");
+    // Serial.print(settings.unsafe);
+    // Serial.print(" dfw:");
+    // Serial.print(settings.dfw);
 
-    // Serial.print(" pwm_diff:");
-    // Serial.print(settings.pwm_diff);
-    // Serial.print(" pwm_zero:");
-    // Serial.print(settings.pwm_zero);
-    // Serial.print(" angle_off:");
-    // Serial.println(settings.angleOff);
+    // Serial.print(" v:");
+    // Serial.print(settings.velocity);
+    // Serial.print(" max_rpm:");
+    // Serial.print(settings.max_rpm);
+    // Serial.print(" min_rpm:");
+    // Serial.print(settings.min_rpm);
+    // Serial.print(" radius:");
+    // Serial.print(settings.radius);
+    // Serial.print(" length:");
+    // Serial.println(settings.length);
   }
 
 #else
@@ -537,6 +555,7 @@ int byteToInt(byte *arrayBuf)
 }
 
 #if CAR_TYPE == DRIVE_CAR
+
 //type, x, y, theta, d0,d1,d2,d3,d4,voltage
 void sendRobotStateValue(byte stateType, Position pos, double irDistance[5], double voltage)
 {
@@ -571,8 +590,17 @@ void sendRobotStateValue(byte stateType, Position pos, double irDistance[5], dou
   bool ret = zmcRobotStateChar.setValue(buf, 19);
   if (!ret)
   {
-    Serial.println("Failed to write state character!");
+    Serial.println("wt bt F!");
   }
+}
+
+void checkBLTL()
+{
+  if (!blTL)
+    return;
+
+  turnAround(blTLPWM);
+  blTL = false;
 }
 
 #else

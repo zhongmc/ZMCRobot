@@ -4,19 +4,19 @@
 #include <Arduino.h>
 #include "Robot.h"
 
-class BalanceRobot :public Robot{
-    public:
-        BalanceRobot();
+class BalanceRobot : public Robot
+{
+public:
+    BalanceRobot();
 
-        Vel ensure_w(double v, double w);
-        double vel_l_to_pwm( double vel);
-        double vel_r_to_pwm( double vel);
+    PWM_OUT getPWMOut(double v, double w);
 
-        double pwm_to_ticks_r(double pwm, double dt);
-        double pwm_to_ticks_l(double pwm, double dt);
+    Vel ensure_w(double v, double w);
+    double vel_l_to_pwm(double vel);
+    double vel_r_to_pwm(double vel);
 
-
-   };
-
+    double pwm_to_ticks_r(double pwm, double dt);
+    double pwm_to_ticks_l(double pwm, double dt);
+};
 
 #endif /* _BALANCE_ROBOT_H_ */

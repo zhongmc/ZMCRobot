@@ -93,17 +93,34 @@ Vector IRSensor::getWallVector(double xc, double yc, double theta, double d)
   Vector p;
   p.x = xw;
   p.y = yw;
-  if (distance > d)
+  if (distance >= (getMaxDistance() - 0.01))
   {
     double dis = distance;
+    double sinV = sin(theta);
+    double cosV = cos(theta);
+
     setDistance(d);
-    applyGeometry(xc, yc, sin(theta), cos(theta));
+    applyGeometry(xc, yc, sinV, cosV);
     p.x = xw;
     p.y = yw;
 
     setDistance(dis);
-    applyGeometry(xc, yc, sin(theta), cos(theta));
+    applyGeometry(xc, yc, sinV, cosV);
   }
+  // if (distance > d)
+  // {
+  //   double dis = distance;
+  //   double sinV = sin(theta);
+  //   double cosV = cos(theta);
+
+  //   setDistance(d);
+  //   applyGeometry(xc, yc, sinV, cosV);
+  //   p.x = xw;
+  //   p.y = yw;
+
+  //   setDistance(dis);
+  //   applyGeometry(xc, yc, sinV, cosV);
+  // }
   return p;
 }
 

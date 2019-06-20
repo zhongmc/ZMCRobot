@@ -32,24 +32,26 @@ public:
 
   void setHaveIRSensor(int idx, bool val);
 
+  void setSimulateMode(bool val);
+
   void getRobotInfo()
   {
-    Serial.print("GotoGoal robot info, current state:");
+    Serial.print("GTG Robot:");
     if (m_state == S_STOP)
       Serial.println("Stoped!");
     else if (m_state == S_GTG)
-      Serial.println("GotoGoal!");
+      Serial.println("GTG!");
     else if (m_state == S_AVO)
-      Serial.println("AvoidObstacle!");
+      Serial.println("AVO!");
     else if (m_state == S_FW)
     {
       if (m_FollowWall.dir == 0)
-        Serial.println("FollowWall LEFT");
+        Serial.println("FLW L");
       else
-        Serial.println("FollowWall RIGHT");
+        Serial.println("FLW R");
     }
 
-    Serial.print("input-v:");
+    Serial.print("i-v:");
     Serial.print(m_input.v);
 
     Serial.print("; v:");
@@ -70,7 +72,7 @@ public:
     Serial.println(m_right_ticks);
 
     Serial.print("at ob:");
-    Serial.println(d_at_obs);
+    Serial.print(d_at_obs);
     Serial.print(", ");
     Serial.print("dfw:");
     Serial.println(d_fw);
@@ -78,9 +80,9 @@ public:
     Serial.print("exec time:");
     Serial.println(execTime);
     robot.getRobotInfo();
-    Serial.print("goto goal ");
+    Serial.print("GTG CTRL ");
     m_GoToGoal.PrintInfo();
-    Serial.print("follow wall ");
+    Serial.print("FLW CTRL ");
     m_FollowWall.PrintInfo();
   }
 

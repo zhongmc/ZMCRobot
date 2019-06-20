@@ -134,7 +134,7 @@ void Robot::updateState(long left_ticks, long right_ticks, double dt)
 
   double phi = (d_right - d_left) / wheel_base_length;
 
-  w = phi; // / dt;
+  w = phi / dt;
 
   x = x + d_center * cos(theta);
   y = y + d_center * sin(theta);
@@ -155,18 +155,15 @@ void Robot::readIRSensors()
       irSensors[i]->readPosition();
   }
 
-  if (haveIrSensor[2] && irSensors[2]->distance >= irSensors[2]->getMaxDistance())
-  {
-    irSensors[2]->setDistance(ultrasonicDistance);
-  }
-  else if (!haveIrSensor[2])
-  {
-    irSensors[2]->setDistance(ultrasonicDistance);
-  }
-  // if (irSensors[2]->distance >= irSensors[2]->getMaxDistance() && ultrasonicDistance < MAX_ULTRASONIC_DIS) //haveIrSensor[2] &&
+  // if (haveIrSensor[2] && irSensors[2]->distance >= irSensors[2]->getMaxDistance())
   // {
   //   irSensors[2]->setDistance(ultrasonicDistance);
   // }
+  // else if (!haveIrSensor[2])
+  // {
+  //   irSensors[2]->setDistance(ultrasonicDistance);
+  // }
+
   for (int i = 0; i < 5; i++)
     irSensors[i]->applyGeometry(x, y, sinTheta, cosTheta);
 }

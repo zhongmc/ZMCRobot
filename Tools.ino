@@ -48,7 +48,7 @@ void checkSerialData()
       }
       if (comDataCount > 30) //some error
       {
-        Serial.print("UnKnow Command:");
+        Serial.print("UnKnow cmd:");
         comData[comDataCount] = 0;
         Serial.println(comData);
         comDataCount = 0;
@@ -112,14 +112,14 @@ void processCommand(char *buffer, int bufferLen)
   if (ch0 == 'g' && ch1 == 'r')
   {
     Serial.println("\r\n\r\n====");
-    Serial.print("Voltage:");
+    Serial.print("BAT:");
     Serial.print(batteryVoltage);
-    Serial.print(", ultrasonic dis:");
+    Serial.print(", uc dis:");
     Serial.println(ultrasonicDistance);
 #if CAR_TYPE == DRIVE_CAR
-    Serial.println("\r\n====");
+    Serial.println("\r\n==");
     supervisor.getRobotInfo();
-    Serial.println("\r\n====");
+    Serial.println("\r\n==");
     driveSupervisor.getRobotInfo();
 #else
     Serial.println("\r\n====");
@@ -500,11 +500,14 @@ void CalibrateIMU()
 
 void printCountInfo()
 {
-  Serial.print(millis());
-  Serial.print(',');
-  Serial.print(count1);
-  Serial.print(',');
-  Serial.println(count2);
+
+  log("CI:%d, %d.\n", count1, count2);
+
+  // Serial.print(millis());
+  // Serial.print(',');
+  // Serial.print(count1);
+  // Serial.print(',');
+  // Serial.println(count2);
 
   // Serial.print("C1=");
   // Serial.print(count1);
@@ -528,8 +531,10 @@ void motorSpeed(int pwm)
 {
   long c1, c2, lt;
   MoveMotor(pwm);
-  Serial.print(pwm);
-  Serial.print(',');
+  log("%d,", pwm);
+
+  // Serial.print(pwm);
+  // Serial.print(',');
   delay(500);
   c1 = count1;
   c2 = count2;
@@ -539,20 +544,14 @@ void motorSpeed(int pwm)
   c1 = count1 - c1;
   c2 = count2 - c2;
   lt = millis() - lt;
-  Serial.print(lt);
-  Serial.print(',');
-  Serial.print(c1);
-  Serial.print(',');
-  Serial.println(c2);
+  log("%d,%d,%d\n", lt, c1, c2);
 }
 
 void turnAround(int pwm)
 {
-  Serial.print("TR:");
-  Serial.println(pwm);
-  Serial.print(count1);
-  Serial.print(',');
-  Serial.println(count2);
+  // Serial.print("TR:");
+  // Serial.println(pwm);
+  log("TR:%d, %d, %d;\n", pwm, count1, count2);
 
   if (pwm > 0)
   {
@@ -567,20 +566,19 @@ void turnAround(int pwm)
 
   while (true)
   {
-    if ((pwm > 0 && count1 > 1700) || (pwm < 0 && count2 > 1700))
+    if ((pwm > 0 && count1 > 2000) || (pwm < 0 && count2 > 2000))
     // if (count1 > 1700 || count2 > 1700)
     {
       StopMotor();
       break;
     }
     delay(50);
+    log("TR:%d, %d, %d;\n", pwm, count1, count2);
   }
 
   delay(100);
 
-  Serial.print(count1);
-  Serial.print(',');
-  Serial.println(count2);
+  log("ci:%d,%d;\n", count1, count2);
 }
 
 void manuaGoal()
@@ -591,9 +589,11 @@ void manuaGoal()
   delay(3000);
   StopMotor();
   delay(500);
-  Serial.print(count1);
-  Serial.print(',');
-  Serial.println(count2);
+  log("%d,%d", count2, count2);
+
+  // Serial.print(count1);
+  // Serial.print(',');
+  // Serial.println(count2);
 }
 
 void getDoubleValues(char *buffer, int c, double *fvs)
@@ -612,6 +612,42 @@ void getDoubleValues(char *buffer, int c, double *fvs)
   // Serial.println(';');
 }
 
+int formatStr(char *buf, char *format, ...)
+{
+  int c = 0;
+  va_list vArgList;
+  va_start(vArgList, format);
+  c = vsprintf(buf, format, vArgList); //_vsnprintf(buf, 256, format, vArgList);
+  va_end(vArgList);
+  // *(buf + c) = 0;
+  return c;
+}
+
+void log(char *format, ...)
+{
+  char tmp[500];
+  va_list vArgList;
+  va_start(vArgList, format);
+  vsprintf(tmp, format, vArgList);
+  va_end(vArgList);
+  Serial.print(tmp);
+}
+
+char tmp[20][15];
+
+char *floatToStr(int idx, double val)
+{
+
+  return floatToStr(idx, (signed char)6, (unsigned char)3, val);
+}
+
+char *floatToStr(int idx, signed char width, unsigned char prec, double val)
+{
+  if (idx >= 19)
+    return NULL;
+  return dtostrf(val, width, prec, tmp[idx]);
+}
+
 #if CAR_TYPE == DRIVE_CAR
 
 void setPID(char *buffer)
@@ -623,12 +659,17 @@ void setPID(char *buffer)
   buf = strchr((buf + 1), ',');
   d = atof(buf + 1);
 
-  Serial.print("PID:");
-  Serial.print(p);
-  Serial.print(",");
-  Serial.print(i);
-  Serial.print(",");
-  Serial.println(d);
+  log("PID:%s, %s, %s;\n",
+      floatToStr(0, p),
+      floatToStr(1, i),
+      floatToStr(2, d));
+
+  // Serial.print("PID:");
+  // Serial.print(p);
+  // Serial.print(",");
+  // Serial.print(i);
+  // Serial.print(",");
+  // Serial.println(d);
 
   SETTINGS settings;
   settings.sType = 1;
@@ -654,4 +695,18 @@ void setPID(char *buffer)
 //   printCountInfo();
 //   MoveMotor(0);
 // }
+
+/*
+void log(int level, char *format, ...)
+{
+  char str_tmp[256];
+  int i = 0;
+  va_list vArgList;                              //定义一个va_list型的变量,这个变量是指向参数的指针.
+  va_start(vArgList, format);                    //用va_start宏初始化变量,这个宏的第二个参数是第一个可变参数的前一个参数,是一个固定的参数
+  i = _vsnprintf(str_tmp, 256, format, vArgList); //注意,不要漏掉前面的_
+  va_end(vArgList);                              //用va_end宏结束可变参数的获取
+  return i;                                      //返回参数的字符个数中间有逗号间隔
+}
+*/
+
 #endif

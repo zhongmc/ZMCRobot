@@ -54,6 +54,7 @@ byte currentState = STATE_IDLE;
 Supervisor supervisor;
 DriveSupervisor driveSupervisor;
 BlinkLed blinkLed;
+bool bExecDrive, bExecGTG;
 
 #else
 PureBalanceSupervisor balanceSupervisor;
@@ -62,6 +63,7 @@ IRReceiver irRecv(12);
 IRCode ircode;
 
 double drive_v, drive_w;
+bool bExecBalance;
 #endif
 
 Position pos;
@@ -207,7 +209,11 @@ void setup()
   supervisor.init();
   driveSupervisor.init();
 
+  bExecDrive = false;
+  bExecGTG = false;
+
 #else
+
   SETTINGS mSettings;
   mSettings.sType = 0;
   mSettings.kp = 30;
@@ -247,6 +253,8 @@ void setup()
   const int oneSecInUsec = 1000000;                           // A second in mirco second unit.
   CurieTimerOne.start(oneSecInUsec / GYRO_RATE, &balanceIsr); // set timer and callback
 
+  bExecBalance = false;
+
 #endif
 
   // bCount = 0;
@@ -272,10 +280,41 @@ void loop()
       irRemoteProcess(ircode.code_l);
   }
 
+  if (bExecBalance)
+  {
+    bExecBalance = false;
+    if (currentState == STATE_BALANCE)
+      balanceSupervisor.execute(readLeftEncoder(), readRightEncoder(), 0.005); // 1.0 / (double)GYRO_RATE);
+    else
+    {
+      balanceSupervisor.calculateAngle(0.005);
+    }
+
+    // if (currentState == STATE_BALANCE)
+    //   balanceSupervisor.execute(readLeftEncoder(), readRightEncoder(), 0.005); // 1.0 / (double)GYRO_RATE);
+    // else
+    //   balanceSupervisor.readIMU(0.005);
+  }
+
+#else
+
+  checkBLTL(); //检查BT 转圈指令
+  if (bExecDrive)
+  {
+    bExecDrive = false;
+    driveSupervisor.execute(readLeftEncoder(), readRightEncoder(), 0.05); //1/20
+  }
+
+  if (bExecGTG)
+  {
+    bExecGTG = false;
+    supervisor.execute(readLeftEncoder(), readRightEncoder(), 0.05);
+  }
+
 #endif
 
   unsigned long millisNow = millis();
-  if (millisNow - millisPrev >= 50)
+  if (millisNow - millisPrev >= 100)
   {
 
     millisPrev = millisNow;
@@ -350,7 +389,7 @@ void loop()
 */
 
     batteryCounter++;
-    if (batteryCounter >= 10)
+    if (batteryCounter >= 2)
     { // Measure battery every 1s
       batteryCounter = 0;
       if (isBatteryLow())
@@ -359,7 +398,7 @@ void loop()
         {
           if (currentState != STATE_IDLE)
           {
-            Serial.println("Bat lower...");
+            Serial.println("Bat L...");
             stopAndReset();
             currentState = STATE_IDLE;
 
@@ -413,7 +452,7 @@ void startGoToGoal()
     return;
 
   // supervisor.updateSettings(mSettings);
-  Serial.print("Start Go to Goal:");
+  Serial.print("Start GTG:");
   Serial.print(supervisor.m_Goal.x);
   Serial.print(",");
   Serial.println(supervisor.m_Goal.y);
@@ -423,12 +462,13 @@ void startGoToGoal()
   currentState = STATE_GOTOGOAL;
 
   const int oneSecInUsec = 1000000;                     // A second in mirco second unit.
-  CurieTimerOne.start(oneSecInUsec / 50, &goToGoalIsr); // set timer and callback //the controller loop need 30ms to exec
+  CurieTimerOne.start(oneSecInUsec / 20, &goToGoalIsr); // set timer and callback //the controller loop need 30ms to exec
 }
 
 void goToGoalIsr()
 {
-  supervisor.execute(readLeftEncoder(), readRightEncoder(), 0.02);
+  bExecGTG = true;
+  // supervisor.execute(readLeftEncoder(), readRightEncoder(), 0.05);
 }
 
 void ResetRobot()
@@ -445,7 +485,7 @@ void startDrive()
   // if ( currentState >= 2 )
   //   return;
 
-  Serial.println("Start drive!");
+  Serial.println("Start DRV!");
   currentState = STATE_DRIVE;
 
   // to test set goal y to 0
@@ -459,28 +499,30 @@ void startDrive()
 
 void driveIsr()
 {
-  driveSupervisor.execute(readLeftEncoder(), readRightEncoder(), 0.02);
+  bExecDrive = true;
+  // driveSupervisor.execute(readLeftEncoder(), readRightEncoder(), 0.05); //1/20
 }
 
 void SetSimulateMode(bool val)
 {
-  supervisor.mSimulateMode = val;
+  // supervisor.mSimulateMode = val;
+  supervisor.setSimulateMode(val);
   driveSupervisor.mSimulateMode = val;
   if (val)
   {
     doCheckBattleVoltage = false;
-    Serial.println("Set to simulate mode!");
+    Serial.println("simulate.");
   }
   else
   {
     doCheckBattleVoltage = true;
-    Serial.println("Close simulate mode!");
+    Serial.println("Close simulate!");
   }
 }
 
 void SetIgnoreObstacle(bool igm)
 {
-  Serial.print("set ignore obstacle mode: ");
+  Serial.print("ignore obs:");
   Serial.println(igm);
   supervisor.mIgnoreObstacle = igm;
   driveSupervisor.mIgnoreObstacle = igm;
@@ -553,40 +595,60 @@ void irRemoteProcess(int code)
 
   if (code == 24) //up
   {
-    if (drive_v <= 0)
+    if (drive_v == 0)
+      drive_v = 0.1;
+    else
     {
-      drive_v = 0.2;
-      drv = true;
+      drive_v = drive_v + 0.02;
+      if (drive_v > 0.3)
+        drive_v = 0.3;
     }
+
+    drv = true;
   }
   else if (code == 82) //down
   {
-    if (drive_v >= 0)
+    if (drive_v == 0)
     {
-      drive_v = -0.2;
-      drv = true;
+      drive_v = -0.1;
     }
+    else
+    {
+      drive_v = drive_v - 0.02;
+      if (drive_v < -0.3)
+        drive_v = -0.3;
+    }
+
+    drv = true;
   }
   else if (code == 8) //LEFT
   {
-    if (drive_w <= 0)
+    drive_w = drive_w + 0.1;
+    if (drive_w > 1.2)
     {
-      drive_w = 10;
-      drv = true;
+      drive_w = 1.2;
     }
+    drv = true;
   }
   else if (code == 90)
   {
-    if (drive_w >= 0)
+    drive_w = drive_w - 0.1;
+    if (drive_w < -1.2)
     {
-      drive_w = -10;
-      drv = true;
+      drive_w = -1.2;
     }
+    drv = true;
   }
+
   if (drv == true)
   {
     balanceSupervisor.setGoal(drive_v, drive_w);
     blinkLed.runingBlink();
+  }
+  if (drive_v == 0 && drive_w == 0)
+  {
+    balanceSupervisor.stopDrive();
+    blinkLed.balanceBlink();
   }
 }
 
@@ -621,10 +683,13 @@ void startBalance()
 
 void balanceIsr()
 {
-  if (currentState == STATE_BALANCE)
-    balanceSupervisor.execute(readLeftEncoder(), readRightEncoder(), 0.005); // 1.0 / (double)GYRO_RATE);
-  else
-    balanceSupervisor.readIMU(0.005);
+  bExecBalance = true;
+  balanceSupervisor.readIMU(0.005);
+
+  // if (currentState == STATE_BALANCE)
+  //   balanceSupervisor.execute(readLeftEncoder(), readRightEncoder(), 0.005); // 1.0 / (double)GYRO_RATE);
+  // else
+  //   balanceSupervisor.readIMU(0.005);
 }
 
 void balanceRecovered()

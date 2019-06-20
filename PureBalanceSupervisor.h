@@ -139,6 +139,7 @@ public:
   void setBeThetaLoop(bool val);
   void setBeSendIMUInfo(bool val);
   void readIMU(double dt);
+  void calculateAngle(double dt);
 
 private:
   void check_states();
@@ -192,6 +193,9 @@ private:
 private:
   // Robot(double R, double L, double ticksr, double maxRpm double minRpm)
   // Robot robot;
+
+  int m_aix, m_aiy, m_aiz;
+  int m_gix, m_giy, m_giz;
 
   BalanceRobot robot;
 

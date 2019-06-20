@@ -7,7 +7,13 @@ RearDriveRobot::RearDriveRobot()
 
   // init(0.0330, 0.16, 390, 390, 50, 180, GP2Y0A41); 2019-02-09 蓝色轮子，有一边转弯差点
   //0.0325 0.1785； 0.0325， 0.156
-  init(0.0313, 0.1631, 390, 390, 50, 180, GP2Y0A41);
+  // init(0.0313, 0.1631, 390, 390, 50, 180, GP2Y0A21);
+
+  //蓝色轮子，长板
+  init(0.0312, 0.1666, 390, 390, 50, 180, GP2Y0A21);
+
+  //balance car
+  //  init(0.0332, 0.159, 390, 390, 50, 180, GP2Y0A21);
 
   //GP2Y0A21 (10-80) GP2Y0A41 (4-30)
   irSensors[0] = new IRSensor(-0.045, 0.05, PI / 2, A1, GP2Y0A21);
@@ -18,19 +24,79 @@ RearDriveRobot::RearDriveRobot()
 
   haveIrSensor[0] = true;
   haveIrSensor[1] = true;
-  haveIrSensor[2] = false;
+  haveIrSensor[2] = true;
   haveIrSensor[3] = true;
   haveIrSensor[4] = true;
 
-  mPIDSettings.kp = 10;  // 5; //25;  //20 0.5 2; 2019-01-26:   5, 0.02, 0.9; 5, 0.05, 1.2; 5,0.08,1.2 2019-02-09 5, 0.01, 0.2
-  mPIDSettings.ki = 0.2; // 0.01;
-  mPIDSettings.kd = 0.1; //0.02; //0.2
+  mPIDSettings.kp = 5;  // 5; //25;  //20 0.5 2; 2019-01-26:   5, 0.02, 0.9; 5, 0.05, 1.2; 5,0.08,1.2 2019-02-09 5, 0.01, 0.2
+  mPIDSettings.ki = 0.2;   //.4; // 0.01;
+  mPIDSettings.kd = 0.0; //0.02; //0.2
+}
+
+PWM_OUT RearDriveRobot::getPWMOut(double v, double w)
+{
+
+  Vel vel = ensure_w(v, w);
+
+  int pwm_l = (int)vel_l_to_pwm(vel.vel_l);
+  int pwm_r = (int)vel_r_to_pwm(vel.vel_r);
+
+  if (v == 0)
+  {
+    if (abs(pwm_l) > 80)
+    {
+      if (pwm_l > 0)
+      {
+        pwm_l = 80;
+        pwm_r = -80;
+      }
+      else
+      {
+        pwm_l = -80;
+        pwm_r = 80;
+      }
+    }
+  }
+  else
+  {
+    int dif = pwm_l - pwm_r;
+    if (dif > 80)
+    {
+      if (pwm_l > 0)
+      {
+        pwm_l = pwm_r + 80;
+      }
+      else
+      {
+        pwm_r = pwm_l - 80;
+      }
+    }
+    else if (dif < -80)
+    {
+      if (pwm_l >= 0)
+      {
+        pwm_r = pwm_l + 80;
+      }
+      else
+      {
+        pwm_l = pwm_r - 80;
+      }
+    }
+  }
+
+  PWM_OUT pwm;
+  pwm.pwm_l = pwm_l;
+  pwm.pwm_r = pwm_r;
+  return pwm;
 }
 
 Vel RearDriveRobot::ensure_w(double v, double w)
 {
 
   Vel vel = uni_to_diff(v, w);
+
+  if (v == 0)
+    return vel;
 
   if (vel.vel_l * vel.vel_r >= 0)
     return vel;
@@ -40,7 +106,7 @@ Vel RearDriveRobot::ensure_w(double v, double w)
     vel.vel_r = 0;
   }
   else
-    vel.vel_r = 0;
+    vel.vel_l = 0;
 
   return vel;
 
@@ -185,8 +251,15 @@ Vel RearDriveRobot::zeroMinVel(Vel vel)
 
 double RearDriveRobot::vel_l_to_pwm(double vel)
 {
+  double nvel = abs(vel);
 
-  return 6.26 * vel + 47;
+  if (nvel < 0.5)
+    return 0;
+
+  double pwm = 6.26 * nvel + 47;
+  if (vel < 0)
+    return -pwm;
+  return pwm;
 
   // //ax^2+bx+c
   // double nvel = abs(vel);
@@ -211,7 +284,15 @@ double RearDriveRobot::vel_l_to_pwm(double vel)
 double RearDriveRobot::vel_r_to_pwm(double vel)
 {
 
-  return 6.26 * vel + 47;
+  double nvel = abs(vel);
+
+  if (nvel < 0.5)
+    return 0;
+
+  double pwm = 6.26 * nvel + 47;
+  if (vel < 0)
+    return -pwm;
+  return pwm;
 
   // //ax^2+bx+c
   // double nvel = abs(vel);

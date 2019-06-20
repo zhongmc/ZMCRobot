@@ -62,6 +62,7 @@ void sendBalanceRobotStateValue(Position pos, double irDistance[5], double volta
 
 void MoveMotor(int pwm);
 
+void checkBLTL();
 void turnAround(int pwm);
 void setPID(char *buffer);
 
@@ -70,4 +71,11 @@ void stopBalance();
 void balanceUnnormal();
 void balanceRecovered();
 void irRemoteProcess(int code);
+
+int formatStr(char *buf, char *fmt, ...);
+
+void log(char *fmt, ...);
+
+char *floatToStr(int idx, double val);
+char *floatToStr(int idx, char width, unsigned char prec, double val);
 #endif

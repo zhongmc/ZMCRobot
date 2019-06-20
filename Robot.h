@@ -54,6 +54,8 @@ public:
   double x, y, theta, w;
   double velocity;
 
+  virtual PWM_OUT getPWMOut(double v, double w) = 0;
+
   virtual Vel ensure_w(double v, double w) = 0;
   virtual double vel_l_to_pwm(double vel) = 0;
   virtual double vel_r_to_pwm(double vel) = 0;

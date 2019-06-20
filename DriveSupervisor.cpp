@@ -142,9 +142,10 @@ void DriveSupervisor::execute(long left_ticks, long right_ticks, double dt)
 
   mVel = robot.ensure_w(v, w);
 
-  PWM_OUT pwm;
-  pwm.pwm_l = (int)robot.vel_l_to_pwm(mVel.vel_l);
-  pwm.pwm_r = (int)robot.vel_r_to_pwm(mVel.vel_r);
+  PWM_OUT pwm = robot.getPWMOut(v, w);
+
+  // pwm.pwm_l = (int)robot.vel_l_to_pwm(mVel.vel_l);
+  // pwm.pwm_r = (int)robot.vel_r_to_pwm(mVel.vel_r);
 
 #ifdef _DEBUG_
   Serial.print(v);

@@ -97,32 +97,40 @@ void GoToGoal::execute(Robot *robot, Input *input, Output *output, double dt)
   e = theta_g - robot->theta;
   e = atan2(sin(e), cos(e));
 
-  e_I = lastErrorIntegration + e * dt;
   e_D = (e - lastError) / dt;
 
-  if (state == 0)
+  if (state == 0 || state == 1) //1 D 控制时，保留角度控制，保证方向
   {
     double p = Kp;
-
-    if (abs(e) > 2)
-      p = p / 3;
-    else if (abs(e) > 1)
+    double ae = abs(e);
+    if (ae > 1)
+    {
       p = p / 2;
+      e_I = 0;
+    }
+    else
+    {
+      e_I = lastErrorIntegration + e * dt;
+    }
+    if (ae > 2)
+      p = p / 3;
+
     w = p * e + Ki * e_I + Kd * e_D;
     lastErrorIntegration = e_I;
     lastError = e;
-    output->v = input->v;
+    output->v = input->v / (1 + abs(robot->w) / 2);
     output->w = w;
   }
-  else if (state == 1)
+  // else
+  if (state == 1) //距离控制
   {
     ve = d;
     vei = lastVEI + ve * dt;
     ved = (ve - lastVE) / dt;
     output->v = pkp * ve + pki * vei + pkd * ved; //
-    if (output->v > 0.3)
-      output->v = 0.3; ///////
-    output->w = 0;
+    if (output->v > 0.12)
+      output->v = 0.12; ///////
+                        //   output->w = 0;
     // log.info(String.format("D: %.3f, %.3f", d, output.v));
     lastVEI = vei;
     lastVE = ve;
@@ -131,10 +139,17 @@ void GoToGoal::execute(Robot *robot, Input *input, Output *output, double dt)
   {
     double p = tkp;
 
+    if (abs(e) > 1)
+    {
+      p = p / 2;
+      e_I = 0;
+    }
+    else
+    {
+      e_I = lastErrorIntegration + e * dt;
+    }
     if (abs(e) > 2)
       p = p / 3;
-    else if (abs(e) > 1)
-      p = p / 2;
 
     w = p * e + tki * e_I + tkd * e_D;
     // log.info(String.format("T: %.3f, %.3f, %.3f", d, e, w));

@@ -4,7 +4,8 @@
 BalanceRobot::BalanceRobot()
 {
   //R, L, ticksr_l, ticksr_r, minRpm, maxRpm, GP2Y0A41);
-  init(0.0334, 0.158, 390, 390, 50, 190, GP2Y0A41);
+  // init(0.0334, 0.158, 390, 390, 50, 190, GP2Y0A41);
+  init(0.0332, 0.159, 390, 390, 50, 180, GP2Y0A21);
 
   mPIDSettings.kp = 30;
   mPIDSettings.ki = 0.0;
@@ -24,6 +25,15 @@ BalanceRobot::BalanceRobot()
   //  mSettings.kp = 5;
   //   mSettings.ki = 0.01;
   //   mSettings.kd = 0.05;
+}
+
+PWM_OUT BalanceRobot::getPWMOut(double v, double w)
+{
+  PWM_OUT pwm;
+  pwm.pwm_l = 0;
+  pwm.pwm_r = 0;
+
+  return pwm;
 }
 
 Vel BalanceRobot::ensure_w(double v, double w)

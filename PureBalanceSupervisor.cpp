@@ -521,7 +521,9 @@ void PureBalanceSupervisor::execute(long leftTicks, long rightTicks, double dt)
 
   long startTime = micros();
 
-  readIMU(dt);
+  //readIMU(dt);
+
+  calculateAngle(dt);
 
   robot.angle = m_kalman_angle; //m_sensor_angle; // m_estima_angle m_sensor_angle
   robot.gyro = m_gyro;
@@ -822,19 +824,19 @@ void PureBalanceSupervisor::check_states()
 void PureBalanceSupervisor::resetKalman()
 {
 
-  int aix, aiy, aiz;
-  int gix, giy, giz;
+  // int aix, aiy, aiz;
+  // int gix, giy, giz;
   double ax, ay, az;
   double gx, gy, gz;
 
-  CurieIMU.readMotionSensor(aix, aiy, aiz, gix, giy, giz);
+  // CurieIMU.readMotionSensor(aix, aiy, aiz, gix, giy, giz);
   // convert from raw data to gravity and degrees/second units
-  ax = convertRawAcceleration(aix);
-  ay = convertRawAcceleration(aiy);
-  az = convertRawAcceleration(aiz);
-  gx = convertRawGyro(gix);
-  gy = convertRawGyro(giy);
-  gz = convertRawGyro(giz);
+  ax = convertRawAcceleration(m_aix);
+  ay = convertRawAcceleration(m_aiy);
+  az = convertRawAcceleration(m_aiz);
+  gx = convertRawGyro(m_gix);
+  gy = convertRawGyro(m_giy);
+  gz = convertRawGyro(m_giz);
 
   double Angle_accY = atan2((double)ay, (double)az) * RAD_TO_DEG;
   kalman.setAngle(Angle_accY);
@@ -845,19 +847,25 @@ void PureBalanceSupervisor::resetKalman()
 
 void PureBalanceSupervisor::readIMU(double dt)
 {
-  int aix, aiy, aiz;
-  int gix, giy, giz;
+  CurieIMU.readMotionSensor(m_aix, m_aiy, m_aiz, m_gix, m_giy, m_giz);
+}
+
+void PureBalanceSupervisor::calculateAngle(double dt)
+{
+
+  // int aix, aiy, aiz;
+  // int gix, giy, giz;
+
   double ax, ay, az;
   double gx, gy, gz;
 
-  CurieIMU.readMotionSensor(aix, aiy, aiz, gix, giy, giz);
   // convert from raw data to gravity and degrees/second units
-  ax = convertRawAcceleration(aix);
-  ay = convertRawAcceleration(aiy);
-  az = convertRawAcceleration(aiz);
-  gx = convertRawGyro(gix);
-  gy = convertRawGyro(giy);
-  gz = convertRawGyro(giz);
+  ax = convertRawAcceleration(m_aix);
+  ay = convertRawAcceleration(m_aiy);
+  az = convertRawAcceleration(m_aiz);
+  gx = convertRawGyro(m_gix);
+  gy = convertRawGyro(m_giy);
+  gz = convertRawGyro(m_giz);
 
   m_gyro = gx; //
 
