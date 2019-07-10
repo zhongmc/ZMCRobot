@@ -9,18 +9,28 @@ RearDriveRobot::RearDriveRobot()
   //0.0325 0.1785； 0.0325， 0.156
   // init(0.0313, 0.1631, 390, 390, 50, 180, GP2Y0A21);
 
-  //蓝色轮子，长板
-  init(0.0312, 0.1666, 390, 390, 50, 180, GP2Y0A21);
+  //黑色轮子，长板
+  // init(0.0312, 0.1666, 390, 390, 50, 180, GP2Y0A21);
+
+  //黑色轮子，自制板
+  init(0.0312, 0.162, 390, 390, 50, 180, GP2Y0A21);
 
   //balance car
   //  init(0.0332, 0.159, 390, 390, 50, 180, GP2Y0A21);
 
-  //GP2Y0A21 (10-80) GP2Y0A41 (4-30)
-  irSensors[0] = new IRSensor(-0.045, 0.05, PI / 2, A1, GP2Y0A21);
-  irSensors[1] = new IRSensor(0.08, 0.04, PI / 4, A2, GP2Y0A21); //0.16,0.045, PI/6 0.075, 0.035
-  irSensors[2] = new IRSensor(0.162, 0.0, 0, A3, GP2Y0A21);
-  irSensors[3] = new IRSensor(0.08, -0.04, -PI / 4, A4, GP2Y0A21);
-  irSensors[4] = new IRSensor(-0.045, -0.05, -PI / 2, A5, GP2Y0A21);
+  //GP2Y0A21 (10-80) GP2Y0A41 (4-30) 长版
+  // irSensors[0] = new IRSensor(-0.045, 0.05, PI / 2, A1, GP2Y0A21);
+  // irSensors[1] = new IRSensor(0.08, 0.04, PI / 4, A2, GP2Y0A21); //0.16,0.045, PI/6 0.075, 0.035
+  // irSensors[2] = new IRSensor(0.162, 0.0, 0, A3, GP2Y0A21);
+  // irSensors[3] = new IRSensor(0.08, -0.04, -PI / 4, A4, GP2Y0A21);
+  // irSensors[4] = new IRSensor(-0.045, -0.05, -PI / 2, A5, GP2Y0A21);
+
+  //GP2Y0A21 (10-80) GP2Y0A41 (4-30) 自制版
+  irSensors[0] = new IRSensor(-0.073, 0.066, PI / 2, A1, GP2Y0A21);
+  irSensors[1] = new IRSensor(0.061, 0.05, PI / 4, A2, GP2Y0A21); // 0.16,0.045, PI/6 0.075, 0.035
+  irSensors[2] = new IRSensor(0.072, 0.0, 0, A3, GP2Y0A21);
+  irSensors[3] = new IRSensor(0.061, -0.05, -PI / 4, A4, GP2Y0A21);
+  irSensors[4] = new IRSensor(-0.073, -0.066, -PI / 2, A5, GP2Y0A21);
 
   haveIrSensor[0] = true;
   haveIrSensor[1] = true;
@@ -28,8 +38,8 @@ RearDriveRobot::RearDriveRobot()
   haveIrSensor[3] = true;
   haveIrSensor[4] = true;
 
-  mPIDSettings.kp = 5;  // 5; //25;  //20 0.5 2; 2019-01-26:   5, 0.02, 0.9; 5, 0.05, 1.2; 5,0.08,1.2 2019-02-09 5, 0.01, 0.2
-  mPIDSettings.ki = 0.2;   //.4; // 0.01;
+  mPIDSettings.kp = 5;   // 5; //25;  //20 0.5 2; 2019-01-26:   5, 0.02, 0.9; 5, 0.05, 1.2; 5,0.08,1.2 2019-02-09 5, 0.01, 0.2
+  mPIDSettings.ki = 0.2; //.4; // 0.01;
   mPIDSettings.kd = 0.0; //0.02; //0.2
 }
 

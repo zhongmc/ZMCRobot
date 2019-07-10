@@ -17,20 +17,14 @@ public:
 
   void PrintInfo()
   {
-    Serial.println(" ctrl info:");
-    Serial.print(Kp);
-    Serial.print(",");
-    Serial.print(Ki);
-    Serial.print(",");
-    Serial.print(Kd);
-    Serial.print("; ");
-    Serial.print(lastError);
-    Serial.print(",");
-    Serial.println(lastErrorIntegration);
-    Serial.print("Q:");
-    Serial.print(mTheta);
-    Serial.print(',');
-    Serial.println(mW);
+    log("Ctrl Info:%s,%s,%s;%s,%s\nQ:%s,%s\n",
+        floatToStr(0, Kp),
+        floatToStr(1, Ki),
+        floatToStr(2, Kd),
+        floatToStr(3, lastError),
+        floatToStr(4, lastErrorIntegration),
+        floatToStr(5, mTheta),
+        floatToStr(6, mW));
   }
 
 private:

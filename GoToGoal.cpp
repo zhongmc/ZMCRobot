@@ -10,6 +10,9 @@ GoToGoal::GoToGoal()
   lastErrorIntegration = 0;
   lastVE = 0;
   lastVEI = 0;
+  lastTE = 0;
+  lastTEI = 0;
+
   state = 0;
 }
 
@@ -19,6 +22,8 @@ void GoToGoal::reset()
   lastErrorIntegration = 0;
   lastVE = 0;
   lastVEI = 0;
+  lastTE = 0;
+  lastTEI = 0;
 }
 
 void GoToGoal::setPID(int type, double kp, double ki, double kd)
@@ -129,9 +134,11 @@ void GoToGoal::execute(Robot *robot, Input *input, Output *output, double dt)
     ved = (ve - lastVE) / dt;
     output->v = pkp * ve + pki * vei + pkd * ved; //
     if (output->v > 0.12)
-      output->v = 0.12; ///////
+      output->v = 0.12; ///////`
                         //   output->w = 0;
-    // log.info(String.format("D: %.3f, %.3f", d, output.v));
+    // log("D: %s, %s\n",
+    //     floatToStr(0, d),
+    //     floatToStr(1, output->v));
     lastVEI = vei;
     lastVE = ve;
   }

@@ -29,8 +29,8 @@ Supervisor::Supervisor()
   // robot.setHaveIrSensor(4, true);
 
   // m_dkp = 10, m_dki = 0.20, m_dkd = 0.1; // direction
-  m_pkp = 10, m_pki = 0.5, m_pkd = 0.0; // position
-  m_tkp = 20, m_tki = 0.7, m_tkd = 0.0; // theta
+  m_pkp = 0.5, m_pki = 0.1, m_pkd = 0.0; // position
+  m_tkp = 20, m_tki = 0.7, m_tkd = 0.0;  // theta
 
   mSimulateMode = false;
   mIgnoreObstacle = false;
@@ -307,18 +307,15 @@ void Supervisor::execute(long left_ticks, long right_ticks, double dt)
   //   v2 = m_distanceToGoal * v1;
   // }
 
-  float w = max(min(m_output.w, robot.max_w), -robot.max_w);
-  float v = m_output.v; // min(v1, v2);
+  // float w = max(min(m_output.w, robot.max_w), -robot.max_w);
+  // float v = m_output.v; // min(v1, v2);
 
-  if (v != 0 && v < robot.min_v)
-    v = 1.01 * robot.min_v;
+  // if (v != 0 && v < robot.min_v)
+  //   v = 1.01 * robot.min_v;
 
-  m_output.v = v;
-  m_output.w = w;
+  PWM_OUT pwm = robot.getPWMOut(m_output.v, m_output.w);
 
-  PWM_OUT pwm = robot.getPWMOut(v, w);
-
-  mVel = robot.ensure_w(v, w);
+  // mVel = robot.ensure_w(v, w);
   // pwm.pwm_l = (int)robot.vel_l_to_pwm(mVel.vel_l);
   // pwm.pwm_r = (int)robot.vel_r_to_pwm(mVel.vel_r);
 

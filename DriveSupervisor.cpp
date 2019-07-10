@@ -95,7 +95,7 @@ void DriveSupervisor::execute(long left_ticks, long right_ticks, double dt)
 
   check_states();
 
-  if (!mSimulateMode && danger)
+  if (!mSimulateMode && m_input.v > 0 && danger)
   {
     if (m_state != S_STOP)
       Serial.println("Danger!");
@@ -140,7 +140,7 @@ void DriveSupervisor::execute(long left_ticks, long right_ticks, double dt)
   v = m_output.v;
   w = m_output.w;
 
-  mVel = robot.ensure_w(v, w);
+  //mVel = robot.ensure_w(v, w);
 
   PWM_OUT pwm = robot.getPWMOut(v, w);
 

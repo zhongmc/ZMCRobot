@@ -155,6 +155,13 @@ void Robot::readIRSensors()
       irSensors[i]->readPosition();
   }
 
+  if (haveIrSensor[2])
+  {
+    if (irSensors[2]->distance >= irSensors[2]->getMaxDistance())
+      irSensors[2]->setDistance(ultrasonicDistance);
+    if (irSensors[2]->distance > ultrasonicDistance)
+      irSensors[2]->setDistance(ultrasonicDistance);
+  }
   // if (haveIrSensor[2] && irSensors[2]->distance >= irSensors[2]->getMaxDistance())
   // {
   //   irSensors[2]->setDistance(ultrasonicDistance);
@@ -178,76 +185,42 @@ void Robot::setObstacleDistance(double dis[5])
 
 void Robot::getRobotInfo()
 {
-  Serial.print("x:");
-  Serial.print(x);
-  Serial.print(",y:");
-  Serial.print(y);
 
-  Serial.print(",theta:");
-  Serial.print(theta);
+  log("x:%s,y:%s,Q:%s,v:%s\n",
+      floatToStr(0, x),
+      floatToStr(1, y),
+      floatToStr(2, theta),
+      floatToStr(3, velocity));
 
-  Serial.print(",v:");
-  Serial.println(10 * velocity);
+  log("vel-l:%s, vel-r:%s;\nmax_vel:%s, min_vel:%s\nmax_rpm:%s,min_rpm:%s,max_w:%s, min-w:%s\n",
+      floatToStr(0, vel_l),
+      floatToStr(1, vel_r),
+      floatToStr(2, max_vel),
+      floatToStr(3, min_vel),
+      floatToStr(4, max_rpm),
+      floatToStr(5, min_rpm),
+      floatToStr(6, max_w),
+      floatToStr(7, min_w));
 
-  Serial.print("vel-l:");
-  Serial.print(vel_l);
-  Serial.print(",vel-r:");
-  Serial.println(vel_r);
+  log("robot(R,L,tks):%s, %s, %d, %d\n",
+      floatToStr(0, 100 * wheel_radius),
+      floatToStr(1, 100 * wheel_base_length),
+      ticks_per_rev_l,
+      ticks_per_rev_r);
 
-  Serial.print("max_vel:");
-  Serial.print(max_vel);
-  Serial.print(", min_vel:");
-  Serial.print(min_vel);
+  log("Balance, Q=%s, gyro=%s\n",
+      floatToStr(0, angle),
+      floatToStr(1, gyro));
 
-  Serial.print(",max_rpm:");
-  Serial.print(max_rpm);
-  Serial.print(", min_rpm:");
-  Serial.print(min_rpm);
-  Serial.print(", max_w:");
-  Serial.print(max_w);
-  Serial.print(", min_w:");
-  Serial.println(min_w);
-
-  /*
-  double pwm_min_l = vel_l_to_pwm(min_vel);
-  double pwm_min_r = vel_r_to_pwm(min_vel);
-  double pwm_max_l = vel_l_to_pwm(max_vel);
-  double pwm_max_r = vel_r_to_pwm(max_vel);
-
-  Serial.print("PWM:(min,max)-l,(min,max)-r:");
-  Serial.print(pwm_min_l);
-  Serial.print(",");
-  Serial.print(pwm_max_l);
-  Serial.print(",");
-  Serial.print(pwm_min_r);
-  Serial.print(",");
-  Serial.println(pwm_max_r);
-*/
-
-  Serial.print("Robot param(R,L, tks/r):");
-  Serial.print(100 * wheel_radius);
-  Serial.print(",");
-  Serial.print(100 * wheel_base_length);
-  Serial.print(",");
-  Serial.print(ticks_per_rev_l);
-  Serial.print(",");
-  Serial.println(ticks_per_rev_r);
-
-  Serial.print("Balance ang=");
-  Serial.print(angle);
-  Serial.print(", gyro=");
-  Serial.println(gyro);
   if (irSensors[0]->getSensorType() == GP2Y0A41) //GP2Y0A41 = 0,     //4-30cm  GP2Y0A21
-    Serial.println("IR GP2Y0A41 d:");
+    Serial.print("IR [GP2Y0A41]:");
   else
-    Serial.println("IR GP2Y0A21 d:");
+    Serial.print("IR [GP2Y0A21]:");
 
   readIRSensors();
 
   for (int i = 0; i < 5; i++)
   {
-    // if (haveIrSensor[i])
-    //   irSensors[i]->readPosition();
     Serial.print(irSensors[i]->distance);
     Serial.print(",");
   }
