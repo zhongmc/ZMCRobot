@@ -13,14 +13,23 @@ VelocityController::VelocityController()
   count = 0;
   curW = 0;
   keepTheta = false;
+  m_robot_w = 0;
 }
 
 void VelocityController::reset()
 {
   lastError = 0;
   lastErrorIntegration = 0;
-  mTheta = 0;
   curW = 0;
+  mTheta = 0;
+}
+
+void VelocityController::reset(Robot *robot)
+{
+  lastError = 0;
+  lastErrorIntegration = 0;
+  curW = 0;
+  mTheta = robot->theta;
 }
 
 void VelocityController::setGoal(double v, double w)
@@ -29,7 +38,8 @@ void VelocityController::setGoal(double v, double w)
   if (w == 0 && curW != 0) //remain the current theta; 加速过程中会有晃动；保留初始角度？
   {
     keepTheta = true;
-    keepThetaTimer = (1 + 2 * abs(curW)) * 50;
+    keepThetaTimer = (1 + 2 * abs(m_robot_w)) * 30;
+    log("kT %d,%.2f\n", keepThetaTimer, floatToStr(0, m_robot_w));
     thetaPrevMillis = millis();
     //    mTheta = robot.theta; //转弯结束，保留当前角度
   }
@@ -38,6 +48,38 @@ void VelocityController::setGoal(double v, double w)
   //reset the controller ???
   lastErrorIntegration = 0;
   lastError = 0;
+
+  if (mW != 0)
+  {
+
+    m_v = 0;
+
+    double sw = abs(mW);
+    if (sw > 1.5)
+      sw = 1.5;
+
+    if (v != 0) //按照w 减速
+    {
+      m_v = -0.027 * sw + 0.12;
+      // m_v = -0.067 * sw + 0.1;
+      if (m_v < 0.08)
+        m_v = 0.08;
+      if (v < 0)
+        m_v = -m_v;
+    }
+
+    // D = -maxD*mw/PI + maxD
+    // w = 2*V/(2*D+L)
+
+    double maxD = 0.2;
+
+    m_w = 2 * m_v / (2 * (-maxD * 2 * sw / PI + maxD) + 0.16);
+    if (mW < 0)
+      m_w = -m_w;
+
+    if (v == 0)
+      m_w = 2 * mW;
+  }
 }
 
 //depricated
@@ -59,11 +101,13 @@ void VelocityController::execute(Robot *robot, Input *input, Output *output, dou
 {
   double e, e_I, e_D, w;
 
+  m_robot_w = robot->w;
+
   if (mW != 0) //转弯，控制角速度？
   {
 
-    output->v = input->v / (1 + abs(robot->w) / 5); //转弯，控制速度
-    output->w = 3 * mW;
+    output->v = m_v; // input->v / (1 + abs(robot->w) / 3); //转弯，控制速度
+    output->w = m_w; //2 * mW;
 
     // output->v = input->v;
 

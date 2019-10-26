@@ -28,7 +28,7 @@ public:
   void resetRobot();
   void resetKalman();
   void setGoal(double v, double w);
-  void setGotoGoal(double x, double y, double theta);
+  void setGotoGoal(double x, double y, double theta, double v);
 
   void startGotoGoal();
 

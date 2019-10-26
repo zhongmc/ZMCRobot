@@ -155,12 +155,22 @@ void Robot::readIRSensors()
       irSensors[i]->readPosition();
   }
 
-  if (haveIrSensor[2])
+  double maxDis = velocity / 10;
+
+  for (int i = 0; i < 5; i++)
   {
-    if (irSensors[2]->distance >= irSensors[2]->getMaxDistance())
-      irSensors[2]->setDistance(ultrasonicDistance);
-    if (irSensors[2]->distance > ultrasonicDistance)
-      irSensors[2]->setDistance(ultrasonicDistance);
+    //如果读入的障碍物距离突变（大于速度*时间），重新读入
+    if (haveIrSensor[i] && abs(irSensors[i]->lastDistance - irSensors[i]->distance) > maxDis)
+      irSensors[i]->readPosition();
+  }
+
+  if (haveIrSensor[2] == 2)
+  {
+    irSensors[2]->setDistance(ultrasonicDistance);
+  }
+  else if (haveIrSensor[2] == 3)
+  {
+    irSensors[2]->setDistance((ultrasonicDistance + irSensors[2]->distance) / 2);
   }
   // if (haveIrSensor[2] && irSensors[2]->distance >= irSensors[2]->getMaxDistance())
   // {

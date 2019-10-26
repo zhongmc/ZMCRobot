@@ -9,7 +9,10 @@ class VelocityController : public Controller
 {
 public:
   VelocityController();
+
   void reset();
+
+  void reset(Robot *robot);
   void execute(Robot *robot, Input *input, Output *output, double dt);
   void setGoal(double v, double theta, double curTheta);
 
@@ -33,12 +36,11 @@ private:
   double curW;    //当前的转弯状态
   bool keepTheta; //是否需要保存当前方向
   int keepThetaTimer;
-
   long thetaPrevMillis;
-
   bool okToKeep;
-
   int count;
+  double m_robot_w; //目前的转弯角速度
+  double m_v, m_w;  //拐弯控制量
 };
 
 #endif /* _VELOCITY_CONTROLLER_H_ */

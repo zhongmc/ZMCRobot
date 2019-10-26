@@ -21,9 +21,9 @@ public:
   void readPosition(double xs, double ys, double thetas, byte pin);
   void setDistance(double val);
 
-  double distance; //obstacle distance
-  double x, y;     //the obtacle position in robot geometry
-  double xw, yw;   //the obtacle pos in real geometry
+  double distance, lastDistance; //obstacle distance
+  double x, y;                   //the obtacle position in robot geometry
+  double xw, yw;                 //the obtacle pos in real geometry
 
   // double w_x, w_y, w_xw, w_yw; // position for fallow wall;
 
@@ -41,12 +41,19 @@ public:
   double getMaxDistance();
   double getMinDistance();
 
+  void setIRFilter(bool open, float filter);
+
   Vector getWallVector(double xc, double yc, double theta, double d);
 
 private:
+  void init();
+
   byte anologPin = A1;
 
   double x_s, y_s, theta_s; //sensor position
+
+  bool bOpenFilter;
+  double filter, prevDistance;
 
   double cos_theta, sin_theta;
   SENSOR_TYPE mSensorType;

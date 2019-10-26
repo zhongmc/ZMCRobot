@@ -15,7 +15,7 @@
 #define S_STOP 0
 #define S_GTG 1
 #define S_AVO 2
-#define S_FW 3
+#define S_FLW 3
 
 class Supervisor
 {
@@ -28,9 +28,11 @@ public:
 
   void reset(long leftTicks, long rightTicks);
   void resetRobot();
-  void setGoal(double x, double y, int theta);
+  void setGoal(double x, double y, int theta, double v);
 
-  void setHaveIRSensor(int idx, bool val);
+  void setHaveIRSensor(int idx, byte val);
+
+  void setIRFilter(bool open, float filter);
 
   void setSimulateMode(bool val);
 
@@ -43,7 +45,7 @@ public:
       Serial.println("GTG!");
     else if (m_state == S_AVO)
       Serial.println("AVO!");
-    else if (m_state == S_FW)
+    else if (m_state == S_FLW)
     {
       if (m_FollowWall.dir == 0)
         Serial.println("FLW L");
@@ -110,8 +112,7 @@ private:
   void
   set_progress_point();
   void check_states();
-  int getOstacleDir();
-  void changeToFollowWall();
+  bool changeToFollowWall();
 
   bool progress_made;
   bool at_goal;

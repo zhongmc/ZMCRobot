@@ -59,7 +59,7 @@ bool bleConnected = false;
 void initBluetooth()
 {
 
-  Serial.println("init Bluetooth device ...");
+  Serial.println("init BLE...");
 
   bleConnected = false;
   /*The name can be changed but maybe be truncated based on space left in advertisement packet */
@@ -87,7 +87,7 @@ void initBluetooth()
   zmcRobotDriveChar.setEventHandler(BLEWritten, driveCharacteristicWritten);
 
   blePeripheral.begin();
-  Serial.println(("Bluetooth device active, waiting for connections..."));
+  Serial.println(("BLE start..."));
 }
 
 void blePeripheralConnectHandler(BLECentral &central)
@@ -95,7 +95,7 @@ void blePeripheralConnectHandler(BLECentral &central)
 
   bleConnected = true;
   // central connected event handler
-  Serial.print("Connected event, central: ");
+  Serial.print("BLE Conn: ");
   Serial.println(central.address());
 
   Serial.print("UUID:");
@@ -109,7 +109,7 @@ void blePeripheralDisconnectHandler(BLECentral &central)
 
   bleConnected = false;
   // central disconnected event handler
-  Serial.print("Disconnected event, central: ");
+  Serial.print("BLE disc: ");
   Serial.println(central.address());
 }
 
@@ -145,7 +145,7 @@ void driveCharacteristicWritten(BLECentral &central, BLECharacteristic &characte
     if (queueLen < 7)
       settingsReqQueue[queueLen++] = data[2];
     else
-      Serial.println("Q ob");
+      Serial.println("Q Ovf");
 
     //    requireForSettings = true;
     //    requiredSettingsType = data[2];
@@ -197,20 +197,27 @@ void driveCharacteristicWritten(BLECentral &central, BLECharacteristic &characte
 
   else if (cmd[0] == 'G' && cmd[1] == 'G') // Go To Goal: x, y, theta
   {
-    double x, y;
+    double x, y, v;
     int theta;
     x = byteToFloat((byte *)(data + 2), 100);
     y = byteToFloat((byte *)(data + 4), 100);
     theta = byteToInt((byte *)(data + 6));
+    v = byteToFloat((byte *)(data + 8), 100);
 
-    setGoal(x, y, theta);
+    setGoal(x, y, theta, v);
 
-    Serial.print("GTG:");
-    Serial.print(x);
-    Serial.print(",");
-    Serial.print(y);
-    Serial.print(",");
-    Serial.println(theta);
+    log("GTG:%s,%s,%d,%s\n",
+        floatToStr(0, x),
+        floatToStr(1, y),
+        theta,
+        floatToStr(2, v));
+
+    // Serial.print("GTG:");
+    // Serial.print(x);
+    // Serial.print(",");
+    // Serial.print(y);
+    // Serial.print(",");
+    // Serial.println(theta);
   }
 
   else if (cmd[0] == 'M' && cmd[1] == 'G') //go to goal
@@ -223,7 +230,7 @@ void driveCharacteristicWritten(BLECentral &central, BLECharacteristic &characte
     count2 = 0;
     supervisor.reset(0, 0);
 
-    setGoal(d, 0, 0);
+    setGoal(d, 0, 0, 0.12);
     startGoToGoal();
   }
 
@@ -241,16 +248,22 @@ void driveCharacteristicWritten(BLECentral &central, BLECharacteristic &characte
     }
     // turnAround(pwm);
   }
+  else if (cmd[0] == 'I' && cmd[1] == 'F') // set ir filter IF0/1,0.6;
+  {
+    bool val = *(data + 2) - '0';
+    float filter = atof((char *)(data + 3));
+    log("IR flt:%d,%s\n", val, floatToStr(0, filter));
+    supervisor.setIRFilter(val, filter);
+    driveSupervisor.setIRFilter(val, filter);
+  }
   else if (cmd[0] == 'I' && cmd[1] == 'R')
   {
     short idx = *(data + 2) - '0';
-    bool val = *(data + 3) - '0';
-    Serial.print("set IR:");
-    Serial.print(idx);
-    Serial.print(", ");
-    Serial.println(val);
+    byte val = *(data + 3) - '0';
+    log("S IR:%d,%d\n", idx, val);
 
     supervisor.setHaveIRSensor(idx, val);
+    driveSupervisor.setHaveIRSensor(idx, val);
   }
 
   else if (cmd[0] == 'P' && cmd[1] == 'I') //pid
@@ -303,13 +316,13 @@ void driveCharacteristicWritten(BLECentral &central, BLECharacteristic &characte
 
   else if (cmd[0] == 'G' && cmd[1] == 'G') // Go To Goal: x, y, theta
   {
-    double x, y;
+    double x, y, v;
     int theta;
     x = byteToFloat((byte *)(data + 2), 100);
     y = byteToFloat((byte *)(data + 4), 100);
     theta = byteToInt((byte *)(data + 6));
-
-    setGoal(x, y, theta);
+    v = byteToFloat((byte *)(data + 8), 100);
+    setGoal(x, y, theta, v);
 
     Serial.print("Go to Goal:");
     Serial.print(x);
@@ -329,7 +342,7 @@ void driveCharacteristicWritten(BLECentral &central, BLECharacteristic &characte
     count2 = 0;
     balanceSupervisor.reset(0, 0);
 
-    setGoal(d, 0.0, 0);
+    setGoal(d, 0.0, 0, 0.12);
     startGoToGoal();
   }
 
@@ -340,7 +353,9 @@ void driveCharacteristicWritten(BLECentral &central, BLECharacteristic &characte
     double v, w;
     v = byteToFloat((byte *)(data + 2), 100);
     w = byteToFloat((byte *)(data + 4), 100);
-    Serial.println(w);
+    log("v=%s,w=%s\n",
+        floatToStr(0, v),
+        floatToStr(1, w));
     setDriveGoal(v, w);
   }
 }

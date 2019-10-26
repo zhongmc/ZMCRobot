@@ -39,7 +39,7 @@ void MoveLeftMotor(int PWM);
 void MoveRightMotor(int PWM);
 void StopMotor();
 
-void setGoal(double x, double y, int theta);
+void setGoal(double x, double y, int theta, double v);
 void startGoToGoal();
 void stopRobot();
 void ResetRobot();

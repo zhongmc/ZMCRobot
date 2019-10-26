@@ -101,10 +101,16 @@ void checkSerialData()
 void processCommand(char *buffer, int bufferLen)
 {
   *(buffer + bufferLen) = 0;
-  //Serial.println(buffer);
-
   if (bufferLen <= 2)
+  {
+    if (buffer[0] == 'b') //get baundrate
+      Serial.println(115200);
+    else if (buffer[0] == 'p')
+      Serial.println(100);
+    else
+      Serial.println("Na");
     return;
+  }
   char ch0, ch1;
   ch0 = tolower(buffer[0]);
   ch1 = tolower(buffer[1]);
@@ -166,12 +172,13 @@ void processCommand(char *buffer, int bufferLen)
     buf = strchr((buf + 1), ',');
     step = atoi(buf + 1);
 
-    Serial.print("SP:");
-    Serial.print(pwm0);
-    Serial.print(",");
-    Serial.print(pwm1);
-    Serial.print(",");
-    Serial.println(step);
+    // Serial.print("SP:");
+    // Serial.print(pwm0);
+    // Serial.print(",");
+    // Serial.print(pwm1);
+    // Serial.print(",");
+    // Serial.println(step);
+    log("SP:%d,%d,%d\n", pwm0, pwm1, step);
     if (step == 0)
       step = 10;
 
@@ -235,9 +242,9 @@ void processCommand(char *buffer, int bufferLen)
   else if (ch0 == 'g' && ch1 == 'g') //set goto goal goal
   {
 
-    double fvs[3];
-    getDoubleValues(buffer + 2, 3, fvs);
-    setGoal(fvs[0], fvs[1], fvs[2]);
+    double fvs[4];
+    getDoubleValues(buffer + 2, 4, fvs);
+    setGoal(fvs[0], fvs[1], fvs[2], fvs[3]);
   }
 
   else if (ch0 == 'o' && ch1 == 'd') //set obstacle distance
@@ -373,8 +380,11 @@ void processCommand(char *buffer, int bufferLen)
       }
     }
   }
-
 #endif
+  else
+  {
+    Serial.println("Unknow");
+  }
 }
 
 #if CAR_TYPE == BALANCE_CAR

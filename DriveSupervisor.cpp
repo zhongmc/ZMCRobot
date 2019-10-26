@@ -28,6 +28,16 @@ DriveSupervisor::DriveSupervisor()
   danger = false;
 }
 
+void DriveSupervisor::setIRFilter(bool open, float val)
+{
+  robot.setIRFilter(open, val);
+}
+
+void DriveSupervisor::setHaveIRSensor(int idx, byte val)
+{
+  robot.setHaveIrSensor(idx, val);
+}
+
 void DriveSupervisor::updateSettings(SETTINGS settings)
 {
   if (settings.sType == 0 || settings.sType == 5)
@@ -64,15 +74,13 @@ void DriveSupervisor::resetRobot()
   robot.y = 0;
   robot.theta = 0;
   m_Controller.setGoal(m_input.v, 0, 0);
-  m_Controller.reset();
+  m_Controller.reset(&robot);
 }
 
 void DriveSupervisor::reset(long leftTicks, long rightTicks)
 {
 
-  m_Controller.reset();
   danger = false;
-
   if (mSimulateMode)
   {
     m_left_ticks = 0;
@@ -81,6 +89,7 @@ void DriveSupervisor::reset(long leftTicks, long rightTicks)
   }
   else
     robot.reset(leftTicks, rightTicks);
+  m_Controller.reset(&robot);
 }
 
 void DriveSupervisor::execute(long left_ticks, long right_ticks, double dt)
@@ -210,6 +219,13 @@ void DriveSupervisor::check_states()
     danger = true;
   else
     danger = false;
+}
+
+void DriveSupervisor::setRobotPosition(double x, double y, double theta)
+{
+  robot.x = x;
+  robot.y = y;
+  robot.theta = theta;
 }
 
 Position DriveSupervisor::getRobotPosition()

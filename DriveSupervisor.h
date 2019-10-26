@@ -49,10 +49,16 @@ public:
     m_Controller.PrintInfo();
   }
 
+  //val: 0 none, 1,yes, 2 use ultro sonic
+  void setHaveIRSensor(int idx, byte val);
+
+  void setIRFilter(bool open, float val);
+
   void getIRDistances(double dis[5]);
   void getRobotVel(double dis[5]);
 
   Position getRobotPosition();
+  void setRobotPosition(double x, double y, double theta);
 
   void updateSettings(SETTINGS settings);
 

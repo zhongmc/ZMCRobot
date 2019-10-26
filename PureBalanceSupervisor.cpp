@@ -275,13 +275,14 @@ void PureBalanceSupervisor::startGotoGoal()
 }
 
 //move robot to target x,y
-void PureBalanceSupervisor::setGotoGoal(double x, double y, double theta)
+void PureBalanceSupervisor::setGotoGoal(double x, double y, double theta, double v)
 {
   m_Goal.x = x;
   m_Goal.y = y;
 
   m_input.x_g = x;
   m_input.y_g = y;
+  m_input.v = v;
 }
 
 //drive the robot

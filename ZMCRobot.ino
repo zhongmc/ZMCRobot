@@ -10,6 +10,7 @@
 #include "Supervisor.h"
 #include "DriveSupervisor.h"
 #include "BlinkLed.h"
+//#include "BlinkMatrixLed.h"
 #else
 #include "MyMPU6050.h"
 #include <CurieIMU.h>
@@ -54,6 +55,7 @@ byte currentState = STATE_IDLE;
 Supervisor supervisor;
 DriveSupervisor driveSupervisor;
 BlinkLed blinkLed;
+//BlinkMatrixLed blinkLed;
 bool bExecDrive, bExecGTG;
 
 #else
@@ -212,6 +214,7 @@ void setup()
   bExecDrive = false;
   bExecGTG = false;
 
+  blinkLed.init();
 #else
 
   SETTINGS mSettings;
@@ -438,18 +441,20 @@ void loop()
 
 #if CAR_TYPE == DRIVE_CAR
 
-void setGoal(double x, double y, int theta)
+void setGoal(double x, double y, int theta, double v)
 {
   // count1 = 0;
   // count2 = 0;
 
-  supervisor.setGoal(x, y, theta);
+  supervisor.setGoal(x, y, theta, v);
 }
 
 void startGoToGoal()
 {
-  if (currentState >= 2)
+  if (currentState == STATE_GOTOGOAL)
     return;
+
+  stopRobot(); //stop currentState
 
   // supervisor.updateSettings(mSettings);
   Serial.print("Start GTG:");
@@ -531,8 +536,19 @@ void SetIgnoreObstacle(bool igm)
 void stopRobot()
 {
   blinkLed.normalBlink();
-  currentState = STATE_IDLE;
   CurieTimerOne.kill();
+
+  if (currentState == STATE_DRIVE)
+  {
+    Position pos = driveSupervisor.getRobotPosition();
+    supervisor.setRobotPosition(pos.x, pos.y, pos.theta);
+  }
+  else if (currentState == STATE_GOTOGOAL)
+  {
+    Position pos = supervisor.getRobotPosition();
+    driveSupervisor.setRobotPosition(pos.x, pos.y, pos.theta);
+  }
+  currentState = STATE_IDLE;
   stopAndReset();
 }
 
@@ -652,9 +668,9 @@ void irRemoteProcess(int code)
   }
 }
 
-void setGoal(double x, double y, int theta)
+void setGoal(double x, double y, int theta, double v)
 {
-  balanceSupervisor.setGotoGoal(x, y, theta);
+  balanceSupervisor.setGotoGoal(x, y, theta, v);
 }
 
 void startGoToGoal()
@@ -764,6 +780,7 @@ void setDriveGoal(double v, double w)
   }
   else
   {
+    stopRobot(); //stop currentState
     startDrive();
     driveSupervisor.setGoal(v, w);
   }

@@ -77,6 +77,24 @@ void FollowWall::execute(Robot *robot, Input *input, Output *output, double dt)
   lastErrorIntegration = e_I;
   lastError = e;
 
+  // 控制W 拐弯半径，避免撞墙
+  // D = (2*V - W*L)/(2*W)
+
+  if (m_beCorner)
+  {
+    double aw = abs(w);
+    double d = (2 * input->v - aw * robot->wheel_base_length) / (2 * aw);
+    // this.d_fw + 车长 0.25 + 0.15 = 0.4
+    if (d < 0.45)
+    {
+      aw = 2 * input->v / (0.9 + robot->wheel_base_length);
+      if (w < 0)
+        w = -aw;
+      else
+        w = aw;
+    }
+  }
+
   output->v = input->v; // / (1 + abs(robot->w));
   output->w = w;
 
@@ -92,6 +110,8 @@ void FollowWall::getWall(Robot *robot)
   IRSensor **irSensors = robot->getIRSensors();
 
   double d = d_fw * 1.42;
+  double d1 = 10;
+
   int idx = 0;
   if (dir == 0) // follow left
   {
@@ -106,14 +126,17 @@ void FollowWall::getWall(Robot *robot)
     case 0:
       p1 = irSensors[1]->getWallVector(robot->x, robot->y, robot->theta, d);
       p0 = irSensors[2]->getWallVector(robot->x, robot->y, robot->theta, d);
+      d1 = irSensors[2]->distance;
       break;
     case 1:
       p1 = irSensors[0]->getWallVector(robot->x, robot->y, robot->theta, d);
       p0 = irSensors[2]->getWallVector(robot->x, robot->y, robot->theta, d);
+      d1 = irSensors[2]->distance;
       break;
     case 2:
       p1 = irSensors[0]->getWallVector(robot->x, robot->y, robot->theta, d);
       p0 = irSensors[1]->getWallVector(robot->x, robot->y, robot->theta, d);
+      d1 = irSensors[1]->distance;
       break;
     }
   }
@@ -134,15 +157,25 @@ void FollowWall::getWall(Robot *robot)
     case 2:
       p1 = irSensors[4]->getWallVector(robot->x, robot->y, robot->theta, d);
       p0 = irSensors[3]->getWallVector(robot->x, robot->y, robot->theta, d);
+      d1 = irSensors[3]->distance;
       break;
     case 3:
       p1 = irSensors[4]->getWallVector(robot->x, robot->y, robot->theta, d);
       p0 = irSensors[2]->getWallVector(robot->x, robot->y, robot->theta, d);
+      d1 = irSensors[2]->distance;
       break;
     case 4:
       p1 = irSensors[3]->getWallVector(robot->x, robot->y, robot->theta, d);
       p0 = irSensors[2]->getWallVector(robot->x, robot->y, robot->theta, d);
+      d1 = irSensors[2]->distance;
       break;
     }
+  }
+
+  if (d1 > irSensors[2]->getMaxDistance() - 0.1)
+    m_beCorner = true;
+  else
+  {
+    m_beCorner = false;
   }
 }

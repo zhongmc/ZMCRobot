@@ -65,7 +65,7 @@ public:
 
   void setObstacleDistance(double dis[5]);
 
-  void setHaveIrSensor(int idx, bool value)
+  void setHaveIrSensor(int idx, byte value)
   {
     if (idx >= 0 && idx < 5)
     {
@@ -74,7 +74,13 @@ public:
     }
   }
 
-  bool haveIrSensor[5];
+  void setIRFilter(bool open, float filter)
+  {
+    for (int i = 0; i < 5; i++)
+      irSensors[i]->setIRFilter(open, filter);
+  }
+
+  byte haveIrSensor[5];
 
   SETTINGS getPIDParams()
   {
