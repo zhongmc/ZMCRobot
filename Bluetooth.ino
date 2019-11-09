@@ -220,19 +220,19 @@ void driveCharacteristicWritten(BLECentral &central, BLECharacteristic &characte
     // Serial.println(theta);
   }
 
-  else if (cmd[0] == 'M' && cmd[1] == 'G') //go to goal
-  {
-    float d = atof((char *)(data + 2));
-    Serial.print("m gtg:");
-    Serial.println(d);
+  // else if (cmd[0] == 'M' && cmd[1] == 'G') //go to goal
+  // {
+  //   float d = atof((char *)(data + 2));
+  //   Serial.print("m gtg:");
+  //   Serial.println(d);
 
-    count1 = 0;
-    count2 = 0;
-    supervisor.reset(0, 0);
+  //   count1 = 0;
+  //   count2 = 0;
+  //   supervisor.reset(0, 0);
 
-    setGoal(d, 0, 0, 0.12);
-    startGoToGoal();
-  }
+  //   setGoal(d, 0, 0, 0.12);
+  //   startGoToGoal();
+  // }
 
   // else if (cmd[0] == 'S' && cmd[1] == 'R') //step response
   // {
@@ -248,6 +248,7 @@ void driveCharacteristicWritten(BLECentral &central, BLECharacteristic &characte
     }
     // turnAround(pwm);
   }
+
   else if (cmd[0] == 'I' && cmd[1] == 'F') // set ir filter IF0/1,0.6;
   {
     bool val = *(data + 2) - '0';

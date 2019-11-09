@@ -18,6 +18,13 @@ public:
   double pwm_to_ticks_r(double pwm, double dt);
   double pwm_to_ticks_l(double pwm, double dt);
 
+private:
+  int maxPWM, minPWM;
+  // pwm = vel_pwm_a * vel + vel_pwm_b
+  double vel_pwm_a, vel_pwm_b;
+  //pwm to ticks ticks = dt*(pta * pwm^2 + ptb *pwm + ptc)
+  double pta_l, pta_r, ptb_l, ptb_r, ptc_l, ptc_r;
+
   // Vel zeroMinVel(Vel vel);
 };
 

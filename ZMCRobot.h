@@ -74,8 +74,8 @@ void irRemoteProcess(int code);
 
 int formatStr(char *buf, char *fmt, ...);
 
-void log(char *fmt, ...);
+void log(const char *fmt, ...);
 
-char *floatToStr(int idx, double val);
-char *floatToStr(int idx, char width, unsigned char prec, double val);
+const char *floatToStr(int idx, double val);
+const char *floatToStr(int idx, char width, unsigned char prec, double val);
 #endif

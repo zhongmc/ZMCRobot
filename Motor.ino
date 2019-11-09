@@ -75,19 +75,19 @@ void MoveMotor(int pwm)
 void MoveLeftMotor(int PWM)
 {
   int pwm_out;
-  if (PWM > 0)
+  if (PWM >= 0)
   {
     pwm_out = PWM + U0L;
     if (pwm_out > 255)
       pwm_out = 255;
-    digitalWrite(LEFT_WHEEL_DIR, LOW);
+    digitalWrite(LEFT_WHEEL_DIR, HIGH); //
   }
   else
   {
     pwm_out = -1 * PWM + U0L;
     if (pwm_out > 255)
       pwm_out = 255;
-    digitalWrite(LEFT_WHEEL_DIR, HIGH);
+    digitalWrite(LEFT_WHEEL_DIR, LOW);
   }
   analogWrite(LEFT_WHEEL_PWM, pwm_out);
 }
@@ -100,14 +100,14 @@ void MoveRightMotor(int PWM)
     pwm_out = PWM + U0R;
     if (pwm_out > 255)
       pwm_out = 255;
-    digitalWrite(RIGHT_WHEEL_DIR, HIGH);
+    digitalWrite(RIGHT_WHEEL_DIR, LOW);
   }
   else
   {
     pwm_out = -1 * PWM + U0R;
     if (pwm_out > 255)
       pwm_out = 255;
-    digitalWrite(RIGHT_WHEEL_DIR, LOW);
+    digitalWrite(RIGHT_WHEEL_DIR, HIGH);
   }
   analogWrite(RIGHT_WHEEL_PWM, pwm_out);
 }
@@ -117,7 +117,7 @@ void Code1()
 {
 #if MOTOR == DUAL_MOTOR
   int wheelDir = digitalRead(LEFT_WHEEL_B);
-  if (wheelDir == HIGH)
+  if (wheelDir == LOW)
     count1++;
   else
     count1--;
@@ -131,7 +131,7 @@ void Code2()
 {
 #if MOTOR == DUAL_MOTOR
   int wheelDir = digitalRead(RIGHT_WHEEL_B);
-  if (wheelDir == LOW) //HIGH)
+  if (wheelDir == HIGH) //HIGH)
     count2++;
   else
     count2--;

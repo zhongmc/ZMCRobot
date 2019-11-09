@@ -13,7 +13,31 @@ RearDriveRobot::RearDriveRobot()
   // init(0.0312, 0.1666, 390, 390, 50, 180, GP2Y0A21);
 
   //黑色轮子，自制板
-  init(0.0312, 0.162, 390, 390, 50, 180, GP2Y0A21);
+  // init(0.0312, 0.162, 390, 390, 50, 180, GP2Y0A21);
+
+  //黑色轮子，自制板 新1：90电机
+  init(0.0312, 0.168, 990, 990, 30, 80, GP2Y0A21);
+
+  maxPWM = 200;
+  minPWM = 80;
+  vel_pwm_a = 28;
+  vel_pwm_b = -20;
+
+  //  y = -0.0341x2 + 16.786x - 633.3
+  pta_l = -0.0341;
+  ptb_l = 16.786;
+  ptc_l = -633.3;
+
+  //y = -0.0367x2 + 17.236x - 630.72
+  pta_r = -0.0367;
+  ptb_r = 17.236;
+  ptc_r = -630.72;
+
+  // int maxPWM, minPWM;
+  // // pwm = vel_pwm_a * vel + vel_pwm_b
+  // double vel_pwm_a, vel_pwm_b;
+  // //pwm to ticks ticks = dt*(pta * pwm^2 + ptb *pwm + ptc)
+  // double pta_l, pta_r, ptb_l, ptb_r, ptc_l, ptc_r;
 
   //balance car
   //  init(0.0332, 0.159, 390, 390, 50, 180, GP2Y0A21);
@@ -53,43 +77,17 @@ PWM_OUT RearDriveRobot::getPWMOut(double v, double w)
 
   if (v == 0)
   {
-    if (abs(pwm_l) > 80)
+    if (abs(pwm_l) > minPWM + 30)
     {
       if (pwm_l > 0)
       {
-        pwm_l = 80;
-        pwm_r = -80;
+        pwm_l = minPWM + 30;
+        pwm_r = -(minPWM + 30);
       }
       else
       {
-        pwm_l = -80;
-        pwm_r = 80;
-      }
-    }
-  }
-  else
-  {
-    int dif = pwm_l - pwm_r;
-    if (dif > 80)
-    {
-      if (pwm_l > 0)
-      {
-        pwm_l = pwm_r + 80;
-      }
-      else
-      {
-        pwm_r = pwm_l - 80;
-      }
-    }
-    else if (dif < -80)
-    {
-      if (pwm_l >= 0)
-      {
-        pwm_r = pwm_l + 80;
-      }
-      else
-      {
-        pwm_l = pwm_r - 80;
+        pwm_l = -(minPWM + 30);
+        pwm_r = minPWM + 30;
       }
     }
   }
@@ -103,7 +101,12 @@ PWM_OUT RearDriveRobot::getPWMOut(double v, double w)
 Vel RearDriveRobot::ensure_w(double v, double w)
 {
 
-  Vel vel = uni_to_diff(v, w);
+  double sw = w;
+  if (sw > 1.5)
+    sw = 1.5;
+  else if (sw < -1.5)
+    sw = -1.5;
+  Vel vel = uni_to_diff(v, sw);
 
   if (v == 0)
     return vel;
@@ -262,84 +265,37 @@ Vel RearDriveRobot::zeroMinVel(Vel vel)
 double RearDriveRobot::vel_l_to_pwm(double vel)
 {
   double nvel = abs(vel);
-
-  if (nvel < 0.5)
-    return 0;
-
-  double pwm = 6.26 * nvel + 47;
+  double pwm = vel_pwm_a * nvel + vel_pwm_b;
+  if (pwm < minPWM)
+    pwm = 0;
+  else if (pwm > maxPWM)
+    pwm = maxPWM;
   if (vel < 0)
     return -pwm;
   return pwm;
-
-  // //ax^2+bx+c
-  // double nvel = abs(vel);
-  // if (nvel < min_vel - 0.1)
-  //   return 0;
-
-  // if (nvel > max_vel)
-  //   nvel = max_vel;
-
-  // // double retVal = 0.5729 * nvel * nvel - 5.1735 * nvel + 86.516;
-  // // double retVal = 9.1631 * nvel + 27.898; //6.393 * nvel + 13.952;
-  // //y = 0.1086x2 + 3.4864x + 60.919
-
-  // double retVal = 0.1086 * nvel * nvel + 3.4864 * nvel + 60.919;
-
-  // if (vel >= 0)
-  //   return retVal;
-  // else
-  //   return -retVal;
 }
 
 double RearDriveRobot::vel_r_to_pwm(double vel)
 {
 
   double nvel = abs(vel);
-
-  if (nvel < 0.5)
-    return 0;
-
-  double pwm = 6.26 * nvel + 47;
+  double pwm = vel_pwm_a * nvel + vel_pwm_b;
+  if (pwm < minPWM)
+    pwm = 0;
+  else if (pwm > maxPWM)
+    pwm = maxPWM;
   if (vel < 0)
     return -pwm;
   return pwm;
-
-  // //ax^2+bx+c
-  // double nvel = abs(vel);
-
-  // if (nvel < min_vel - 0.1)
-  //   return 0; //nvel = min_vel;
-
-  // if (nvel > max_vel)
-  //   nvel = max_vel;
-
-  // // double retVal = 0.5649 * nvel * nvel - 4.3156 * nvel + 80.706;
-  // // double retVal = 9.1631 * nvel + 27.898; // 6.2798 * nvel + 18.787;
-  // //  y = 0.5649x2 - 4.3156x + 80.706
-  // //y = 0.1194x2 + 3.0069x + 63.031
-  // double retVal = 0.1194 * nvel * nvel + 3.0069 * nvel + 63.031;
-
-  // if (vel >= 0)
-  //   return retVal;
-  // else
-  //   return -retVal;
 }
 
 double RearDriveRobot::pwm_to_ticks_l(double pwm, double dt)
 {
-  double npwm = abs(pwm);
-  if (npwm < 60) //14
+  if (pwm == 0)
     return 0;
 
-  if (npwm > 220)
-    npwm = 220;
-
-  // double ticks = dt * (-0.024 * npwm * npwm + 12.097 * npwm - 426.23);
-  //y = -0.0264x2 + 16.836x - 882.53
-  double ticks = dt * (-0.0264 * npwm * npwm + 16.836 * npwm - 882.53);
-
-  //5.7132x - 180.16
-  //  double ticks = dt * (5.7132 * npwm - 180.16);
+  double npwm = abs(pwm);
+  double ticks = dt * (pta_l * npwm * npwm + ptb_l * npwm + ptc_l);
   if (pwm > 0)
     return ticks;
   else
@@ -348,19 +304,11 @@ double RearDriveRobot::pwm_to_ticks_l(double pwm, double dt)
 
 double RearDriveRobot::pwm_to_ticks_r(double pwm, double dt)
 {
+  if (pwm == 0)
+    return 0;
 
   double npwm = abs(pwm);
-  if (npwm < 60)
-    return 0;
-  if (npwm > 220)
-    npwm = 220;
-  // double ticks = dt * (-0.0218 * npwm * npwm + 11.634 * npwm - 358.83);
-  //5.7049x - 131.73
-  //  double ticks = dt * (5.7049 * npwm - 131.73);
-  //y = -0.0312x2 + 18.344x - 974.3
-
-  double ticks = dt * (-0.0312 * npwm * npwm + 18.344 * npwm - 974.3);
-
+  double ticks = dt * (pta_r * npwm * npwm + ptb_r * npwm + ptc_r);
   if (pwm > 0)
     return ticks;
   else

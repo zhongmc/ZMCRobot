@@ -21,7 +21,7 @@ extern long trigTime, echoTime;
 extern double ultrasonicDistance;
 
 static char comData[32];
-int comDataCount;
+int comDataCount = 0;
 
 //extern Supervisor supervisor;
 extern double gp2y0a41[3][4];
@@ -143,24 +143,30 @@ void processCommand(char *buffer, int bufferLen)
     printCountInfo();
   }
 
-  else if (ch0 == 'm' && ch1 == 'l') // move left motor
-  {
-    int pwm = atoi(buffer + 2);
-    printCountInfo();
-    MoveLeftMotor(pwm);
-  }
+  // else if (ch0 == 'm' && ch1 == 'l') // move left motor
+  // {
+  //   int pwm = atoi(buffer + 2);
+  //   printCountInfo();
+  //   MoveLeftMotor(pwm);
+  // }
 
-  else if (ch0 == 'm' && ch1 == 'r') // move right motor
-  {
-    int pwm = atoi(buffer + 2);
-    printCountInfo();
-    MoveRightMotor(pwm);
-  }
+  // else if (ch0 == 'm' && ch1 == 'r') // move right motor
+  // {
+  //   int pwm = atoi(buffer + 2);
+  //   printCountInfo();
+  //   MoveRightMotor(pwm);
+  // }
 
-  else if (ch0 == 'm' && ch1 == 'm') // move motor
+  else if (ch0 == 'm' && ch1 == 'm') // move motor mmpwml,pwmr
   {
-    int pwm = atoi(buffer + 2);
-    motorSpeed(pwm);
+    int pwml = atoi(buffer + 2);
+    char *buf = strchr((buffer + 2), ',');
+
+    int pwmr = pwml;
+    if (buf != NULL)
+      pwmr = atoi(buf + 1);
+
+    motorSpeed(pwml, pwmr);
     MoveMotor(0);
   }
   else if (ch0 == 's' && ch1 == 'p') //speed test
@@ -217,21 +223,10 @@ void processCommand(char *buffer, int bufferLen)
     int pwm = atoi(buffer + 2);
     turnAround(pwm);
   }
-  else if (ch0 == 'm' && ch1 == 'g') //go to goal
-  {
-    // count1 = 0;
-    // count2 = 0;
-    // supervisor.reset(0, 0);
-    // supervisor.resetRobot();
-    // float x = atof(buffer + 2);
-    // float y = 0;
-    // char *buf = strchr(buffer, ',');
-    // if (buf != NULL)
-    //   y = atof(buf + 1);
-    // setGoal(x, y, 0);
-    // startGoToGoal();
-    manuaGoal();
-  }
+  // else if (ch0 == 'm' && ch1 == 'g') //go to goal
+  // {
+  //   manuaGoal();
+  // }
 
 #if CAR_TYPE == DRIVE_CAR
   else if (ch0 == 'g' && ch1 == 'o') //start go to goal
@@ -272,11 +267,11 @@ void processCommand(char *buffer, int bufferLen)
     setPID(buffer + 2);
   }
 
-  else if (ch0 == 't' && ch1 == 'l') //turn around left/ right(-pwm) test
-  {
-    int pwm = atoi(buffer + 2);
-    turnAround(pwm);
-  }
+  // else if (ch0 == 't' && ch1 == 'l') //turn around left/ right(-pwm) test
+  // {
+  //   int pwm = atoi(buffer + 2);
+  //   turnAround(pwm);
+  // }
   else if (ch0 == 'i' && ch1 == 'o') //ignore atObstacle
   {
     int val = atoi(buffer + 2);
@@ -383,7 +378,7 @@ void processCommand(char *buffer, int bufferLen)
 #endif
   else
   {
-    Serial.println("Unknow");
+    Serial.println("Na");
   }
 }
 
@@ -532,16 +527,18 @@ void speedTest(int pwm0, int pwm1, int step)
   // long c1, c2, lt;
   for (int i = pwm0; i < pwm1; i += step)
   {
-    motorSpeed(i);
+    motorSpeed(i, i);
   }
   MoveMotor(0);
 }
 
-void motorSpeed(int pwm)
+void motorSpeed(int pwml, int pwmr)
 {
   long c1, c2, lt;
-  MoveMotor(pwm);
-  log("%d,", pwm);
+  MoveLeftMotor(pwml);
+  MoveRightMotor(pwmr);
+
+  log("%d,", pwml);
 
   // Serial.print(pwm);
   // Serial.print(',');
@@ -591,20 +588,20 @@ void turnAround(int pwm)
   log("ci:%d,%d;\n", count1, count2);
 }
 
-void manuaGoal()
-{
-  count1 = 0;
-  count2 = 0;
-  MoveMotor(90);
-  delay(3000);
-  StopMotor();
-  delay(500);
-  log("%d,%d", count2, count2);
+// void manuaGoal()
+// {
+//   count1 = 0;
+//   count2 = 0;
+//   MoveMotor(90);
+//   delay(3000);
+//   StopMotor();
+//   delay(500);
+//   log("%d,%d", count2, count2);
 
-  // Serial.print(count1);
-  // Serial.print(',');
-  // Serial.println(count2);
-}
+//   // Serial.print(count1);
+//   // Serial.print(',');
+//   // Serial.println(count2);
+// }
 
 void getDoubleValues(char *buffer, int c, double *fvs)
 {
@@ -633,7 +630,7 @@ int formatStr(char *buf, char *format, ...)
   return c;
 }
 
-void log(char *format, ...)
+void log(const char *format, ...)
 {
   char tmp[500];
   va_list vArgList;
@@ -645,13 +642,13 @@ void log(char *format, ...)
 
 char tmp[20][15];
 
-char *floatToStr(int idx, double val)
+const char *floatToStr(int idx, double val)
 {
 
   return floatToStr(idx, (signed char)6, (unsigned char)3, val);
 }
 
-char *floatToStr(int idx, signed char width, unsigned char prec, double val)
+const char *floatToStr(int idx, signed char width, unsigned char prec, double val)
 {
   if (idx >= 19)
     return NULL;
