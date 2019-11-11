@@ -615,7 +615,7 @@ void checkBLTL()
   if (!blTL)
     return;
 
-  turnAround(blTLPWM);
+  turnAround(blTLPWM, 5000);
   blTL = false;
 }
 

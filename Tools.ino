@@ -221,7 +221,12 @@ void processCommand(char *buffer, int bufferLen)
   else if (ch0 == 't' && ch1 == 'l') //turn around left/ right(-pwm) test
   {
     int pwm = atoi(buffer + 2);
-    turnAround(pwm);
+    int stopCount = 2000;
+    char *buf = strchr(buffer, ',');
+    if (buf != NULL)
+      stopCount = atof(buf + 1);
+
+    turnAround(pwm, stopCount);
   }
   // else if (ch0 == 'm' && ch1 == 'g') //go to goal
   // {
@@ -554,7 +559,7 @@ void motorSpeed(int pwml, int pwmr)
   log("%d,%d,%d\n", lt, c1, c2);
 }
 
-void turnAround(int pwm)
+void turnAround(int pwm, int stopCount)
 {
   // Serial.print("TR:");
   // Serial.println(pwm);
@@ -573,7 +578,7 @@ void turnAround(int pwm)
 
   while (true)
   {
-    if ((pwm > 0 && count1 > 2000) || (pwm < 0 && count2 > 2000))
+    if ((pwm > 0 && count1 > stopCount) || (pwm < 0 && count2 > stopCount))
     // if (count1 > 1700 || count2 > 1700)
     {
       StopMotor();

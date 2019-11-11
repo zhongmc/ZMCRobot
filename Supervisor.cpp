@@ -29,8 +29,13 @@ Supervisor::Supervisor()
   // robot.setHaveIrSensor(4, true);
 
   // m_dkp = 10, m_dki = 0.20, m_dkd = 0.1; // direction
-  m_pkp = 0.5, m_pki = 0.1, m_pkd = 0.0; // position
-  m_tkp = 20, m_tki = 0.7, m_tkd = 0.0;  // theta
+  //平衡之家
+  // m_pkp = 0.5, m_pki = 0.1, m_pkd = 0.0; // position
+  // m_tkp = 20, m_tki = 0.7, m_tkd = 0.0;  // theta
+
+  //1：90
+  m_pkp = 5, m_pki = 0.5, m_pkd = 0.1; // position
+  m_tkp = 5, m_tki = 0.2, m_tkd = 0.0; // theta
 
   mSimulateMode = false;
   mIgnoreObstacle = false;

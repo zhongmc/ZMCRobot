@@ -63,7 +63,7 @@ void sendBalanceRobotStateValue(Position pos, double irDistance[5], double volta
 void MoveMotor(int pwm);
 
 void checkBLTL();
-void turnAround(int pwm);
+void turnAround(int pwm, int stopCount);
 void setPID(char *buffer);
 
 void startBalance();

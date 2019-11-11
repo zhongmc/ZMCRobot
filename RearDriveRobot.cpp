@@ -16,7 +16,7 @@ RearDriveRobot::RearDriveRobot()
   // init(0.0312, 0.162, 390, 390, 50, 180, GP2Y0A21);
 
   //黑色轮子，自制板 新1：90电机
-  init(0.0312, 0.168, 990, 990, 30, 80, GP2Y0A21);
+  init(0.0317, 0.169, 990, 990, 30, 80, GP2Y0A21);
 
   maxPWM = 200;
   minPWM = 80;
@@ -62,9 +62,15 @@ RearDriveRobot::RearDriveRobot()
   haveIrSensor[3] = true;
   haveIrSensor[4] = true;
 
-  mPIDSettings.kp = 5;   // 5; //25;  //20 0.5 2; 2019-01-26:   5, 0.02, 0.9; 5, 0.05, 1.2; 5,0.08,1.2 2019-02-09 5, 0.01, 0.2
-  mPIDSettings.ki = 0.2; //.4; // 0.01;
-  mPIDSettings.kd = 0.0; //0.02; //0.2
+  //平衡之家
+  // mPIDSettings.kp = 5;   // 5; //25;  //20 0.5 2; 2019-01-26:   5, 0.02, 0.9; 5, 0.05, 1.2; 5,0.08,1.2 2019-02-09 5, 0.01, 0.2
+  // mPIDSettings.ki = 0.2; //.4; // 0.01;
+  // mPIDSettings.kd = 0.0; //0.02; //0.2
+
+  //1:90
+  mPIDSettings.kp = 2;    // 5; //25;  //20 0.5 2; 2019-01-26:   5, 0.02, 0.9; 5, 0.05, 1.2; 5,0.08,1.2 2019-02-09 5, 0.01, 0.2
+  mPIDSettings.ki = 0.2;  //.4; // 0.01;
+  mPIDSettings.kd = 0.05; //0.02; //0.2
 }
 
 PWM_OUT RearDriveRobot::getPWMOut(double v, double w)
